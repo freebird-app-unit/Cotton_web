@@ -932,9 +932,9 @@ class ProductController extends Controller
         $station_arr = [];
 		if(!empty($attribute_array)){
 			foreach ($attribute_array as $val) {
-				$search = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute,'tbl_post_details.attribute_value'=>$val->attribute_value])->get();
+				$search = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute])->whereBetween('tbl_post_details.attribute_value',[$val->from,$val->to])->get();
 
-                // dd($search);
+               	//dd($search);
                 if(count($search)>0){
 					$seller_id = [];
 					foreach ($search as $value) {
@@ -953,6 +953,7 @@ class ProductController extends Controller
         $city_arr_count = [];
         $station_arr_count = [];
         if (count($country_arr) > 0) {
+
             $country_arr = array_unique($country_arr);
             $state_arr = array_unique($state_arr);
             $city_arr = array_unique($city_arr);
@@ -968,10 +969,10 @@ class ProductController extends Controller
                                 ->whereIn('tbl_post.id', $post_arr)
                                 ->groupBy('tbl_post.id')
                                 ->get();
-
                 if (!empty($country_result) && count($country_result) > 0) {
                     $state_arr_count = [];
                     foreach($state_arr as $state_val) {
+
                         $state_result = Post::whereHas('user_detail.country', function($query)  use ($country_val) {
                                         $query->where('id', $country_val);
                                     })
@@ -1080,6 +1081,7 @@ class ProductController extends Controller
                 }
             }
         }
+
         $response['status'] = 200;
         $response['message'] = 'Search to sell';
         $response['data'] = $final_arr;
