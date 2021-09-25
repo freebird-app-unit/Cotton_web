@@ -13,4 +13,8 @@ class Post extends Model
     {
         return $this->hasOne(UserDetails::class,'user_id','seller_buyer_id');
     }
+    public function product()
+    {
+        return $this->hasOne(Product::class,'id','product_id');
+    }
 }

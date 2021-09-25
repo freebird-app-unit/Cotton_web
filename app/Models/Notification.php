@@ -9,4 +9,9 @@ class Notification extends Model
 {
     use HasFactory;
      protected $table = 'tbl_notification';
+
+     public function product()
+     {
+         return $this->hasOne(Product::class,'id','product_id');
+     }
 }

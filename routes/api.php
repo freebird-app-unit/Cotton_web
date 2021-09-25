@@ -115,6 +115,13 @@ Route::group(['namespace' => 'Api\product'], function () {
 
 	Route::post('/negotiation_list_new', 'NegotiationController@negotiation_list_new');
 	Route::post('/negotiation_list_buyer_new', 'NegotiationController@negotiation_list_buyer_new');
+
+    //new api
+    Route::post('/negotiation_new_v2', 'ProductController@negotiation_new_v2');
+    Route::post('/make_deal_new_v2', 'ProductController@make_deal_new_v2');
+    Route::post('/negotiation_list_new_v2', 'ProductController@negotiation_list_new_v2');
+    Route::post('/negotiation_list_buyer_new_v2', 'ProductController@negotiation_list_buyer_new_v2');
+    Route::post('/negotiation_detail_new_v2', 'ProductController@negotiation_detail_new_v2');
 });
 
 Route::post('/news', 'Api\seller\LoginController@news_list');

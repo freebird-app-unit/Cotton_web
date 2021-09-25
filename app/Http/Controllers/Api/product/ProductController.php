@@ -28,6 +28,8 @@ use App\Models\Settings;
 use App\Models\DealPdf;
 use App\Models\WithoutNegotiationMakeDeal;
 use App\Models\NegotiationComplete;
+use App\Models\NegotiationLog;
+use App\Models\NegotiationHistory;
 use Validator;
 use Carbon\Carbon;
 use PDF;
@@ -1028,7 +1030,7 @@ class ProductController extends Controller
                                                     ->groupBy('tbl_post.id')
                                                     ->orderBy('tbl_post.id','DESC')
                                                     ->get();
-										                                            
+
                                         if (!empty($station_result) && count($station_result)> 0) {
 
                                             $search_array = [];
@@ -1194,7 +1196,7 @@ class ProductController extends Controller
 				$response['status'] = 404;
 			}
 		}
-		
+
 		return response($response, 200);
     }
 
@@ -1293,7 +1295,7 @@ class ProductController extends Controller
                                             ->whereIn('tbl_post.id', $post_arr)
                                             ->groupBy('tbl_post.id')
                                             ->get();
-                                            
+
                                 if (!empty($city_result) && count($city_result)> 0) {
                                     $station_arr_count = [];
                                     foreach($station_arr as $station_val) {
@@ -1508,7 +1510,7 @@ class ProductController extends Controller
 				];
 			}
 		}
-		
+
 		$header = [
 			[
 				'id' => 1,
@@ -1519,14 +1521,14 @@ class ProductController extends Controller
 				'name' => 'Confirm To',
 			]
 		];
-		
+
 		$transmit_payment_lab_array[] = [
 			'transmit_condition' => $transmit,
 			'payment_condition' => $payment,
 			'lab_list' => $lab_list,
 			'header' => $header,
 		];
-				
+
 		$response['status'] = 200;
 		$response['data'] = $transmit_payment_lab_array;
 		return response($response, 200);
@@ -1689,12 +1691,12 @@ class ProductController extends Controller
 					$post = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
 					if(!empty($post)){
 						$negotiation->prev_price = $post->price;
-						$negotiation->prev_no_of_bales = $post->no_of_bales;		
+						$negotiation->prev_no_of_bales = $post->no_of_bales;
 					}else{
 						$notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0])->first();
 						if(!empty($notification)){
 							$negotiation->prev_price = $notification->price;
-							$negotiation->prev_no_of_bales = $notification->no_of_bales;	
+							$negotiation->prev_no_of_bales = $notification->no_of_bales;
 						}
 					}
 				}else{
@@ -1717,7 +1719,7 @@ class ProductController extends Controller
 				if (!empty($header)) {
 					$negotiation->header = $header;
 				}
-				
+
 				if($negotiation->save()){
 					$response['status'] = 200;
 					$response['message'] = 'Negotiation';
@@ -1746,12 +1748,12 @@ class ProductController extends Controller
 					$post = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
 					if(!empty($post)){
 						$negotiation->prev_price = $post->price;
-						$negotiation->prev_no_of_bales = $post->no_of_bales;		
+						$negotiation->prev_no_of_bales = $post->no_of_bales;
 					}else{
 						$notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0])->first();
 						if(!empty($notification)){
 							$negotiation->prev_price = $notification->price;
-							$negotiation->prev_no_of_bales = $notification->no_of_bales;	
+							$negotiation->prev_no_of_bales = $notification->no_of_bales;
 						}
 					}
 				}else{
@@ -1774,7 +1776,7 @@ class ProductController extends Controller
 				if (!empty($header)) {
 					$negotiation->header = $header;
 				}
-				
+
 				if($negotiation->save()){
 					$response['status'] = 200;
 					$response['message'] = 'Negotiation';
@@ -1813,7 +1815,7 @@ class ProductController extends Controller
 	    }
 
 		$negotiation_array = [];
-		$ids = []; 
+		$ids = [];
 		$buyer_ids = [];
 		$negotiation = Negotiation::where(['seller_id'=>$seller_id,'is_deal'=>0])->orderBy('id','DESC')->get();
 		if(count($negotiation)>0){
@@ -1841,7 +1843,7 @@ class ProductController extends Controller
 					}
 				}
 			}
-			
+
 			$negotiation_post_arr = [];
 			$negotiation_notification_arr = [];
 			$unique_post_ids = array_unique($post_ids);
@@ -2029,7 +2031,7 @@ class ProductController extends Controller
 				}
 			}
 			$negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
-			
+
 			$response['status'] = 200;
 			$response['message'] = 'Negotiation list';
 			$response['data'] = $negotiation_array;
@@ -2068,7 +2070,7 @@ class ProductController extends Controller
 	    }
 
 		$negotiation_array = [];
-		$ids = []; 
+		$ids = [];
 		$seller_ids = [];
 		$negotiation = Negotiation::where(['buyer_id'=>$buyer_id,'is_deal'=>0])->orderBy('id','DESC')->get();
 		if(count($negotiation)>0){
@@ -2096,7 +2098,7 @@ class ProductController extends Controller
 					}
 				}
 			}
-			
+
 			$negotiation_post_arr = [];
 			$negotiation_notification_arr = [];
 			$unique_post_ids = array_unique($post_ids);
@@ -2284,7 +2286,7 @@ class ProductController extends Controller
 				}
 			}
 			$negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
-			
+
 			$response['status'] = 200;
 			$response['message'] = 'Negotiation list Buy';
 			$response['data'] = $negotiation_array;
@@ -2419,8 +2421,8 @@ class ProductController extends Controller
 		$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
 		$post_notification_id = isset($content->post_notification_id) ? $content->post_notification_id : '';
 		$type = isset($content->post_notification_id) ? $content->type : '';
-		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';	
-		$done_by = isset($content->done_by) ? $content->done_by : '';	
+		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
+		$done_by = isset($content->done_by) ? $content->done_by : '';
 
 		$params = [
 			'seller_id' => $seller_id,
@@ -2447,10 +2449,10 @@ class ProductController extends Controller
 	    }
 
 		$negotiation = Negotiation::where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type,'is_deal'=>0])->orderBy('id','DESC')->get();
-		
+
 		if(count($negotiation)>0){
 			foreach ($negotiation as $value) {
-				
+
 				if($value->negotiation_type == "post"){
 		    	 	$post_remain = Post::where(['id'=>$value->post_notification_id,'is_active'=>0])->first();
 				   	if($no_of_bales > $post_remain->no_of_bales){
@@ -2467,7 +2469,7 @@ class ProductController extends Controller
 							$complete->updated_at = date('Y-m-d H:i:s');
 							$complete->save();
 							$make_deal = new NegotiationComplete();
-				
+
 							$response['status'] = 200;
 							$response['message'] = 'Make Deal done';
 						}
@@ -2500,7 +2502,7 @@ class ProductController extends Controller
 			$negotiation_comp = Negotiation::where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type,'is_deal'=>1])->orderBy('id','DESC')->first();
 
 			if(!empty($negotiation_comp)){
-					
+
 					if($type == "post"){
 									$post = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
 									if(!empty($post)){
@@ -2565,7 +2567,7 @@ class ProductController extends Controller
 					$make_deal->status = $negotiation_comp->status;
 					$make_deal->save();
 
-					//pdf 
+					//pdf
 				        $broker_name = '';
 				        $broker_address = '';
 				        $broker_country = '';
@@ -2706,7 +2708,7 @@ class ProductController extends Controller
 								}
 							}
 						}
-						
+
 						$buyer_details = Buyers::where('id',$buyer_id)->first();
 						if(!empty($buyer_details)){
 							$buyer_sub_details = UserDetails::where(['user_type'=>'buyer','user_id'=>$buyer_details->id])->first();
@@ -2723,7 +2725,7 @@ class ProductController extends Controller
 								}
 							}
 						}
-						
+
 						$pdf = PDF::loadView('download', ['broker_name' => $broker_name,'broker_address'=>$broker_address,'broker_country'=>$broker_country,'broker_state'=>$broker_state,'broker_mobile_number'=>$broker_mobile_number,'broker_email'=>$broker_email,'seller_name_address'=>$seller_name_address,'seller_station'=>$seller_station,'buyer_name_address'=>$buyer_name_address,'buyer_station'=>$buyer_station,'broker_url'=>$broker_url,'broker_mobile_number_2'=>$broker_mobile_number_2,'deal_date'=>$deal_date,'product_name_pdf'=>$product_name_pdf,'deal_no_of_bales'=>$deal_no_of_bales,'deal_price'=>$deal_price,'ref_no'=>$ref_no,'attribute_array_pdf'=>$attribute_array_pdf,'broker_stamp_image'=>$broker_stamp_image,'broker_header_image'=>$broker_header_image,'seller_stamp_image'=>$seller_stamp_image,'buyer_stamp_image'=>$buyer_stamp_image])->setOptions(['defaultFont' => 'sans-serif']);
 				        $pdf->getDomPDF()->setHttpContext(
 				            stream_context_create([
@@ -2739,7 +2741,7 @@ class ProductController extends Controller
 						$file_name = $make_deal->id.'_'.$current_time.'_deal.pdf';
 						//$pdf->save(public_path().$file_name);
 						Storage::put('public/pdf/'.$file_name, $pdf->output());
-						
+
 						$save = new DealPdf();
 						$save->deal_id = $make_deal->id;
 						$save->done_by = $make_deal->done_by;
@@ -2747,7 +2749,7 @@ class ProductController extends Controller
 						$save->buyer_id = $make_deal->buyer_id;
 						$save->filename = $file_name;
 						$save->save();
-						//pdf 
+						//pdf
 			}
 		}else{
 
@@ -2767,7 +2769,7 @@ class ProductController extends Controller
 						$notification->updated_at = date('Y-m-d H:i:s');
 						$notification->save();
 
-						
+
 							$make_deal = new NegotiationComplete();
 							$make_deal->negotiation_id = 0;
 							$make_deal->done_by = $done_by;
@@ -2799,8 +2801,8 @@ class ProductController extends Controller
 							$make_deal->is_deal = '1';
 							$make_deal->status = 'complete';
 							$make_deal->save();
-						
-						//pdf 
+
+						//pdf
 				        $broker_name = '';
 				        $broker_address = '';
 				        $broker_country = '';
@@ -2928,7 +2930,7 @@ class ProductController extends Controller
 								}
 							}
 						}
-						
+
 						$buyer_details = Buyers::where('id',$buyer_id)->first();
 						if(!empty($buyer_details)){
 							$buyer_sub_details = UserDetails::where(['user_type'=>'buyer','user_id'=>$buyer_details->id])->first();
@@ -2961,7 +2963,7 @@ class ProductController extends Controller
 						$file_name = $make_deal->id.'_'.$current_time.'_deal.pdf';
 						//$pdf->save(public_path().$file_name);
 						Storage::put('public/pdf/'.$file_name, $pdf->output());
-						
+
 						$save = new DealPdf();
 						$save->deal_id = $make_deal->id;
 						$save->done_by = $make_deal->done_by;
@@ -2969,12 +2971,12 @@ class ProductController extends Controller
 						$save->buyer_id = $make_deal->buyer_id;
 						$save->filename = $file_name;
 						$save->save();
-						//pdf 
+						//pdf
 
 						$response['status'] = 200;
 						$response['message'] = 'Make Deal done';
 				   	}
-				}	
+				}
 			}elseif ($type == "post") {
 				$post = Post::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
 				if(!empty($post)){
@@ -2990,7 +2992,7 @@ class ProductController extends Controller
 						$post->status = 'complete';
 						$post->updated_at = date('Y-m-d H:i:s');
 						$post->save();
-						
+
 							$make_deal = new NegotiationComplete();
 							$make_deal->negotiation_id = 0;
 							$make_deal->done_by = $done_by;
@@ -3022,8 +3024,8 @@ class ProductController extends Controller
 							$make_deal->status = 'complete';
 							$make_deal->save();
 
-						
-						//pdf 
+
+						//pdf
 				        $broker_name = '';
 				        $broker_address = '';
 				        $broker_country = '';
@@ -3151,7 +3153,7 @@ class ProductController extends Controller
 								}
 							}
 						}
-						
+
 						$buyer_details = Buyers::where('id',$buyer_id)->first();
 						if(!empty($buyer_details)){
 							$buyer_sub_details = UserDetails::where(['user_type'=>'buyer','user_id'=>$buyer_details->id])->first();
@@ -3192,20 +3194,20 @@ class ProductController extends Controller
 						$save->buyer_id = $make_deal->buyer_id;
 						$save->filename = $file_name;
 						$save->save();
-						//pdf 
+						//pdf
 
 						$response['status'] = 200;
 						$response['message'] = 'Make Deal done';
 				   	}
-				}	
+				}
 			}else{
-				$response['status'] = 404;	
+				$response['status'] = 404;
 			}
-			
+
 		}
 		return response($response, 200);
 	}
-	
+
 	public function completed_deal(Request $request)
 	{
 		$response = array();
@@ -3217,7 +3219,7 @@ class ProductController extends Controller
 		$content = json_decode($data);
 
 		$seller_id = isset($content->seller_id) ? $content->seller_id : '';
-		
+
 		$params = [
 			'seller_id' => $seller_id,
 		];
@@ -3232,7 +3234,7 @@ class ProductController extends Controller
 				return response($response, 200);
 	    }
 
-		
+
 			$post_array = [];
 			$post_complete_cancel = Post::where(['seller_buyer_id'=>$seller_id,'is_active'=>0,'user_type'=>'seller'])->where(function($query) {
                         $query->where('status','cancel')
@@ -3324,7 +3326,7 @@ class ProductController extends Controller
 					}else{
 						$done_by = $name;
 					}
-					
+
 					$created_at = date('d-m-Y, h:i a', strtotime($value->created_at));
 					$updated_at = date('d-m-Y, h:i a', strtotime($value->updated_at));
 					$post_array[] = [
@@ -3515,7 +3517,7 @@ class ProductController extends Controller
 	    }
 
 	    $final_arr = [];
-		
+
 			$post_array = [];
 					$post_complete_cancel = Post::where(['seller_buyer_id'=>$buyer_id,'is_active'=>0,'user_type'=>'buyer'])->where(function($query) {
                         $query->where('status','cancel')
@@ -3767,7 +3769,7 @@ class ProductController extends Controller
 		$response['status'] = 200;
 		$response['message'] = 'completed deal buyer';
 		$response['data'] = $final_arr;
-		
+
 		return response($response, 200);
 	}
 	public function search_seller(Request $request){
@@ -3910,10 +3912,10 @@ class ProductController extends Controller
 				foreach ($make_deals as $make_deal) {
 					array_push($dates,date('Y-m-d', strtotime($make_deal->updated_at)));
 				}
-			}			
+			}
 			$unique_date = array_unique($dates);
 			foreach ($unique_date as $date) {
-				
+
 				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
@@ -3979,7 +3981,7 @@ class ProductController extends Controller
 								if (!empty($url->filename)) {
 
 									$filename = storage_path('app/public/pdf/' . $url->filename);
-								
+
 									if (File::exists($filename)) {
 										$url = asset('storage/app/public/pdf/' . $url->filename);
 									} else {
@@ -3987,31 +3989,31 @@ class ProductController extends Controller
 									}
 								}
 							}
-							
+
 						$lab_report = '';
-						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);								
+						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);
 						if (File::exists($lab_report_file) && !empty($value->lab_report)) {
 							$lab_report = asset('storage/app/public/transaction_tracking/' . $value->lab_report);
 						}
-						
+
 						$transmit_deal = '';
-						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);								
+						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);
 						if (File::exists($transmit_deal_file) && !empty($value->transmit_deal)) {
 							$transmit_deal = asset('storage/app/public/transaction_tracking/' . $value->transmit_deal);
 						}
-						
+
 						$without_gst = '';
-						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);								
+						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);
 						if (File::exists($without_gst_file) && !empty($value->without_gst)) {
 							$without_gst = asset('storage/app/public/transaction_tracking/' . $value->without_gst);
 						}
-						
+
 						$gst_reciept = '';
-						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);								
+						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);
 						if (File::exists($gst_reciept_file) && !empty($value->gst_reciept)) {
 							$gst_reciept = asset('storage/app/public/transaction_tracking/' . $value->gst_reciept);
 						}
-						
+
 						$final_arr[$dates][]  = [
 							'deal_id' => $value->id,
 							'post_notification_id' => $value->post_notification_id,
@@ -4037,11 +4039,11 @@ class ProductController extends Controller
 							'transmit_deal_mime' => !empty($value->transmit_deal_mime) ? $value->transmit_deal_mime : '',
 							'without_gst_mime' => !empty($value->without_gst_mime) ? $value->without_gst_mime : '',
 							'gst_reciept_mime' => !empty($value->gst_reciept_mime) ? $value->gst_reciept_mime : '',
-							'product_name' => $product_name,							
+							'product_name' => $product_name,
 							'attribute_array' => $attribute_array,
 							'url'=>$url
 						];
-					}	
+					}
 					if($value->negotiation_type=="notification"){
 							$notification = Notification::where('id',$value->post_notification_id)->first();
 							if(!empty($notification)){
@@ -4103,7 +4105,7 @@ class ProductController extends Controller
 								if (!empty($url->filename)) {
 
 									$filename = storage_path('app/public/pdf/' . $url->filename);
-								
+
 									if (File::exists($filename)) {
 										$url = asset('storage/app/public/pdf/' . $url->filename);
 									} else {
@@ -4111,31 +4113,31 @@ class ProductController extends Controller
 									}
 								}
 							}
-							
+
 						$lab_report = '';
-						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);								
+						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);
 						if (File::exists($lab_report_file) && !empty($value->lab_report)) {
 							$lab_report = asset('storage/app/public/transaction_tracking/' . $value->lab_report);
 						}
-						
+
 						$transmit_deal = '';
-						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);								
+						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);
 						if (File::exists($transmit_deal_file) && !empty($value->transmit_deal)) {
 							$transmit_deal = asset('storage/app/public/transaction_tracking/' . $value->transmit_deal);
 						}
-						
+
 						$without_gst = '';
-						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);								
+						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);
 						if (File::exists($without_gst_file) && !empty($value->without_gst)) {
 							$without_gst = asset('storage/app/public/transaction_tracking/' . $value->without_gst);
 						}
-						
+
 						$gst_reciept = '';
-						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);								
+						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);
 						if (File::exists($gst_reciept_file) && !empty($value->gst_reciept)) {
 							$gst_reciept = asset('storage/app/public/transaction_tracking/' . $value->gst_reciept);
 						}
-						
+
 						$final_arr[$dates][]  = [
 							'deal_id' => $value->id,
 							'post_notification_id' => $value->post_notification_id,
@@ -4166,7 +4168,7 @@ class ProductController extends Controller
 							'url'=>$url
 						];
 					}
-				}	
+				}
 			}
 		}
 		if($user_type == "buyer"){
@@ -4175,10 +4177,10 @@ class ProductController extends Controller
 				foreach ($make_deals as $make_deal) {
 					array_push($dates,date('Y-m-d', strtotime($make_deal->updated_at)));
 				}
-			}			
+			}
 			$unique_date = array_unique($dates);
 			foreach ($unique_date as $date) {
-				
+
 				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
@@ -4244,7 +4246,7 @@ class ProductController extends Controller
 								if (!empty($url->filename)) {
 
 									$filename = storage_path('app/public/pdf/' . $url->filename);
-								
+
 									if (File::exists($filename)) {
 										$url = asset('storage/app/public/pdf/' . $url->filename);
 									} else {
@@ -4252,31 +4254,31 @@ class ProductController extends Controller
 									}
 								}
 							}
-						
+
 						$lab_report = '';
-						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);								
+						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);
 						if (File::exists($lab_report_file) && !empty($value->lab_report)) {
 							$lab_report = asset('storage/app/public/transaction_tracking/' . $value->lab_report);
 						}
-						
+
 						$transmit_deal = '';
-						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);								
+						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);
 						if (File::exists($transmit_deal_file) && !empty($value->transmit_deal)) {
 							$transmit_deal = asset('storage/app/public/transaction_tracking/' . $value->transmit_deal);
 						}
-						
+
 						$without_gst = '';
-						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);								
+						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);
 						if (File::exists($without_gst_file) && !empty($value->without_gst)) {
 							$without_gst = asset('storage/app/public/transaction_tracking/' . $value->without_gst);
 						}
-						
+
 						$gst_reciept = '';
-						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);								
+						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);
 						if (File::exists($gst_reciept_file) && !empty($value->gst_reciept)) {
 							$gst_reciept = asset('storage/app/public/transaction_tracking/' . $value->gst_reciept);
 						}
-						
+
 						$final_arr[$dates][]  = [
 							'deal_id' => $value->id,
 							'post_notification_id' => $value->post_notification_id,
@@ -4306,7 +4308,7 @@ class ProductController extends Controller
 							'attribute_array' => $attribute_array,
 							'url'=>$url
 						];
-					}	
+					}
 					if($value->negotiation_type=="notification"){
 							$notification = Notification::where('id',$value->post_notification_id)->first();
 							if(!empty($notification)){
@@ -4368,7 +4370,7 @@ class ProductController extends Controller
 								if (!empty($url->filename)) {
 
 									$filename = storage_path('app/public/pdf/' . $url->filename);
-								
+
 									if (File::exists($filename)) {
 										$url = asset('storage/app/public/pdf/' . $url->filename);
 									} else {
@@ -4376,31 +4378,31 @@ class ProductController extends Controller
 									}
 								}
 							}
-						
+
 						$lab_report = '';
-						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);								
+						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);
 						if (File::exists($lab_report_file) && !empty($value->lab_report)) {
 							$lab_report = asset('storage/app/public/transaction_tracking/' . $value->lab_report);
 						}
-						
+
 						$transmit_deal = '';
-						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);								
+						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);
 						if (File::exists($transmit_deal_file) && !empty($value->transmit_deal)) {
 							$transmit_deal = asset('storage/app/public/transaction_tracking/' . $value->transmit_deal);
 						}
-						
+
 						$without_gst = '';
-						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);								
+						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);
 						if (File::exists($without_gst_file) && !empty($value->without_gst)) {
 							$without_gst = asset('storage/app/public/transaction_tracking/' . $value->without_gst);
 						}
-						
+
 						$gst_reciept = '';
-						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);								
+						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);
 						if (File::exists($gst_reciept_file) && !empty($value->gst_reciept)) {
 							$gst_reciept = asset('storage/app/public/transaction_tracking/' . $value->gst_reciept);
 						}
-						
+
 						$final_arr[$dates][]  = [
 							'deal_id' => $value->id,
 							'post_notification_id' => $value->post_notification_id,
@@ -4425,13 +4427,13 @@ class ProductController extends Controller
 							'lab_report_mime' => !empty($value->lab_report_mime) ? $value->lab_report_mime : '',
 							'transmit_deal_mime' => !empty($value->transmit_deal_mime) ? $value->transmit_deal_mime : '',
 							'without_gst_mime' => !empty($value->without_gst_mime) ? $value->without_gst_mime : '',
-							'gst_reciept_mime' => !empty($value->gst_reciept_mime) ? $value->gst_reciept_mime : '',							
+							'gst_reciept_mime' => !empty($value->gst_reciept_mime) ? $value->gst_reciept_mime : '',
 							'product_name' => $product_name,
 							'attribute_array' => $attribute_array,
 							'url'=>$url
 						];
 					}
-				}	
+				}
 			}
 		}
 		$test_arr = [];
@@ -4557,7 +4559,7 @@ class ProductController extends Controller
 								'product_name' => $product_name,
 								'attribute_array' => $attribute_array
 						];
-					}	
+					}
 					if($value->negotiation_type=="notification"){
 							$notification = Notification::where('id',$value->post_notification_id)->first();
 							if(!empty($notification)){
@@ -4651,7 +4653,7 @@ class ProductController extends Controller
 				if($time_duration == "weekly"){
 					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->where('seller_id',$seller_buyer_id)->get();
 				}
-				
+
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
 
@@ -4733,7 +4735,7 @@ class ProductController extends Controller
 								'product_name' => $product_name,
 								'attribute_array' => $attribute_array
 						];
-					}	
+					}
 					if($value->negotiation_type=="notification"){
 							$notification = Notification::where('id',$value->post_notification_id)->first();
 							if(!empty($notification)){
@@ -5046,7 +5048,7 @@ class ProductController extends Controller
         $state_arr = [];
         $city_arr = [];
         $station_arr = [];
-		
+
 		$cnt_required = count($required);
         if (!empty($required)) {
             $temp = 0;
@@ -5140,7 +5142,7 @@ class ProductController extends Controller
                                             ->whereIn('tbl_post.id', $post_arr)
                                             ->groupBy('tbl_post.id')
                                             ->get();
-                                            
+
                                 if (!empty($city_result) && count($city_result)> 0) {
                                     $station_arr_count = [];
                                     foreach($station_arr as $station_val) {
@@ -5337,11 +5339,11 @@ class ProductController extends Controller
 			}
 		}
 		$final_arr = array_merge($post_to_buy_list,$notification_to_buy_list);
-		
+
 		$response['status'] = 200;
 		$response['message'] = 'list';
 		$response['data'] = $final_arr;
-		
+
 		return response($response, 200);
 	}
 	public function notification_post_seller_list(Request $request)
@@ -5457,12 +5459,12 @@ class ProductController extends Controller
 					'date' => $created_at,
 				];
 			}
-		}	
+		}
 		$final_arr = array_merge($post_to_sell_list,$notification_to_sell_list);
 		$response['status'] = 200;
 		$response['message'] = 'list';
 		$response['data'] = $final_arr;
-		
+
 		return response($response, 200);
 	}
 
@@ -5478,7 +5480,7 @@ class ProductController extends Controller
 		$params = [
 			'deal_id' => $deal_id,
 		];
-		
+
 		$validator = Validator::make($params, [
             'deal_id' => 'required|exists:tbl_negotiation_complete,id',
         ]);
@@ -5489,55 +5491,1251 @@ class ProductController extends Controller
 			return response($response, 200);
 	    }
     	$negotiation_comp = NegotiationComplete::find($deal_id);
-					
+
         if ($files = $request->file('lab_report')) {
-			$image_name = time() . '.' .$files->getClientOriginalName();  
+			$image_name = time() . '.' .$files->getClientOriginalName();
 			$mime_type = $files->getMimeType();
 			$files->move(storage_path('app/public/transaction_tracking/'), $image_name);
-            
+
 			$negotiation_comp->lab_report = $image_name;
 			$negotiation_comp->lab_report_mime = $mime_type;
 			$negotiation_comp->lab_report_upload_by = $upload_by;
 			$negotiation_comp->save();
         }
-		
+
 		if ($files = $request->file('transmit_deal')) {
-			$image_name = time() . '.' .$files->getClientOriginalName();  
+			$image_name = time() . '.' .$files->getClientOriginalName();
 			$mime_type = $files->getMimeType();
 			$files->move(storage_path('app/public/transaction_tracking/'), $image_name);
-         
+
 			$negotiation_comp->transmit_deal = $image_name;
 			$negotiation_comp->transmit_deal_mime = $mime_type;
 			$negotiation_comp->transmit_deal_upload_by = $upload_by;
 			$negotiation_comp->save();
         }
-		
+
 		if ($files = $request->file('without_gst')) {
-			$image_name = time() . '.' .$files->getClientOriginalName();  
+			$image_name = time() . '.' .$files->getClientOriginalName();
 			$mime_type = $files->getMimeType();
 			$files->move(storage_path('app/public/transaction_tracking/'), $image_name);
-            
+
 			$negotiation_comp->without_gst = $image_name;
 			$negotiation_comp->without_gst_mime = $mime_type;
 			$negotiation_comp->without_gst_upload_by = $upload_by;
 			$negotiation_comp->save();
         }
-		
-		if($files = $request->file('gst_reciept')){  
-			$name = time() . '.' .$files->getClientOriginalName();  
+
+		if($files = $request->file('gst_reciept')){
+			$name = time() . '.' .$files->getClientOriginalName();
 			$mime_type = $files->getMimeType();
 			$files->move(storage_path('app/public/transaction_tracking/'), $name);
-			
+
 			$negotiation_comp->gst_reciept = $name;
 			$negotiation_comp->gst_reciept_mime = $mime_type;
 			$negotiation_comp->gst_reciept_upload_by = $upload_by;
 			$negotiation_comp->save();
-		
-		}  
-		
+
+		}
+
 		$response['status'] = 200;
 		$response['message'] = 'Updated Successfully';
 		$response['data'] = (object)[];
+		return response($response, 200);
+	}
+
+    public function negotiation_new_v2(Request $request)
+	{
+		$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$seller_id = isset($content->seller_id) ? $content->seller_id : '';
+		$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
+		$post_notification_id = isset($content->post_notification_id) ? $content->post_notification_id : '';
+		$negotiation_type = isset($content->negotiation_type) ? $content->negotiation_type : '';
+		$negotiation_by = isset($content->negotiation_by) ? $content->negotiation_by : '';
+		$price = isset($content->price) ? $content->price : '';
+		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
+		$payment_condition = isset($content->payment_condition) ? $content->payment_condition : '';
+		$transmit_condition = isset($content->transmit_condition) ? $content->transmit_condition : '';
+		$lab = isset($content->lab) ? $content->lab : '';
+		$broker_id = isset($content->broker_id) ? $content->broker_id : '';
+		$header = isset($content->header) ? $content->header : '';
+		$notes = isset($content->notes) ? $content->notes : '';
+
+		$params = [
+			'seller_id' => $seller_id,
+			'buyer_id' => $buyer_id,
+			'broker_id' => $broker_id,
+			'post_notification_id' => $post_notification_id,
+			'negotiation_type' => $negotiation_type,
+			'negotiation_by' => $negotiation_by,
+			'price' => $price,
+			'no_of_bales' => $no_of_bales,
+			'payment_condition' => $payment_condition,
+			'transmit_condition' => $transmit_condition,
+			'lab' => $lab,
+			'header' => $header,
+			'notes' => $notes,
+		];
+
+		$validator = Validator::make($params, [
+            'seller_id' => 'required|exists:tbl_sellers,id',
+            'buyer_id' => 'required|exists:tbl_buyers,id',
+            'broker_id' => 'required|exists:tbl_brokers,id',
+            'post_notification_id' => 'required',
+            'negotiation_type' => 'required',
+            'negotiation_by' => 'required',
+            'price' => 'required',
+            'no_of_bales' => 'required',
+            'payment_condition' => 'required|exists:tbl_payment_condition,id',
+            'transmit_condition' => 'required|exists:tbl_transmit_condition,id',
+            'lab' => 'required|exists:tbl_lab,id',
+            'header' => 'required',
+            'notes' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+			$response['message'] =$validator->errors()->first();
+			return response($response, 200);
+	    }
+
+	    if($negotiation_type == "post"){
+	    	 $post_remain = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
+		   	if($no_of_bales > $post_remain->no_of_bales){
+		   		$response['status'] = 404;
+		   		$response['message'] = 'Please Enter Less Bales';
+		   	}elseif ($no_of_bales > $post_remain->remain_bales) {
+		   		$response['status'] = 404;
+		   		$response['message'] = 'Please Enter Less Bales';
+		   	}else{
+		    	$negotiation = new Negotiation();
+				$negotiation->seller_id = $seller_id;
+				$negotiation->buyer_id = $buyer_id;
+				$negotiation->post_notification_id = $post_notification_id;
+				$negotiation->negotiation_type = $negotiation_type;
+				$negotiation->negotiation_by = $negotiation_by;
+
+                $prev_price = $price;
+                $prev_bales = $no_of_bales;
+				$negotia = Negotiation::where(['post_notification_id'=>$post_notification_id,'seller_id'=>$seller_id,'buyer_id'=>$buyer_id])->first();
+                if(!empty($negotia)){
+                    $negotiation = Negotiation::where('id',$negotia->id)->first();
+                    $prev_price = $negotia->price;
+                    $prev_bales = $negotia->bales;
+                }
+
+                $negotiation->prev_price = $prev_price;
+                $negotiation->prev_bales = $prev_bales;
+                $negotiation->price = $price;
+				$negotiation->bales = $no_of_bales;
+                $negotiation->broker_id = $broker_id;
+				$negotiation->notes = $notes;
+				$negotiation->header = $header;
+                $negotiation->payment_condition = $payment_condition;
+                $negotiation->transmit_condition = $transmit_condition;
+                $negotiation->lab = $lab;
+
+				if($negotiation->save()){
+                    $negotiation_log = new NegotiationLog();
+                    $negotiation_log->negotiation_id = $negotiation->id;
+                    $negotiation_log->negotiation_by = $negotiation_by;
+                    $negotiation_log->price = $price;
+                    $negotiation_log->bales = $no_of_bales;
+                    $negotiation_log->payment_condition_id = $payment_condition;
+                    $negotiation_log->transmit_condition_id = $transmit_condition;
+                    $negotiation_log->lab_id = $lab;
+                    $negotiation_log->save();
+
+					$response['status'] = 200;
+					$response['message'] = 'Negotiation';
+				}else{
+					$response['status'] = 404;
+				}
+	    	}
+	    }
+	 	if($negotiation_type == "notification"){
+	    	$notification_remain = Notification::where(['id'=>$post_notification_id,'is_active'=>0])->first();
+		   	if($no_of_bales > $notification_remain->no_of_bales){
+		   		$response['status'] = 404;
+		   		$response['message'] = 'Please Enter Less Bales';
+		   	}elseif ($no_of_bales > $notification_remain->remain_bales) {
+		   		$response['status'] = 404;
+		   		$response['message'] = 'Please Enter Less Bales';
+		   	}else{
+		    	$negotiation = new Negotiation();
+				$negotiation->seller_id = $seller_id;
+				$negotiation->buyer_id = $buyer_id;
+				$negotiation->post_notification_id = $post_notification_id;
+				$negotiation->negotiation_type = $negotiation_type;
+				$negotiation->negotiation_by = $negotiation_by;
+
+                $prev_price = $price;
+                $prev_bales = $no_of_bales;
+				$negotia = Negotiation::where(['post_notification_id'=>$post_notification_id,'seller_id'=>$seller_id,'buyer_id'=>$buyer_id])->first();
+                if(!empty($negotia)){
+                    $negotiation = Negotiation::where('id',$negotia->id)->first();
+                    $prev_price = $negotia->price;
+                    $prev_bales = $negotia->bales;
+                }
+
+                $negotiation->prev_price = $prev_price;
+                $negotiation->prev_bales = $prev_bales;
+                $negotiation->price = $price;
+				$negotiation->bales = $no_of_bales;
+                $negotiation->broker_id = $broker_id;
+				$negotiation->notes = $notes;
+				$negotiation->header = $header;
+
+				if($negotiation->save()){
+                    $negotiation_log = new NegotiationLog();
+                    $negotiation_log->negotiation_id = $negotiation->id;
+                    $negotiation_log->negotiation_by = $negotiation_by;
+                    $negotiation_log->price = $price;
+                    $negotiation_log->bales = $no_of_bales;
+                    $negotiation_log->payment_condition_id = $payment_condition;
+                    $negotiation_log->transmit_condition_id = $transmit_condition;
+                    $negotiation_log->lab_id = $lab;
+                    $negotiation_log->save();
+
+					$response['status'] = 200;
+					$response['message'] = 'Negotiation';
+				}else{
+					$response['status'] = 404;
+				}
+	    	}
+	    }
+		return response($response, 200);
+	}
+
+    public function make_deal_new_v2(Request $request)
+	{
+		$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$seller_id = isset($content->seller_id) ? $content->seller_id : '';
+		$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
+		$post_notification_id = isset($content->post_notification_id) ? $content->post_notification_id : '';
+		$type = isset($content->type) ? $content->type : '';
+		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
+		$done_by = isset($content->done_by) ? $content->done_by : '';
+		$negotiation_complete_id = isset($content->negotiation_complete_id) ? $content->negotiation_complete_id : '';
+
+		$params = [
+			'seller_id' => $seller_id,
+			'buyer_id' => $buyer_id,
+			'post_notification_id' => $post_notification_id,
+			'type' => $type,
+			'no_of_bales' => $no_of_bales,
+			'done_by' => $done_by
+		];
+
+		$validator = Validator::make($params, [
+            'seller_id' => 'required',
+            'buyer_id' => 'required',
+            'post_notification_id' => 'required',
+            'type' => 'required',
+            'no_of_bales' => 'required',
+            'done_by' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+            $response['message'] =$validator->errors()->first();
+            return response($response, 200);
+	    }
+
+		$negotiation_comp = Negotiation::where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type])->first();
+
+		if(!empty($negotiation_comp)){
+
+            if($negotiation_comp->negotiation_type == "post"){
+                $post_remain = Post::where(['id'=>$negotiation_comp->post_notification_id,'is_active'=>0])->first();
+                if($no_of_bales > $post_remain->no_of_bales){
+                    $response['status'] = 404;
+                    $response['message'] = 'Please Enter Less Bales';
+                }else{
+                    $complete = Negotiation::where('id',$negotiation_comp->id)->orderBy('id','DESC')->first();
+                    if(!empty($complete)){
+                        $complete->status = 'complete';
+                        $complete->updated_at = date('Y-m-d H:i:s');
+                        $complete->save();
+                        $make_deal = new NegotiationComplete();
+
+                        $response['status'] = 200;
+                        $response['message'] = 'Make Deal done';
+                    }
+                }
+            }
+            if($negotiation_comp->negotiation_type == "notification"){
+                $notification_remain = Notification::where(['id'=>$negotiation_comp->post_notification_id,'is_active'=>0])->first();
+                if($no_of_bales > $notification_remain->no_of_bales){
+                    $response['status'] = 404;
+                    $response['message'] = 'Please Enter Less Bales';
+                }else{
+                    $complete = Negotiation::where('id',$negotiation_comp->id)->orderBy('id','DESC')->first();
+                    if(!empty($complete)){
+                        $complete->status = 'complete';
+                        $complete->updated_at = date('Y-m-d H:i:s');
+                        $complete->save();
+                        $make_deal = new NegotiationComplete();
+
+                        $response['status'] = 200;
+                        $response['message'] = 'Make Deal done';
+                    }
+                }
+            }
+
+			// $negotiation_comp = Negotiation::where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type,'is_deal'=>1])->orderBy('id','DESC')->first();
+
+			if(!empty($negotiation_comp)){
+
+            if($type == "post"){
+                $post = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                if(!empty($post)){
+
+                    $post->sold_bales = $post->sold_bales + $no_of_bales;
+                    $post->remain_bales = $post->no_of_bales - $post->sold_bales;
+                    $make_deal->no_of_bales = $no_of_bales;
+                    if($post->remain_bales <= 0){
+
+                        $post->status = 'complete';
+                        $post->updated_at = date('Y-m-d H:i:s');
+                    }
+                    $post->save();
+                }
+            }
+            if($type == "notification"){
+                $notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                if(!empty($notification)){
+
+                    $notification->sold_bales = $notification->sold_bales +  $no_of_bales;
+                    $notification->remain_bales = $notification->no_of_bales - $notification->sold_bales;
+                    $make_deal->no_of_bales = $no_of_bales;
+                    if($notification->remain_bales <= 0){
+
+                        $notification->status = 'complete';
+                        $notification->updated_at = date('Y-m-d H:i:s');
+                    }
+                    $notification->save();
+                }
+            }
+            // $make_deal->negotiation_id = $negotiation_comp->id;
+            $history_type = 'negotiation';
+            if(!empty($negotiation_complete_id)){
+                $history_type = 're-negotiation';
+                $make_deal = NegotiationComplete::where('id',$negotiation_complete_id)->first();
+            }
+
+            $make_deal->buyer_id = $negotiation_comp->buyer_id;
+            $make_deal->seller_id = $negotiation_comp->seller_id;
+            $make_deal->negotiation_by = $negotiation_comp->negotiation_by;
+            $make_deal->post_notification_id = $negotiation_comp->post_notification_id;
+            $make_deal->negotiation_type = $negotiation_comp->negotiation_type;
+            $make_deal->price = $negotiation_comp->price;
+            $make_deal->done_by = $done_by;
+            $make_deal->payment_condition = $negotiation_comp->payment_condition;
+            $make_deal->transmit_condition = $negotiation_comp->transmit_condition;
+            $make_deal->lab = $negotiation_comp->lab;
+            $make_deal->deal_type = 'negotiation';
+
+            $status = "";
+            if(!empty($complete)){
+                $make_deal->status = $complete->status;
+                $status =  $complete->status;
+            }else{
+                $make_deal->status = $negotiation_comp->status;
+                $status =  $negotiation_comp->status;
+            }
+            $make_deal->save();
+
+            $history = new NegotiationHistory();
+            $history->negotiation_complete_id = $make_deal->id;
+            $history->negotiation_id = $negotiation_comp->id;
+            $history->type = $history_type;
+            $history->save();
+
+            $negotiation_log = new NegotiationLog();
+            $negotiation_log->negotiation_id = $negotiation_comp->id;
+            $negotiation_log->negotiation_by = $negotiation_comp->negotiation_by;
+            $negotiation_log->price = $negotiation_comp->price;
+            $negotiation_log->bales = $no_of_bales;
+            $negotiation_log->payment_condition_id = $negotiation_comp->payment_condition;
+            $negotiation_log->transmit_condition_id = $negotiation_comp->transmit_condition;
+            $negotiation_log->lab_id = $negotiation_comp->lab;
+            $negotiation_log->save();
+
+            if($status == 'complete'){
+                Negotiation::where('id',$negotiation_comp->id)->delete();
+            }
+            //pdf
+                $broker_name = '';
+                $broker_address = '';
+                $broker_country = '';
+                $broker_state = '';
+                $broker_mobile_number = '';
+                $broker_mobile_number_2 = '';
+                $broker_email = '';
+                $broker_url = '';
+                $seller_name_address = '';
+                $seller_station = '';
+                $buyer_name_address = '';
+                $buyer_station = '';
+                $product_name_pdf = '';
+                $deal_date = '';
+                $deal_no_of_bales = '';
+                $deal_price = '';
+                $ref_no = '';
+                $attribute_array_pdf = '';
+                $broker_stamp_image = '';
+                $buyer_stamp_image = '';
+                $seller_stamp_image = '';
+                $broker_header_image = '';
+
+                $deal_date = date('d-M-Y', strtotime($make_deal->created_at));
+                $deal_price = $make_deal->price;
+                $ref_no = $make_deal->id;
+                $deal_no_of_bales = $make_deal->no_of_bales;
+                if($done_by == "seller"){
+                    $seller = Sellers::where('id',$seller_id)->first();
+                    if(!empty($seller)){
+                        $broker = Brokers::where('code',$seller->referral_code)->first();
+                        if(!empty($broker)){
+                            $broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
+                            if(!empty($broker_data)){
+                                $country = Country::where('id',$broker_data->country_id)->first();
+                                if(!empty($country)){
+                                    $state = State::where('id',$broker_data->state_id)->first();
+                                    if(!empty($state)){
+                                        $broker_name = $broker->name;
+                                        $broker_address = $broker->address;
+                                        $broker_country = $country->name;
+                                        $broker_state = $state->name;
+                                        $broker_mobile_number = $broker->mobile_number;
+                                        $broker_mobile_number_2 =$broker->mobile_number_2;
+                                        $broker_email =$broker->email;
+                                        $broker_url =$broker->website;
+                                        $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+                                        $file1 = file_get_contents($broker_stamp_img);
+                                        $broker_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
+
+                                        $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                                        $file2 = file_get_contents($broker_header_img);
+                                        $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if($done_by == "buyer"){
+                    $buyer = Buyers::where('id',$buyer_id)->first();
+                    if(!empty($buyer)){
+                        $broker = Brokers::where('code',$buyer->referral_code)->first();
+                        if(!empty($broker)){
+                            $broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
+                            if(!empty($broker_data)){
+                                $country = Country::where('id',$broker_data->country_id)->first();
+                                if(!empty($country)){
+                                    $state = State::where('id',$broker_data->state_id)->first();
+                                    if(!empty($state)){
+                                        $broker_name = $broker->name;
+                                        $broker_address = $broker->address;
+                                        $broker_country = $country->name;
+                                        $broker_state = $state->name;
+                                        $broker_mobile_number = $broker->mobile_number;
+                                        $broker_mobile_number_2 =$broker->mobile_number_2;
+                                        $broker_email =$broker->email;
+                                        $broker_url =$broker->website;
+                                        $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+                                        $file1 = file_get_contents($broker_stamp_img);
+                                        $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+
+                                        $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                                        $file2 = file_get_contents($broker_header_img);
+                                        $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if($make_deal->negotiation_type == "post"){
+                    $post_detail = Post::where('id',$post_notification_id)->first();
+                    if(!empty($post_detail)){
+                        $product = Product::where('id',$post_detail->product_id)->first();
+                        if(!empty($product)){
+                            $product_name_pdf = $product->name;
+                        }
+                        $attribute_array_push  = [];
+                        $attribute = PostDetails::where('post_id',$post_detail->id)->get();
+                        foreach ($attribute as $value) {
+                            array_push($attribute_array_push, $value->attribute.':'.$value->attribute_value);
+                        }
+                        $attribute_array_pdf = implode(",",$attribute_array_push);
+                    }
+                }
+                if($make_deal->negotiation_type == "notification"){
+                    $notification_detail = Notification::where('id',$post_notification_id)->first();
+                    if(!empty($notification_detail)){
+                        $product = Product::where('id',$notification_detail->product_id)->first();
+                        if(!empty($product)){
+                            $product_name_pdf = $product->name;
+                        }
+                        $attribute_array_push  = [];
+                        $attribute = NotificatonDetails::where('notification_id',$notification_detail->id)->get();
+                        foreach ($attribute as $value) {
+                            array_push($attribute_array_push, $value->attribute.':'.$value->attribute_value);
+                        }
+                        $attribute_array_pdf = implode(",",$attribute_array_push);
+                    }
+                }
+
+                $seller_details = Sellers::where('id',$seller_id)->first();
+                if(!empty($seller_details)){
+                    $seller_sub_details = UserDetails::where(['user_type'=>'seller','user_id'=>$seller_details->id])->first();
+                    if(!empty($seller_sub_details)){
+                        $station = Station::where('id',$seller_sub_details->station_id)->first();
+                        if(!empty($station)){
+                            $seller_name_address = $seller_details->name.' '.$seller_details->address;
+                            $seller_station = $station->name;
+                            if(!empty($seller_details->image)){
+                                $seller_stamp_img = asset('storage/app/public/seller/profile/' . $seller_details->image);
+                                $file3 = file_get_contents($seller_stamp_img);
+                                $seller_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file3);
+                            }
+                        }
+                    }
+                }
+
+                $buyer_details = Buyers::where('id',$buyer_id)->first();
+                if(!empty($buyer_details)){
+                    $buyer_sub_details = UserDetails::where(['user_type'=>'buyer','user_id'=>$buyer_details->id])->first();
+                    if(!empty($buyer_sub_details)){
+                        $station = Station::where('id',$buyer_sub_details->station_id)->first();
+                        if(!empty($station)){
+                            $buyer_name_address = $buyer_details->name.' '.$buyer_details->address;
+                            $buyer_station = $station->name;
+                            if(!empty($buyer_details->image)){
+                                $buyer_stamp_img = asset('storage/app/public/buyer/profile/' . $buyer_details->image);
+                                $file4 = file_get_contents($buyer_stamp_img);
+                                $buyer_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file4);
+                            }
+                        }
+                    }
+                }
+
+                $pdf = PDF::loadView('download', ['broker_name' => $broker_name,'broker_address'=>$broker_address,'broker_country'=>$broker_country,'broker_state'=>$broker_state,'broker_mobile_number'=>$broker_mobile_number,'broker_email'=>$broker_email,'seller_name_address'=>$seller_name_address,'seller_station'=>$seller_station,'buyer_name_address'=>$buyer_name_address,'buyer_station'=>$buyer_station,'broker_url'=>$broker_url,'broker_mobile_number_2'=>$broker_mobile_number_2,'deal_date'=>$deal_date,'product_name_pdf'=>$product_name_pdf,'deal_no_of_bales'=>$deal_no_of_bales,'deal_price'=>$deal_price,'ref_no'=>$ref_no,'attribute_array_pdf'=>$attribute_array_pdf,'broker_stamp_image'=>$broker_stamp_image,'broker_header_image'=>$broker_header_image,'seller_stamp_image'=>$seller_stamp_image,'buyer_stamp_image'=>$buyer_stamp_image])->setOptions(['defaultFont' => 'sans-serif']);
+                $pdf->getDomPDF()->setHttpContext(
+                    stream_context_create([
+                        'ssl' => [
+                            'allow_self_signed'=> TRUE,
+                            'verify_peer' => FALSE,
+                            'verify_peer_name' => FALSE,
+                        ]
+                    ])
+                );
+
+                $current_time = time();
+                $file_name = $make_deal->id.'_'.$current_time.'_deal.pdf';
+                //$pdf->save(public_path().$file_name);
+                Storage::put('public/pdf/'.$file_name, $pdf->output());
+
+                $save = new DealPdf();
+                $save->deal_id = $make_deal->id;
+                $save->done_by = $make_deal->done_by;
+                $save->seller_id = $make_deal->seller_id;
+                $save->buyer_id = $make_deal->buyer_id;
+                $save->filename = $file_name;
+                $save->save();
+                //pdf
+			}
+		}
+		else{
+
+			if($type == "notification"){
+				$notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
+				if(!empty($notification)){
+					if($no_of_bales > $notification->no_of_bales){
+				   		$response['status'] = 404;
+				   		$response['message'] = 'Please Enter Less Bales';
+				   	}/*elseif ($no_of_bales > $notification->remain_bales) {
+				   		$response['status'] = 404;
+				   		$response['message'] = 'Please Enter Less Bales';
+				   	}*/else{
+				   		$notification->sold_bales = $notification->no_of_bales;
+						$notification->remain_bales = 0;
+						$notification->status = 'complete';
+						$notification->updated_at = date('Y-m-d H:i:s');
+						$notification->save();
+
+
+							$make_deal = new NegotiationComplete();
+							$make_deal->negotiation_id = 0;
+							$make_deal->done_by = $done_by;
+							$without = new WithoutNegotiationMakeDeal();
+							$without->post_notification_id = $notification->id;
+							$without->type = 'notification';
+							if($notification->user_type == "seller"){
+								$without->seller_buyer_id = $buyer_id;
+								$without->user_type = 'buyer';
+								$make_deal->seller_id = $notification->seller_buyer_id;
+								$make_deal->buyer_id = $buyer_id;
+							}
+							if($notification->user_type == "buyer"){
+								$without->seller_buyer_id = $seller_id;
+								$without->user_type = 'seller';
+								$make_deal->seller_id = $seller_id;
+								$make_deal->buyer_id = $notification->seller_buyer_id;
+							}
+							$without->save();
+
+							$make_deal->negotiation_by = 'seller';
+							$make_deal->post_notification_id = $notification->id;
+							$make_deal->negotiation_type = 'notification';
+							$make_deal->price = $notification->price;
+							$make_deal->no_of_bales = $notification->no_of_bales;
+							$make_deal->payment_condition = $notification->payment_condition;
+							$make_deal->transmit_condition = $notification->transmit_condition;
+							$make_deal->lab = $notification->lab;
+							$make_deal->is_deal = '1';
+							$make_deal->status = 'complete';
+							$make_deal->save();
+
+						//pdf
+				        $broker_name = '';
+				        $broker_address = '';
+				        $broker_country = '';
+				        $broker_state = '';
+				        $broker_mobile_number = '';
+				        $broker_mobile_number_2 = '';
+				        $broker_email = '';
+				        $broker_url = '';
+				        $seller_name_address = '';
+				        $seller_station = '';
+				        $buyer_name_address = '';
+				        $buyer_station = '';
+				        $product_name_pdf = '';
+				        $deal_date = '';
+				        $deal_no_of_bales = '';
+				        $deal_price = '';
+				        $ref_no = '';
+				        $attribute_array_pdf = '';
+				        $broker_stamp_image = '';
+				        $buyer_stamp_image = '';
+				        $seller_stamp_image = '';
+				        $broker_header_image = '';
+
+				        $deal_date = date('d-M-Y', strtotime($make_deal->created_at));
+				        $deal_price = $make_deal->price;
+				        $ref_no = $make_deal->id;
+				        $deal_no_of_bales = $make_deal->no_of_bales;
+						if($done_by == "seller"){
+							$seller = Sellers::where('id',$seller_id)->first();
+							if(!empty($seller)){
+								$broker = Brokers::where('code',$seller->referral_code)->first();
+								if(!empty($broker)){
+									$broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
+									if(!empty($broker_data)){
+										$country = Country::where('id',$broker_data->country_id)->first();
+										if(!empty($country)){
+											$state = State::where('id',$broker_data->state_id)->first();
+											if(!empty($state)){
+												$broker_name = $broker->name;
+												$broker_address = $broker->address;
+												$broker_country = $country->name;
+												$broker_state = $state->name;
+												$broker_mobile_number = $broker->mobile_number;
+												$broker_mobile_number_2 =$broker->mobile_number_2;
+												$broker_email =$broker->email;
+												$broker_url =$broker->website;
+
+												$broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+												$file1 = file_get_contents($broker_stamp_img);
+												$broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+
+												$broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+												$file2 = file_get_contents($broker_header_img);
+												$broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+											}
+										}
+									}
+								}
+							}
+						}
+
+						if($done_by == "buyer"){
+							$buyer = Buyers::where('id',$buyer_id)->first();
+							if(!empty($buyer)){
+								$broker = Brokers::where('code',$buyer->referral_code)->first();
+								if(!empty($broker)){
+									$broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
+									if(!empty($broker_data)){
+										$country = Country::where('id',$broker_data->country_id)->first();
+										if(!empty($country)){
+											$state = State::where('id',$broker_data->state_id)->first();
+											if(!empty($state)){
+												$broker_name = $broker->name;
+												$broker_address = $broker->address;
+												$broker_country = $country->name;
+												$broker_state = $state->name;
+												$broker_mobile_number = $broker->mobile_number;
+												$broker_mobile_number_2 =$broker->mobile_number_2;
+												$broker_email =$broker->email;
+												$broker_url =$broker->website;
+
+												$broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+												$file1 = file_get_contents($broker_stamp_img);
+												$broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+
+												$broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+												$file2 = file_get_contents($broker_header_img);
+												$broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+											}
+										}
+									}
+								}
+							}
+						}
+
+						if($make_deal->negotiation_type == "notification"){
+							$notification_detail = Notification::where('id',$post_notification_id)->first();
+							if(!empty($notification_detail)){
+								$product = Product::where('id',$notification_detail->product_id)->first();
+								if(!empty($product)){
+									$product_name_pdf = $product->name;
+								}
+								$attribute_array_push  = [];
+								$attribute = NotificatonDetails::where('notification_id',$notification_detail->id)->get();
+								foreach ($attribute as $value) {
+									array_push($attribute_array_push, $value->attribute.':'.$value->attribute_value);
+								}
+								$attribute_array_pdf = implode(",",$attribute_array_push);
+							}
+						}
+
+						$seller_details = Sellers::where('id',$seller_id)->first();
+						if(!empty($seller_details)){
+							$seller_sub_details = UserDetails::where(['user_type'=>'seller','user_id'=>$seller_details->id])->first();
+							if(!empty($seller_sub_details)){
+								$station = Station::where('id',$seller_sub_details->station_id)->first();
+								if(!empty($station)){
+									$seller_name_address = $seller_details->name.' '.$seller_details->address;
+									$seller_station = $station->name;
+									if(!empty($seller_details->image)){
+										$seller_stamp_img = asset('storage/app/public/seller/profile/' . $seller_details->image);
+										$file3 = file_get_contents($seller_stamp_img);
+										$seller_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file3);
+									}
+								}
+							}
+						}
+
+						$buyer_details = Buyers::where('id',$buyer_id)->first();
+						if(!empty($buyer_details)){
+							$buyer_sub_details = UserDetails::where(['user_type'=>'buyer','user_id'=>$buyer_details->id])->first();
+							if(!empty($buyer_sub_details)){
+								$station = Station::where('id',$buyer_sub_details->station_id)->first();
+								if(!empty($station)){
+									$buyer_name_address = $buyer_details->name.' '.$buyer_details->address;
+									$buyer_station = $station->name;
+									if(!empty($buyer_details->image)){
+										$buyer_stamp_img = asset('storage/app/public/buyer/profile/' . $buyer_details->image);
+										$file4 = file_get_contents($buyer_stamp_img);
+										$buyer_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file4);
+									}
+								}
+							}
+						}
+
+						$pdf = PDF::loadView('download', ['broker_name' => $broker_name,'broker_address'=>$broker_address,'broker_country'=>$broker_country,'broker_state'=>$broker_state,'broker_mobile_number'=>$broker_mobile_number,'broker_email'=>$broker_email,'seller_name_address'=>$seller_name_address,'seller_station'=>$seller_station,'buyer_name_address'=>$buyer_name_address,'buyer_station'=>$buyer_station,'broker_url'=>$broker_url,'broker_mobile_number_2'=>$broker_mobile_number_2,'deal_date'=>$deal_date,'product_name_pdf'=>$product_name_pdf,'deal_no_of_bales'=>$deal_no_of_bales,'deal_price'=>$deal_price,'ref_no'=>$ref_no,'attribute_array_pdf'=>$attribute_array_pdf,'broker_stamp_image'=>$broker_stamp_image,'broker_header_image'=>$broker_header_image,'seller_stamp_image'=>$seller_stamp_image,'buyer_stamp_image'=>$buyer_stamp_image])->setOptions(['defaultFont' => 'sans-serif']);
+				        $pdf->getDomPDF()->setHttpContext(
+				            stream_context_create([
+				                'ssl' => [
+				                    'allow_self_signed'=> TRUE,
+				                    'verify_peer' => FALSE,
+				                    'verify_peer_name' => FALSE,
+				                ]
+				            ])
+				        );
+
+						$current_time = time();
+						$file_name = $make_deal->id.'_'.$current_time.'_deal.pdf';
+						//$pdf->save(public_path().$file_name);
+						Storage::put('public/pdf/'.$file_name, $pdf->output());
+
+						$save = new DealPdf();
+						$save->deal_id = $make_deal->id;
+						$save->done_by = $make_deal->done_by;
+						$save->seller_id = $make_deal->seller_id;
+						$save->buyer_id = $make_deal->buyer_id;
+						$save->filename = $file_name;
+						$save->save();
+						//pdf
+
+						$response['status'] = 200;
+						$response['message'] = 'Make Deal done';
+				   	}
+				}
+			}elseif ($type == "post") {
+				$post = Post::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
+				if(!empty($post)){
+					if($no_of_bales > $post->no_of_bales){
+				   		$response['status'] = 404;
+				   		$response['message'] = 'Please Enter Less Bales';
+				   	}/*elseif ($no_of_bales > $post->remain_bales) {
+				   		$response['status'] = 404;
+				   		$response['message'] = 'Please Enter Less Bales';
+				   	}*/else{
+				   		$post->sold_bales = $post->no_of_bales;
+						$post->remain_bales = 0;
+						$post->status = 'complete';
+						$post->updated_at = date('Y-m-d H:i:s');
+						$post->save();
+
+							$make_deal = new NegotiationComplete();
+							$make_deal->negotiation_id = 0;
+							$make_deal->done_by = $done_by;
+							$without = new WithoutNegotiationMakeDeal();
+							$without->post_notification_id = $post->id;
+							$without->type = 'post';
+							if($post->user_type == "seller"){
+								$without->seller_buyer_id = $buyer_id;
+								$without->user_type = 'buyer';
+								$make_deal->seller_id = $post->seller_buyer_id;
+								$make_deal->buyer_id = $buyer_id;
+							}
+							if($post->user_type == "buyer"){
+								$without->seller_buyer_id = $seller_id;
+								$without->user_type = 'seller';
+								$make_deal->seller_id = $seller_id;
+								$make_deal->buyer_id = $post->seller_buyer_id;
+							}
+							$without->save();
+							$make_deal->negotiation_by = 'seller';
+							$make_deal->post_notification_id = $post->id;
+							$make_deal->negotiation_type = 'post';
+							$make_deal->price = $post->price;
+							$make_deal->no_of_bales = $post->no_of_bales;
+							$make_deal->payment_condition = $post->payment_condition;
+							$make_deal->transmit_condition = $post->transmit_condition;
+							$make_deal->lab = $post->lab;
+							$make_deal->is_deal = '1';
+							$make_deal->status = 'complete';
+							$make_deal->save();
+
+
+						//pdf
+				        $broker_name = '';
+				        $broker_address = '';
+				        $broker_country = '';
+				        $broker_state = '';
+				        $broker_mobile_number = '';
+				        $broker_mobile_number_2 = '';
+				        $broker_email = '';
+				        $broker_url = '';
+				        $seller_name_address = '';
+				        $seller_station = '';
+				        $buyer_name_address = '';
+				        $buyer_station = '';
+				        $product_name_pdf = '';
+				        $deal_date = '';
+				        $deal_no_of_bales = '';
+				        $deal_price = '';
+				        $ref_no = '';
+				        $attribute_array_pdf = '';
+				        $broker_stamp_image = '';
+				        $buyer_stamp_image = '';
+				        $seller_stamp_image = '';
+				        $broker_header_image = '';
+
+				        $deal_date = date('d-M-Y', strtotime($make_deal->created_at));
+				        $deal_price = $make_deal->price;
+				        $ref_no = $make_deal->id;
+				        $deal_no_of_bales = $make_deal->no_of_bales;
+						if($done_by == "seller"){
+							$seller = Sellers::where('id',$seller_id)->first();
+							if(!empty($seller)){
+								$broker = Brokers::where('code',$seller->referral_code)->first();
+								if(!empty($broker)){
+									$broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
+									if(!empty($broker_data)){
+										$country = Country::where('id',$broker_data->country_id)->first();
+										if(!empty($country)){
+											$state = State::where('id',$broker_data->state_id)->first();
+											if(!empty($state)){
+												$broker_name = $broker->name;
+												$broker_address = $broker->address;
+												$broker_country = $country->name;
+												$broker_state = $state->name;
+												$broker_mobile_number = $broker->mobile_number;
+												$broker_mobile_number_2 =$broker->mobile_number_2;
+												$broker_email =$broker->email;
+												$broker_url =$broker->website;
+
+												$broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+												$file1 = file_get_contents($broker_stamp_img);
+												$broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+
+												$broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+												$file2 = file_get_contents($broker_header_img);
+												$broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+											}
+										}
+									}
+								}
+							}
+						}
+
+						if($done_by == "buyer"){
+							$buyer = Buyers::where('id',$buyer_id)->first();
+							if(!empty($buyer)){
+								$broker = Brokers::where('code',$buyer->referral_code)->first();
+								if(!empty($broker)){
+									$broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
+									if(!empty($broker_data)){
+										$country = Country::where('id',$broker_data->country_id)->first();
+										if(!empty($country)){
+											$state = State::where('id',$broker_data->state_id)->first();
+											if(!empty($state)){
+												$broker_name = $broker->name;
+												$broker_address = $broker->address;
+												$broker_country = $country->name;
+												$broker_state = $state->name;
+												$broker_mobile_number = $broker->mobile_number;
+												$broker_mobile_number_2 =$broker->mobile_number_2;
+												$broker_email =$broker->email;
+												$broker_url =$broker->website;
+
+												$broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+												$file1 = file_get_contents($broker_stamp_img);
+												$broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+
+												$broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+												$file2 = file_get_contents($broker_header_img);
+												$broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+											}
+										}
+									}
+								}
+							}
+						}
+
+						if($make_deal->negotiation_type == "post"){
+							$post_detail = Post::where('id',$post_notification_id)->first();
+							if(!empty($post_detail)){
+								$product = Product::where('id',$post_detail->product_id)->first();
+								if(!empty($product)){
+									$product_name_pdf = $product->name;
+								}
+								$attribute_array_push  = [];
+								$attribute = PostDetails::where('post_id',$post_detail->id)->get();
+								foreach ($attribute as $value) {
+									array_push($attribute_array_push, $value->attribute.':'.$value->attribute_value);
+								}
+								$attribute_array_pdf = implode(",",$attribute_array_push);
+							}
+						}
+
+						$seller_details = Sellers::where('id',$seller_id)->first();
+						if(!empty($seller_details)){
+							$seller_sub_details = UserDetails::where(['user_type'=>'seller','user_id'=>$seller_details->id])->first();
+							if(!empty($seller_sub_details)){
+								$station = Station::where('id',$seller_sub_details->station_id)->first();
+								if(!empty($station)){
+									$seller_name_address = $seller_details->name.' '.$seller_details->address;
+									$seller_station = $station->name;
+									if(!empty($seller_details->image)){
+										$seller_stamp_img = asset('storage/app/public/seller/profile/' . $seller_details->image);
+										$file3 = file_get_contents($seller_stamp_img);
+										$seller_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file3);
+									}
+								}
+							}
+						}
+
+						$buyer_details = Buyers::where('id',$buyer_id)->first();
+						if(!empty($buyer_details)){
+							$buyer_sub_details = UserDetails::where(['user_type'=>'buyer','user_id'=>$buyer_details->id])->first();
+							if(!empty($buyer_sub_details)){
+								$station = Station::where('id',$buyer_sub_details->station_id)->first();
+								if(!empty($station)){
+									$buyer_name_address = $buyer_details->name.' '.$buyer_details->address;
+									$buyer_station = $station->name;
+									if(!empty($buyer_details->image)){
+										$buyer_stamp_img = asset('storage/app/public/buyer/profile/' . $buyer_details->image);
+										$file4 = file_get_contents($buyer_stamp_img);
+										$buyer_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file4);
+									}
+								}
+							}
+						}
+
+						$pdf = PDF::loadView('download', ['broker_name' => $broker_name,'broker_address'=>$broker_address,'broker_country'=>$broker_country,'broker_state'=>$broker_state,'broker_mobile_number'=>$broker_mobile_number,'broker_email'=>$broker_email,'seller_name_address'=>$seller_name_address,'seller_station'=>$seller_station,'buyer_name_address'=>$buyer_name_address,'buyer_station'=>$buyer_station,'broker_url'=>$broker_url,'broker_mobile_number_2'=>$broker_mobile_number_2,'deal_date'=>$deal_date,'product_name_pdf'=>$product_name_pdf,'deal_no_of_bales'=>$deal_no_of_bales,'deal_price'=>$deal_price,'ref_no'=>$ref_no,'attribute_array_pdf'=>$attribute_array_pdf,'broker_stamp_image'=>$broker_stamp_image,'broker_header_image'=>$broker_header_image,'seller_stamp_image'=>$seller_stamp_image,'buyer_stamp_image'=>$buyer_stamp_image])->setOptions(['defaultFont' => 'sans-serif']);
+				        $pdf->getDomPDF()->setHttpContext(
+				            stream_context_create([
+				                'ssl' => [
+				                    'allow_self_signed'=> TRUE,
+				                    'verify_peer' => FALSE,
+				                    'verify_peer_name' => FALSE,
+				                ]
+				            ])
+				        );
+
+						$current_time = time();
+						$file_name = $make_deal->id.'_'.$current_time.'_deal.pdf';
+						//$pdf->save(public_path().$file_name);
+						Storage::put('public/pdf/'.$file_name, $pdf->output());
+
+						$save = new DealPdf();
+						$save->deal_id = $make_deal->id;
+						$save->done_by = $make_deal->done_by;
+						$save->seller_id = $make_deal->seller_id;
+						$save->buyer_id = $make_deal->buyer_id;
+						$save->filename = $file_name;
+						$save->save();
+						//pdf
+
+						$response['status'] = 200;
+						$response['message'] = 'Make Deal done';
+				   	}
+				}
+			}else{
+				$response['status'] = 404;
+			}
+
+		}
+		return response($response, 200);
+	}
+
+    public function negotiation_list_new_v2(Request $request)
+	{
+		$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$seller_id = isset($content->seller_id) ? $content->seller_id : '';
+
+		$params = [
+			'seller_id' => $seller_id,
+		];
+
+		$validator = Validator::make($params, [
+            'seller_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+            $response['message'] =$validator->errors()->first();
+            return response($response, 200);
+	    }
+
+		$negotiation_array = [];
+		$negotiation = Negotiation::with('buyer')->where(['seller_id'=>$seller_id,'negotiation_by' => 'buyer'])->orderBy('id','DESC')->limit(5)->get();
+		if(count($negotiation)>0){
+            foreach($negotiation as $value){
+                if($value->negotiation_type == 'post'){
+                    $post = Post::with('product')->where('id',$value->post_notification_id)->first();
+                    $product_id = $post->product_id;
+                    $product_name = $post->product->name;
+                }
+                if($value->negotiation_type == 'notification'){
+                    $notification = Notification::with('product')->where('id',$value->post_notification_id)->first();
+                    $product_id = $notification->product_id;
+                    $product_name = $notification->product->name;
+                }
+                $negotiation_array [] = [
+                    'negotiation_id' => $value->id,
+                    'product_id' => $product_id,
+                    'product_name' => $product_name,
+                    'buyer_id' => $value->buyer_id,
+                    'buyer_name' => $value->buyer->name,
+                    'prev_price' => $value->prev_price,
+                    'new_price' => $value->price,
+                ];
+            }
+
+			$response['status'] = 200;
+			$response['message'] = 'Negotiation list';
+			$response['data'] = $negotiation_array;
+		}else{
+			$response['status'] = 404;
+		}
+
+		return response($response, 200);
+	}
+
+    public function negotiation_list_buyer_new_v2(Request $request)
+	{
+		$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
+
+		$params = [
+			'buyer_id' => $buyer_id,
+		];
+
+		$validator = Validator::make($params, [
+            'buyer_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+            $response['message'] =$validator->errors()->first();
+            return response($response, 200);
+	    }
+
+		$negotiation_array = [];
+		$negotiation = Negotiation::with('seller','logs')->where(['buyer_id'=>$buyer_id,'negotiation_by' => 'seller'])->orderBy('id','DESC')->limit(5)->get();
+		if(count($negotiation)>0){
+            foreach($negotiation as $value){
+                if($value->negotiation_type == 'post'){
+                    $post = Post::with('product')->where('id',$value->post_notification_id)->first();
+                    $product_id = $post->product_id;
+                    $product_name = $post->product->name;
+                }
+                if($value->negotiation_type == 'notification'){
+                    $notification = Notification::with('product')->where('id',$value->post_notification_id)->first();
+                    $product_id = $notification->product_id;
+                    $product_name = $notification->product->name;
+                }
+                $negotiation_array [] = [
+                    'negotiation_id' => $value->id,
+                    'product_id' => $product_id,
+                    'product_name' => $product_name,
+                    'seller_id' => $value->seller_id,
+                    'seller_name' => $value->buyer->name,
+                    'prev_price' => $value->prev_price,
+                    'new_price' => $value->price,
+                ];
+            }
+
+			$response['status'] = 200;
+			$response['message'] = 'Negotiation list';
+			$response['data'] = $negotiation_array;
+		}else{
+			$response['status'] = 404;
+		}
+
+		return response($response, 200);
+	}
+
+	public function negotiation_detail_new_v2(Request $request)
+	{
+		$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$seller_id = isset($content->seller_id) ? $content->seller_id : '';
+		$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
+		$post_notification_id = isset($content->post_notification_id) ? $content->post_notification_id : '';
+
+
+		$params = [
+			'seller_id' => $seller_id,
+			'buyer_id' => $buyer_id,
+			'post_notification_id' => $post_notification_id,
+		];
+
+		$validator = Validator::make($params, [
+            'seller_id' => 'required',
+            'buyer_id' => 'required',
+            'post_notification_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+				$response['message'] =$validator->errors()->first();
+				return response($response, 200);
+	    }
+
+		$negotiation_array = [];
+		$negotiation = Negotiation::where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id])->first();
+		if(!empty($negotiation)) {
+			$transmit_condition_name = '';
+			$transmit_condition = TransmitCondition::where('id',$negotiation->transmit_condition)->first();
+			if(!empty($transmit_condition)){
+				$transmit_condition_name = $transmit_condition->name;
+			}
+			$payment_condition_name = '';
+			$payment_condition = PaymentCondition::where('id',$negotiation->payment_condition)->first();
+			if(!empty($payment_condition)){
+				$payment_condition_name = $payment_condition->name;
+			}
+			$lab_name = '';
+			$lab = Lab::where('id',$negotiation->lab)->first();
+			if(!empty($lab)){
+				$lab_name = $lab->name;
+			}
+			$seller_name = '';
+			$seller = Sellers::where('id',$negotiation->seller_id)->first();
+			if(!empty($seller)){
+				$seller_name = $seller->name;
+			}
+			$buyer_name = '';
+			$buyer = Buyers::where('id',$negotiation->buyer_id)->first();
+			if(!empty($buyer)){
+				$buyer_name = $buyer->name;
+			}
+            if($negotiation->negotiation_type == 'post'){
+                $post = Post::with('product')->where('id',$negotiation->post_notification_id)->first();
+                $product_id = $post->product_id;
+                $product_name = $post->product->name;
+            }
+            if($negotiation->negotiation_type == 'notification'){
+                $notification = Notification::with('product')->where('id',$negotiation->post_notification_id)->first();
+                $product_id = $notification->product_id;
+                $product_name = $notification->product->name;
+            }
+			$negotiation_array = [
+                'negotiation_id' => $negotiation->id,
+                'seller_id' => $negotiation->seller_id,
+                'seller_name' => $seller_name,
+                'buyer_id' => $negotiation->buyer_id,
+                'buyer_name' => $buyer_name,
+                'negotiation_by' => $negotiation->negotiation_by,
+                'post_notification_id' => $negotiation->post_notification_id,
+                'negotiation_type' => $negotiation->negotiation_type,
+                'current_price' => $negotiation->current_price,
+                'prev_price' => $negotiation->prev_price,
+                'current_no_of_bales' => $negotiation->current_no_of_bales,
+                'prev_no_of_bales' => $negotiation->prev_no_of_bales,
+                'transmit_condition' => $transmit_condition_name,
+                'payment_condition' => $payment_condition_name,
+                'lab' => $lab_name,
+                'product_id' => $product_id,
+                'product_name' => $product_name,
+			];
+			$response['status'] = 200;
+			$response['message'] = 'Negotiation Detail';
+			$response['data'] = $negotiation_array;
+		}
 		return response($response, 200);
 	}
 }
