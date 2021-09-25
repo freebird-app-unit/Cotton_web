@@ -3844,10 +3844,11 @@ class ProductController extends Controller
 		$country_id = isset($content->country_id) ? $content->country_id : '';
 		$state_id = isset($content->state_id) ? $content->state_id : '';
 		$city_id = isset($content->city_id) ? $content->city_id : '';
-		$station_id = isset($content->station_id) ? $content->station_id : '';
+		/*$station_id = isset($content->station_id) ? $content->station_id : '';*/
 
 		$buyer_array =[];
-		$buyer = UserDetails::where(['user_type'=>'buyer','country_id'=>$country_id,'state_id'=>$state_id,'city_id'=>$city_id,'station_id'=>$station_id])->get();
+		//$buyer = UserDetails::where(['user_type'=>'buyer','country_id'=>$country_id,'state_id'=>$state_id,'city_id'=>$city_id,'station_id'=>$station_id])->get();
+		$buyer = UserDetails::where(['user_type'=>'buyer','country_id'=>$country_id,'state_id'=>$state_id,'city_id'=>$city_id])->get();
 		if(count($buyer)>0){
 			foreach ($buyer as $value) {
 				$country = Country::where(['id'=>$value->country_id,'is_delete'=>1])->first();
@@ -3865,11 +3866,11 @@ class ProductController extends Controller
 						if(!empty($city)){
 							$city_name = $city->name;
 						}
-					$station = Station::where(['id'=>$value->station_id,'is_delete'=>1])->first();
+					/*$station = Station::where(['id'=>$value->station_id,'is_delete'=>1])->first();
 						$station_name = '';
 						if(!empty($station)){
 							$station_name = $station->name;
-						}
+						}*/
 				$buyer_data = Buyers::where(['id'=>$value->user_id,'is_active'=>1,'is_delete'=>1,'is_approve'=>1])->first();
 				if(!empty($buyer_data)){
 					$buyer_array[] = [
@@ -3878,7 +3879,7 @@ class ProductController extends Controller
 						'country' => $country_name,
 						'state' => $state_name,
 						'city' => $city_name,
-						'station' => $station_name
+						/*'station' => $station_name*/
 					];
 				}
 			}
