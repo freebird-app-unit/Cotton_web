@@ -5054,7 +5054,7 @@ class ProductController extends Controller
         if (!empty($required)) {
             $temp = 0;
             foreach ($required as $val) {
-            	$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute,'tbl_post_details.attribute_value'=>$val->attribute_value])->get();
+            	$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute])->whereBetween('tbl_post_details.attribute_value',[$val->from,$val->to])->get();
             	 if(count($query)>0){
             	 	$temp++;
             	 }
@@ -5072,7 +5072,7 @@ class ProductController extends Controller
 
         if(empty($required)){
         	foreach ($non_required as $key => $val) {
-        		$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute,'tbl_post_details.attribute_value'=>$val->attribute_value])->get();
+        		$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute])->whereBetween('tbl_post_details.attribute_value',[$val->from,$val->to])->get();
 
 	        	if(count($query)>0){
 	            	 foreach ($query as $value) {
