@@ -6587,12 +6587,12 @@ class ProductController extends Controller
 		$negotiation_array = [];
 		$negotiation = Negotiation::with('buyer')->where(['seller_id'=>$seller_id,'negotiation_by' => 'buyer'])->orderBy('id','DESC')->skip($offset)->take($limit)->get();
 
-        $best_price = [];
         $post_ids = [];
         $notification_ids = [];
         $post_negotiation_buyer_ids = [];
         $notification_negotiation_buyer_ids = [];
 
+        // dd($negotiation);
 		if(count($negotiation)>0){
             foreach($negotiation as $value){
                 if($value->negotiation_type == 'post'){
@@ -6692,7 +6692,7 @@ class ProductController extends Controller
 						}
 					}
 
-					if(count($best_price)>0){
+					if(count($best_price)>1){
 						$max = max($best_price);
 						foreach ($post_array as $post_value) {
 							if($post_value['current_price'] == $max){
@@ -6749,7 +6749,7 @@ class ProductController extends Controller
 			foreach ($unique_notification_negotiation_buyer_ids as $i22) {
 				foreach ($unique_notification_ids as $i2) {
                     $best_price = [];
-					$notification = Notification::where(['id'=>$i2,'is_active'=>0,'status'=>'active'])->first();
+					$notification = Notification::with('product','seller','buyer')->where(['id'=>$i2,'is_active'=>0,'status'=>'active'])->first();
 					if(!empty($notification)){
 						$notification_array = [];
 						$product_name = $notification->product->name;
@@ -6805,7 +6805,7 @@ class ProductController extends Controller
 					}
 				}
 
-				if(count($best_price)>0){
+				if(count($best_price)>1){
 						$max = max($best_price);
 						foreach ($notification_array as $notification_value) {
 							if($notification_value['current_price'] == $max){
@@ -6907,33 +6907,274 @@ class ProductController extends Controller
 
 		$negotiation_array = [];
 		$negotiation = Negotiation::with('seller','logs')->where(['buyer_id'=>$buyer_id,'negotiation_by' => 'seller'])->orderBy('id','DESC')->skip($offset)->take($limit)->get();
+        $post_ids = [];
+        $notification_ids = [];
+        $post_negotiation_seller_ids = [];
+        $notification_negotiation_seller_ids = [];
 		if(count($negotiation)>0){
             foreach($negotiation as $value){
                 if($value->negotiation_type == 'post'){
-                    $post = Post::with('product')->where('id',$value->post_notification_id)->first();
-                    $product_id = $post->product_id;
-                    $product_name = $post->product->name;
+                    // $post = Post::with('product')->where('id',$value->post_notification_id)->first();
+                    // $product_id = $post->product_id;
+                    // $product_name = $post->product->name;
+                    array_push($post_ids, $value->post_notification_id);
+					array_push($post_negotiation_seller_ids, $value->seller_id);
                 }
                 if($value->negotiation_type == 'notification'){
-                    $notification = Notification::with('product')->where('id',$value->post_notification_id)->first();
-                    $product_id = $notification->product_id;
-                    $product_name = $notification->product->name;
+                    // $notification = Notification::with('product')->where('id',$value->post_notification_id)->first();
+                    // $product_id = $notification->product_id;
+                    // $product_name = $notification->product->name;
+                    array_push($notification_ids, $value->post_notification_id);
+					array_push($notification_negotiation_seller_ids, $value->seller_id);
                 }
-                $negotiation_array [] = [
-                    'negotiation_id' => $value->id,
-                    'post_notification_id' => $value->post_notification_id,
-                    'product_id' => $product_id,
-                    'product_name' => $product_name,
-                    'seller_id' => $value->seller_id,
-                    'seller_name' => $value->buyer->name,
-                    'prev_price' => $value->prev_price,
-                    'new_price' => $value->price,
-                    'negotiation_by' => $value->negotiation_by,
-                    'best_price' => "",
-                    'best_bales' => "",
-                    'best_name' => "",
-                ];
+                // $negotiation_array [] = [
+                //     'negotiation_id' => $value->id,
+                //     'post_notification_id' => $value->post_notification_id,
+                //     'product_id' => $product_id,
+                //     'product_name' => $product_name,
+                //     'seller_id' => $value->seller_id,
+                //     'seller_name' => $value->buyer->name,
+                //     'prev_price' => $value->prev_price,
+                //     'new_price' => $value->price,
+                //     'negotiation_by' => $value->negotiation_by,
+                //     'best_price' => "",
+                //     'best_bales' => "",
+                //     'best_name' => "",
+                // ];
             }
+
+            $negotiation_post_arr = [];
+			$negotiation_notification_arr = [];
+			$unique_post_ids = array_unique($post_ids);
+			$unique_notification_ids = array_unique($notification_ids);
+			$unique_post_negotiation_seller_ids = array_unique($post_negotiation_seller_ids);
+			$unique_notification_negotiation_seller_ids = array_unique($notification_negotiation_seller_ids);
+
+            foreach ($unique_post_ids as $i1) {
+                $best_price = [];
+				$post_data = Post::with('product','seller','buyer')->where(['id'=>$i1,'is_active'=>0,'status'=>'active'])->first();
+				if(!empty($post_data)){
+                        $best_price = [];
+                        $post_array = [];
+                        $product_name = $post_data->product->name;
+				       $name = '';
+				       $broker_name ='';
+				        if($post_data->user_type == "seller"){
+					        $name = $post_data->seller->name;
+                            $broker_data = Brokers::where('code',$post_data->seller->referral_code)->first();
+                            if(!empty($broker_data)){
+                                $broker_name = $broker_data->name;
+                            }
+				        }
+				        if($post_data->user_type == "buyer"){
+                            $name = $post_data->buyer->name;
+                            $broker_data = Brokers::where('code',$post_data->buyer->referral_code)->first();
+                            if(!empty($broker_data)){
+                                $broker_name = $broker_data->name;
+                            }
+				        }
+
+						foreach ($unique_post_negotiation_seller_ids as $i11) {
+						$negotiation_post = Negotiation::with('seller','buyer','broker','transmit_conditions','payment_conditions','labs')->where(['seller_id'=>$i11,'post_notification_id'=>$i1,'buyer_id'=>$buyer_id,'negotiation_type'=>'post'])->orderBy('id','DESC')->first();
+						if(!empty($negotiation_post)){
+							$seller_name = !empty($negotiation_post->seller->name) ? $negotiation_post->seller->name :'';
+                            $buyer_name = !empty($negotiation_post->buyer->name) ? $negotiation_post->buyer->name :'';
+
+                            $transmit_condition_name = !empty($negotiation_post->transmit_conditions->name) ? $negotiation_post->transmit_conditions->name :'';
+
+                            $payment_condition_name = !empty($negotiation_post->payment_conditions->name) ? $negotiation_post->payment_conditions->name :'';
+
+                            $lab_name = !empty($negotiation_post->labs->name) ? $negotiation_post->labs->name :'';
+
+							$post_array[] = [
+								'negotiation_id' => $negotiation_post->id,
+								'buyer_id' => $negotiation_post->buyer_id,
+								'buyer_name' => $buyer_name,
+								'seller_id' => $negotiation_post->seller_id,
+								'seller_name' => $seller_name,
+								'negotiation_by' => $negotiation_post->negotiation_by,
+								'negotiation_type' => $negotiation_post->negotiation_type,
+								'current_price' => $negotiation_post->price,
+								'prev_price' => $negotiation_post->prev_price,
+								'current_no_of_bales' => $negotiation_post->bales,
+								'prev_no_of_bales' => $negotiation_post->prev_bales,
+								'transmit_condition' => $transmit_condition_name,
+								'payment_condition' => $payment_condition_name,
+								'lab' => $lab_name,
+								'post_notification_id' => $negotiation_post->post_notification_id,
+							];
+                            array_push($best_price, $negotiation_post->price);
+                        }
+					}
+
+					if(count($best_price)>1){
+						$max = max($best_price);
+						foreach ($post_array as $post_value) {
+							if($post_value['current_price'] == $max){
+
+								$negotiation_post_arr[] = [
+									'post_id' => $post_data->id,
+									'status' => $post_data->status,
+									'seller_buyer_id' => $post_data->seller_buyer_id,
+									'name' => $name,
+									'broker_name' =>$broker_name,
+									'user_type' => $post_data->user_type,
+									'product_id' => $post_data->product_id,
+									'product_name' => $product_name,
+									'no_of_bales' => $post_data->no_of_bales,
+									'price' => $post_data->price,
+									'address' => $post_data->address,
+									'd_e' => $post_data->d_e,
+									'buy_for' => $post_data->buy_for,
+									'negotiation_type' => 'post',
+									'spinning_meal_name' => $post_data->spinning_meal_name,
+									'best_price' => $post_value['current_price'],
+									'best_bales' => $post_value['current_no_of_bales'],
+									'best_name' => $post_value['seller_name'],
+									'count' => count($post_array),
+									'post_detail' => $post_array,
+								];
+							}
+						}
+					}else{
+						$negotiation_post_arr[] = [
+							'post_id' => $post_data->id,
+							'status' => $post_data->status,
+							'seller_buyer_id' => $post_data->seller_buyer_id,
+							'name' => $name,
+							'broker_name'=>$broker_name,
+							'user_type' => $post_data->user_type,
+							'product_id' => $post_data->product_id,
+							'product_name' => $product_name,
+							'no_of_bales' => $post_data->no_of_bales,
+							'price' => $post_data->price,
+							'address' => $post_data->address,
+							'd_e' => $post_data->d_e,
+							'buy_for' => $post_data->buy_for,
+							'spinning_meal_name' => $post_data->spinning_meal_name,
+							'negotiation_type' => 'post',
+							'best_price' => '',
+							'best_bales' => '',
+							'best_name' => '',
+							'count' => '',
+							'post_detail' => $post_array,
+						];
+					}
+				}
+			}
+
+			foreach ($unique_notification_negotiation_seller_ids as $i22) {
+				foreach ($unique_notification_ids as $i2) {
+                    $best_price = [];
+					$notification = Notification::with('product','seller','buyer')->where(['id'=>$i2,'is_active'=>0,'status'=>'active'])->first();
+					if(!empty($notification)){
+						$notification_array = [];
+						$notification_array = [];
+						$product_name = $notification->product->name;
+				       $name = '';
+				       $broker_name ='';
+				        if($notification->user_type == "seller"){
+					        $name = !empty($notification->seller->name) ? $notification->seller->name : '';
+                            $broker_data = Brokers::where('code',$notification->seller->referral_code)->first();
+                            if(!empty($broker_data)){
+                                $broker_name = $broker_data->name;
+                            }
+				        }
+				        if($notification->user_type == "buyer"){
+                            $name = !empty($notification->buyer->name) ? $notification->buyer->name : '';
+                            $broker_data = Brokers::where('code',$notification->buyer->referral_code)->first();
+                            if(!empty($broker_data)){
+                                $broker_name = $broker_data->name;
+                            }
+				        }
+
+						$negotiation_notification = Negotiation::with('seller','buyer','broker','transmit_conditions','payment_conditions','labs')->where(['seller_id'=>$i22,'post_notification_id'=>$i2,'buyer_id'=>$buyer_id,'negotiation_type'=>'notification'])->orderBy('id','DESC')->first();
+						if(!empty($negotiation_notification)){
+                            $seller_name = !empty($negotiation_notification->seller->name) ? $negotiation_notification->seller->name :'';
+                            $buyer_name = !empty($negotiation_notification->buyer->name) ? $negotiation_notification->buyer->name :'';
+
+                            $transmit_condition_name = !empty($negotiation_notification->transmit_conditions->name) ? $negotiation_notification->transmit_conditions->name :'';
+
+                            $payment_condition_name = !empty($negotiation_notification->payment_conditions->name) ? $negotiation_notification->payment_conditions->name :'';
+
+                            $lab_name = !empty($negotiation_notification->labs->name) ? $negotiation_notification->labs->name :'';
+
+                            $notification_array[] = [
+                                'negotiation_id' => $negotiation_notification->id,
+                                'buyer_id' => $negotiation_notification->buyer_id,
+                                'buyer_name' => $buyer_name,
+                                'seller_id' => $negotiation_notification->seller_id,
+                                'seller_name' => $seller_name,
+                                'negotiation_by' => $negotiation_notification->negotiation_by,
+                                'negotiation_type' => $negotiation_notification->negotiation_type,
+                                'current_price' => $negotiation_notification->price,
+                                'prev_price' => $negotiation_notification->prev_price,
+                                'current_no_of_bales' => $negotiation_notification->bales,
+                                'prev_no_of_bales' => $negotiation_notification->prev_bales,
+                                'transmit_condition' => $transmit_condition_name,
+                                'payment_condition' => $payment_condition_name,
+                                'lab' => $lab_name,
+                                'post_notification_id' => $negotiation_notification->post_notification_id,
+                            ];
+                            array_push($best_price, $negotiation_notification->price);
+                    }
+				}
+
+				if(count($best_price)>1){
+						$max = max($best_price);
+						foreach ($notification_array as $notification_value) {
+							if($notification_value['current_price'] == $max){
+								$negotiation_notification_arr[] = [
+									'notification_id' => $notification->id,
+									'status' => $notification->status,
+									'seller_buyer_id' => $notification->seller_buyer_id,
+									'name' => $name,
+									'broker_name'=>$broker_name,
+									'user_type' => $notification->user_type,
+									'product_id' => $notification->product_id,
+									'product_name' => $product_name,
+									'no_of_bales' => $notification->no_of_bales,
+									'price' => $notification->price,
+									'address' => $notification->address,
+									'd_e' => $notification->d_e,
+									'buy_for' => $notification->buy_for,
+									'negotiation_type' => 'notification',
+									'spinning_meal_name' => $notification->spinning_meal_name,
+									'best_price' => $notification_value['current_price'],
+									'best_bales' => $notification_value['current_no_of_bales'],
+									'best_name' => $notification_value['seller_name'],
+									'count' => count($post_array),
+									'notification_detail' =>(!empty($notification_array))?$notification_array:''
+								];
+							}
+						}
+					}else{
+						$negotiation_post_arr[] = [
+							'notification_id' => $notification->id,
+							'status' => $notification->status,
+							'seller_buyer_id' => $notification->seller_buyer_id,
+							'name' => $name,
+							'broker_name'=>$broker_name,
+							'user_type' => $notification->user_type,
+							'product_id' => $notification->product_id,
+							'product_name' => $product_name,
+							'no_of_bales' => $notification->no_of_bales,
+							'price' => $notification->price,
+							'address' => $notification->address,
+							'd_e' => $notification->d_e,
+							'buy_for' => $notification->buy_for,
+							'spinning_meal_name' => $notification->spinning_meal_name,
+							'negotiation_type' => 'notification',
+							'best_price' => '',
+							'best_bales' => '',
+							'best_name' => '',
+							'count' => '',
+							'notification_detail' =>(!empty($notification_array))?$notification_array:''
+						];
+					}
+				}
+			}
+			$negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
 
 			$response['status'] = 200;
 			$response['message'] = 'Negotiation list';
