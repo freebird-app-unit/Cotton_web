@@ -5633,13 +5633,6 @@ class ProductController extends Controller
 		   		$response['message'] = 'Please Enter Less Bales';
 		   	}else{
 		    	$negotiation = new Negotiation();
-				$negotiation->seller_id = $seller_id;
-				$negotiation->buyer_id = $buyer_id;
-                $negotiation->negotiation_complete_id = $deal_id;
-				$negotiation->post_notification_id = $post_notification_id;
-				$negotiation->negotiation_type = $negotiation_type;
-				$negotiation->negotiation_by = $negotiation_by;
-
                 $prev_price = $price;
                 $prev_bales = $no_of_bales;
 				$negotia = Negotiation::where(['post_notification_id'=>$post_notification_id,'seller_id'=>$seller_id,'buyer_id'=>$buyer_id])->first();
@@ -5648,7 +5641,12 @@ class ProductController extends Controller
                     $prev_price = $negotia->price;
                     $prev_bales = $negotia->bales;
                 }
-
+				$negotiation->seller_id = $seller_id;
+				$negotiation->buyer_id = $buyer_id;
+                $negotiation->negotiation_complete_id = $deal_id;
+				$negotiation->post_notification_id = $post_notification_id;
+				$negotiation->negotiation_type = $negotiation_type;
+                $negotiation->negotiation_by = $negotiation_by;
                 $negotiation->prev_price = $prev_price;
                 $negotiation->prev_bales = $prev_bales;
                 $negotiation->price = $price;
@@ -5715,12 +5713,6 @@ class ProductController extends Controller
 		   		$response['message'] = 'Please Enter Less Bales';
 		   	}else{
 		    	$negotiation = new Negotiation();
-				$negotiation->seller_id = $seller_id;
-				$negotiation->buyer_id = $buyer_id;
-				$negotiation->post_notification_id = $post_notification_id;
-				$negotiation->negotiation_type = $negotiation_type;
-				$negotiation->negotiation_by = $negotiation_by;
-
                 $prev_price = $price;
                 $prev_bales = $no_of_bales;
 				$negotia = Negotiation::where(['post_notification_id'=>$post_notification_id,'seller_id'=>$seller_id,'buyer_id'=>$buyer_id])->first();
@@ -5729,7 +5721,11 @@ class ProductController extends Controller
                     $prev_price = $negotia->price;
                     $prev_bales = $negotia->bales;
                 }
-
+				$negotiation->seller_id = $seller_id;
+				$negotiation->buyer_id = $buyer_id;
+				$negotiation->post_notification_id = $post_notification_id;
+				$negotiation->negotiation_type = $negotiation_type;
+                $negotiation->negotiation_by = $negotiation_by;
                 $negotiation->prev_price = $prev_price;
                 $negotiation->prev_bales = $prev_bales;
                 $negotiation->price = $price;
@@ -6679,6 +6675,7 @@ class ProductController extends Controller
 
 						foreach ($unique_post_negotiation_buyer_ids as $i11) {
 						$negotiation_post = Negotiation::with('seller','buyer','broker','transmit_conditions','payment_conditions','labs')->where(['buyer_id'=>$i11,'post_notification_id'=>$i1,'seller_id'=>$seller_id,'negotiation_type'=>'post'])->orderBy('id','DESC')->first();
+
 						if(!empty($negotiation_post)){
                             $seller_name = !empty($negotiation_post->seller->name) ? $negotiation_post->seller->name :'';
                             $buyer_name = !empty($negotiation_post->buyer->name) ? $negotiation_post->buyer->name :'';
@@ -7291,6 +7288,12 @@ class ProductController extends Controller
 
                 // $attrinutes = ProductAttribute::select('label')->where('product_id',$product_id)->get();
             }
+            if($negotiation->header == 1){
+                $header_name = "Subject To";
+            }else{
+                $header_name = "Confirm To";
+            }
+
 			$negotiation_array = [
                 'negotiation_id' => $negotiation->id,
                 'seller_id' => $negotiation->seller_id,
@@ -7311,6 +7314,7 @@ class ProductController extends Controller
                 'lab' => $lab_name,
                 'notes' => $negotiation->notes,
                 'header' => $negotiation->header,
+                'header_name' => $header_name,
                 'product_id' => $product_id,
                 'product_name' => $product_name,
                 'post_price' => $post_price,
@@ -8071,6 +8075,12 @@ class ProductController extends Controller
                 }
 
             }
+            if($negotiation->header == 1){
+                $header_name = "Subject To";
+            }else{
+                $header_name = "Confirm To";
+            }
+
 			$negotiation_array = [
                 'negotiation_id' => $negotiation->id,
                 'seller_id' => $negotiation->seller_id,
@@ -8091,6 +8101,7 @@ class ProductController extends Controller
                 'lab' => $lab_name,
                 'notes' => $negotiation->notes,
                 'header' => $negotiation->header,
+                'header_name' => $header_name,
                 'product_id' => $product_id,
                 'product_name' => $product_name,
                 'post_price' => $post_price,
