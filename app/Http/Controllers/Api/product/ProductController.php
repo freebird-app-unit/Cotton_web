@@ -5581,8 +5581,8 @@ class ProductController extends Controller
 			'payment_condition' => $payment_condition,
 			'transmit_condition' => $transmit_condition,
 			'lab' => $lab,
-			'header' => $header,
-			'notes' => $notes,
+			// 'header' => $header,
+			// 'notes' => $notes,
 		];
 
 		$validator = Validator::make($params, [
@@ -5597,8 +5597,8 @@ class ProductController extends Controller
             'payment_condition' => 'required|exists:tbl_payment_condition,id',
             'transmit_condition' => 'required|exists:tbl_transmit_condition,id',
             'lab' => 'required|exists:tbl_lab,id',
-            'header' => 'required',
-            'notes' => 'required',
+            // 'header' => 'required',
+            // 'notes' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -6605,7 +6605,7 @@ class ProductController extends Controller
 	    }
 
 		$negotiation_array = [];
-		$negotiation = Negotiation::with('buyer')->where(['seller_id'=>$seller_id,'negotiation_by' => 'buyer'])->orderBy('id','DESC')->skip($offset)->take($limit)->get();
+		$negotiation = Negotiation::with('buyer')->where(['seller_id'=>$seller_id])->orderBy('id','DESC')->skip($offset)->take($limit)->get();
 
         $post_ids = [];
         $notification_ids = [];
@@ -6656,7 +6656,7 @@ class ProductController extends Controller
             foreach ($unique_post_ids as $i1) {
                 $best_price = [];
 
-				$post_data = Post::with('product','seller','buyer')->where(['id'=>$i1,'is_active'=>0,'status'=>'active'])->first();
+				$post_data = Post::with('product','seller','buyer')->where(['id'=>$i1,'is_active'=>0])->first();
 				if(!empty($post_data)){
                     $post_array = [];
                         $product_name = $post_data->product->name;
@@ -6769,7 +6769,7 @@ class ProductController extends Controller
 			foreach ($unique_notification_negotiation_buyer_ids as $i22) {
 				foreach ($unique_notification_ids as $i2) {
                     $best_price = [];
-					$notification = Notification::with('product','seller','buyer')->where(['id'=>$i2,'is_active'=>0,'status'=>'active'])->first();
+					$notification = Notification::with('product','seller','buyer')->where(['id'=>$i2,'is_active'=>0])->first();
 					if(!empty($notification)){
 						$notification_array = [];
 						$product_name = $notification->product->name;
@@ -6926,7 +6926,7 @@ class ProductController extends Controller
 	    }
 
 		$negotiation_array = [];
-		$negotiation = Negotiation::with('seller','logs')->where(['buyer_id'=>$buyer_id,'negotiation_by' => 'seller'])->orderBy('id','DESC')->skip($offset)->take($limit)->get();
+		$negotiation = Negotiation::with('seller')->where(['buyer_id'=>$buyer_id])->orderBy('id','DESC')->skip($offset)->take($limit)->get();
         $post_ids = [];
         $notification_ids = [];
         $post_negotiation_seller_ids = [];
@@ -6972,7 +6972,7 @@ class ProductController extends Controller
 
             foreach ($unique_post_ids as $i1) {
                 $best_price = [];
-				$post_data = Post::with('product','seller','buyer')->where(['id'=>$i1,'is_active'=>0,'status'=>'active'])->first();
+				$post_data = Post::with('product','seller','buyer')->where(['id'=>$i1,'is_active'=>0])->first();
 				if(!empty($post_data)){
                         $best_price = [];
                         $post_array = [];
@@ -7086,7 +7086,7 @@ class ProductController extends Controller
 			foreach ($unique_notification_negotiation_seller_ids as $i22) {
 				foreach ($unique_notification_ids as $i2) {
                     $best_price = [];
-					$notification = Notification::with('product','seller','buyer')->where(['id'=>$i2,'is_active'=>0,'status'=>'active'])->first();
+					$notification = Notification::with('product','seller','buyer')->where(['id'=>$i2,'is_active'=>0])->first();
 					if(!empty($notification)){
 						$notification_array = [];
 						$notification_array = [];

@@ -130,6 +130,7 @@ Route::group(['namespace' => 'Api\product'], function () {
     Route::post('/completed_deal_detail_new_v2', 'ProductController@completed_deal_detail_new_v2');
     Route::post('/negotiation_detail_by_deal_new_v2', 'ProductController@negotiation_detail_by_deal_new_v2');
 
+});
 Route::post('/news', 'Api\seller\LoginController@news_list');
 Route::post('/news_details', 'Api\seller\LoginController@news_details');
 Route::post('/broker_list', 'Api\seller\LoginController@broker_list');
