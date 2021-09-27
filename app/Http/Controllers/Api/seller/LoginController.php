@@ -34,7 +34,7 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$user_type = isset($content->user_type) ? $content->user_type : '';
@@ -89,9 +89,9 @@ class LoginController extends Controller
 	    }
 
 	      if(!empty($referral_code)){
-	    	$broker = Brokers::where('code',$referral_code)->first();	
+	    	$broker = Brokers::where('code',$referral_code)->first();
 	    	if(empty($broker)){
-	    		$response['status'] = 404; 
+	    		$response['status'] = 404;
 				$response['message'] = 'Referral Code is not avaialble';
 		    }else{
 		    	$image_name = '';
@@ -165,20 +165,20 @@ class LoginController extends Controller
 					$add_broker->updated_at =date('Y-m-d H:i:s');
 					$add_broker->save();
 				}
-				
+
 				if($bank_details->save()){
 							//send otp
 							$message = "OTP to verify your account is ". $seller->otp ." - My Health Chart";
 							$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$seller->mobile_number."'&message=" . urlencode($message);
 							$sms = file_get_contents($api);
-							//send otp 
-							
+							//send otp
+
 							$response['data']->id=$seller->id;
 							$response['data']->mobile_number=$seller->mobile_number;
 							$response['data']->email=$seller->email;
 							$response['data']->api_token=$device_details->api_token;
-							
-							$response['status'] = 200; 
+
+							$response['status'] = 200;
 							$response['message'] = 'Congratulations, your account has been successfully created.';
 						}
 		    }
@@ -246,24 +246,24 @@ class LoginController extends Controller
 					$bank_details->save();
 
 				}
-				
+
 				if($bank_details->save()){
 							//send otp
 							$message = "OTP to verify your account is ". $seller->otp ." - My Health Chart";
 							$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$seller->mobile_number."'&message=" . urlencode($message);
 							$sms = file_get_contents($api);
-							//send otp 
-							
+							//send otp
+
 							$response['data']->id=$seller->id;
 							$response['data']->mobile_number=$seller->mobile_number;
 							$response['data']->email=$seller->email;
 							$response['data']->api_token=$device_details->api_token;
-							
-							$response['status'] = 200; 
+
+							$response['status'] = 200;
 							$response['message'] = 'Congratulations, your account has been successfully created.';
 						}
 	    }
-    	
+
         return response($response, 200);
     }
 
@@ -274,7 +274,7 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-    	$data = $request->input('data');	
+    	$data = $request->input('data');
 		$content = json_decode($data);
 
 		$mobile_number = isset($content->mobile_number) ? $content->mobile_number : '';
@@ -313,33 +313,33 @@ class LoginController extends Controller
 										}
 										$response['data']->id=$login->id;
 										$response['data']->api_token=$device_details->api_token;
-										$response['status'] = 200; 
+										$response['status'] = 200;
 										$response['message'] = 'Login Success';
 									}else{
-										$response['status'] = 404; 
+										$response['status'] = 404;
 										$response['message'] = 'Your account is deleted';
 									}
 								}else{
-									$response['status'] = 404; 
+									$response['status'] = 404;
 									$response['message'] = 'Your account is not approved';
 								}
 							}else{
-								$response['status'] = 404; 
+								$response['status'] = 404;
 								$response['message'] = 'Your account is not active please contact to adminstrator';
 							}
 						}else{
-							$response['status'] = 404; 
+							$response['status'] = 404;
 							$response['message'] = 'Your account is not verify';
 						}
 					}else{
-						$response['status'] = 404; 
+						$response['status'] = 404;
 						$response['message'] = 'You have entered wrong password';
 					}
 				}else{
-					$response['status'] = 404; 
+					$response['status'] = 404;
 					$response['message'] = 'You have entered wrong mobileno';
 				}
-    		
+
 		return response($response, 200);
     }
 
@@ -350,7 +350,7 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$mobile_number = isset($content->mobile_number) ? $content->mobile_number : '';
@@ -381,20 +381,20 @@ class LoginController extends Controller
 				$hours   = floor(($diff - ($days * 86400)) / 3600);
 				$minutes = floor(($diff - ($days * 86400) - ($hours * 3600)) / 60);
 				if (($diff > 0) && ($minutes <= 180)) {
-					$response['status'] = 200; 
+					$response['status'] = 200;
 					$response['message'] = 'Your mobile number has been verified successfully';
 					$otp_verify->is_otp_verify = 1;
 					$otp_verify->save();
 				}else{
-						$response['status'] = 404; 
+						$response['status'] = 404;
 						$response['message'] = 'OTP expired';
-					} 
+					}
 			}else{
-					$response['status'] = 404; 
+					$response['status'] = 404;
 					$response['message'] = 'OTP is not valid';
 			}
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 			$response['message'] = 'Mobile number not found';
 		}
 		return response($response, 200);
@@ -405,9 +405,9 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
-    	
+
     	$mobile_number = isset($content->mobile_number) ? $content->mobile_number : '';
 
     	$params = [
@@ -439,31 +439,31 @@ class LoginController extends Controller
 							$message = "OTP to verify your account is ". $forgot_password->otp ." - My Health Chart";
 							$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$forgot_password->mobile_number."'&message=" . urlencode($message);
 							$sms = file_get_contents($api);
-							//send otp 
+							//send otp
 
-							$response['status'] = 200; 
+							$response['status'] = 200;
 							$response['message'] = 'Verification code successfully sent';
 						}else{
-							$response['status'] = 404; 
+							$response['status'] = 404;
 							$response['message'] = 'Your account is deleted';
 						}
 					}else{
-						$response['status'] = 404; 
+						$response['status'] = 404;
 						$response['message'] = 'Your account is not approved';
 					}
 				}else{
-					$response['status'] = 404; 
+					$response['status'] = 404;
 					$response['message'] = 'Your account is not active please contact to adminstrator';
 				}
 			}else{
-				$response['status'] = 404; 
+				$response['status'] = 404;
 				$response['message'] = 'Your account is not verify';
 			}
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 			$response['message'] = 'Mobile number not found';
 		}
-    		
+
 		return response($response, 200);
     }
 
@@ -475,7 +475,7 @@ class LoginController extends Controller
 		$response['data'] = (object)array();
 
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$mobile_number = isset($content->mobile_number) ? $content->mobile_number : '';
@@ -503,8 +503,8 @@ class LoginController extends Controller
     	$reset_password = Sellers::where('mobile_number',$mobile_number)->first();
 			if(!empty($reset_password)){
 				if(Hash::check($password, $reset_password->password)) {
-					$response['status'] = 404; 
-					$response['message'] = 'Old password and new password cannot be same';	
+					$response['status'] = 404;
+					$response['message'] = 'Old password and new password cannot be same';
 				}else{
 					$reset_password->password = Hash::make($password);
 					$reset_password->otp = '';
@@ -513,14 +513,14 @@ class LoginController extends Controller
 					$message = "Congratulations! Your password has been reset successfully. - My Health Chart";
 					$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$reset_password->mobile_number."'&message=" . urlencode($message);
 					$sms = file_get_contents($api);
-					$response['status'] = 200; 
+					$response['status'] = 200;
 					$response['message'] = 'Your password has been reset successfully';
 				}
 			}else{
-				$response['status'] = 404; 
+				$response['status'] = 404;
 				$response['message'] = 'Mobile number not found';
 			}
-    		
+
 		return response($response, 200);
     }
     public function change_password_seller(Request $request)
@@ -530,14 +530,14 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
-		
+
 		$user_id = isset($content->user_id) ? $content->user_id : '';
 		$current_password = isset($content->current_password) ? $content->current_password : '';
 		$password = isset($content->password) ? $content->password : '';
 		$confirm_password = isset($content->confirm_password) ? $content->confirm_password : '';
-    	
+
     	$params = [
 			'user_id' => $user_id,
 			'current_password' => $current_password,
@@ -564,25 +564,25 @@ class LoginController extends Controller
 			$change_password = Sellers::where('id', $user_id)->first();
 			if(!empty($change_password)){
 					if(Hash::check($current_password, Hash::make($password))){
-						$response['status'] = 404; 
+						$response['status'] = 404;
 						$response['message'] = 'Old password and new password cannot be same';
 					}elseif (!Hash::check($current_password, $change_password->password)) {
-						$response['status'] = 404; 
+						$response['status'] = 404;
 						$response['message'] = 'Current password doent not match';
 					}else{
 						$change_password->password = Hash::make($password);
 						$change_password->otp = '';
 						$change_password->save();
-						
+
 						$message = "Congratulations! Your password has been changed successfully. - My Health Chart";
 						$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$change_password->mobile_number."'&message=" . urlencode($message);
 						$sms = file_get_contents($api);
 
-						$response['status'] = 200; 
+						$response['status'] = 200;
 						$response['message'] = 'Your password has been successfully changed';
 					}
 			}else{
-				$response['status'] = 404; 
+				$response['status'] = 404;
 				$response['message'] = 'User not found';
 			}
 		}else{
@@ -590,7 +590,7 @@ class LoginController extends Controller
 	        $response['message'] = 'Unauthenticated';
 		}
 
-    	
+
 		return response($response, 200);
     }
     public function resend_otp_seller(Request $request)
@@ -600,9 +600,9 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
-    	
+
     	$mobile_number = isset($content->mobile_number) ? $content->mobile_number : '';
 
     	$params = [
@@ -632,8 +632,8 @@ class LoginController extends Controller
 					$message = "OTP to verify your account is ". $resend_data->otp ." - My Health Chart";
 					$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$resend_data->mobile_number."'&message=" . urlencode($message);
 					$sms = file_get_contents($api);
-							//send otp 
-					$response['status'] = 200; 
+							//send otp
+					$response['status'] = 200;
 					$response['message'] = 'Resend OTP successfully';
 			}else{
 					$verification_code = mt_rand(100000,999999);
@@ -644,14 +644,14 @@ class LoginController extends Controller
 					$message = "OTP to verify your account is ". $resend_data->otp ." - My Health Chart";
 					$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$resend_data->mobile_number."'&message=" . urlencode($message);
 					$sms = file_get_contents($api);
-					$response['status'] = 200; 
+					$response['status'] = 200;
 					$response['message'] = 'Resend OTP successfully';
 						}
 			}else{
-					$response['status'] = 404; 
+					$response['status'] = 404;
 					$response['message'] = 'Mobile number not found';
 			}
-    		
+
 		return response($response, 200);
     }
     public function profile_seller(Request $request)
@@ -661,7 +661,7 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$user_id = isset($content->user_id) ? $content->user_id : '';
@@ -715,17 +715,17 @@ class LoginController extends Controller
 				$response['data']->referral_code=($profile->referral_code)?$profile->referral_code:'';
 				$response['data']->fcm_token=($profile->fcm_token)?$profile->fcm_token:'';
 
-				$response['status'] = 200; 
+				$response['status'] = 200;
 				$response['message'] = 'Profile';
 		    }else{
-				$response['status'] = 404; 
+				$response['status'] = 404;
 				$response['message'] = 'User not found';
 			}
     	}else{
 	    	$response['status'] = 401;
 	        $response['message'] = 'Unauthenticated';
 		}
-			
+
 		return response($response, 200);
     }
 
@@ -736,7 +736,7 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$user_id = isset($content->user_id) ? $content->user_id : '';
@@ -762,10 +762,10 @@ class LoginController extends Controller
 	    	$response['status'] = 200;
 			$response['message'] = 'Logged Out Successfully';
 	    }else{
-	    	$response['status'] = 404; 
+	    	$response['status'] = 404;
 			$response['message'] = 'User not found';
 	    }
-    		
+
 		return response($response, 200);
     }
     public function business_type(Request $request)
@@ -784,11 +784,11 @@ class LoginController extends Controller
 					'name' => $value->name
 				];
 			}
-			$response['status'] = 200; 
+			$response['status'] = 200;
 			$response['message'] = 'Bussiness Type';
 			$response['data'] = $business_type_list;
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 		}
 		return response($response, 200);
     }
@@ -808,11 +808,11 @@ class LoginController extends Controller
 					'name' => $value->name
 				];
 			}
-			$response['status'] = 200; 
+			$response['status'] = 200;
 			$response['message'] = 'Registration Type';
 			$response['data'] = $registration_type_list;
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 		}
 		return response($response, 200);
     }
@@ -832,11 +832,11 @@ class LoginController extends Controller
 					'name' => $value->name
 				];
 			}
-			$response['status'] = 200; 
+			$response['status'] = 200;
 			$response['message'] = 'Country List';
 			$response['data'] = $country_list;
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 		}
 		return response($response, 200);
     }
@@ -847,7 +847,7 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$country_id = isset($content->country_id) ? $content->country_id : '';
@@ -861,11 +861,11 @@ class LoginController extends Controller
 					'name' => $value->name
 				];
 			}
-			$response['status'] = 200; 
+			$response['status'] = 200;
 			$response['message'] = 'state List';
 			$response['data'] = $state_list;
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 		}
 		return response($response, 200);
     }
@@ -876,7 +876,7 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$state_id = isset($content->state_id) ? $content->state_id : '';
@@ -890,11 +890,11 @@ class LoginController extends Controller
 					'name' => $value->name
 				];
 			}
-			$response['status'] = 200; 
+			$response['status'] = 200;
 			$response['message'] = 'city List';
 			$response['data'] = $city_list;
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 		}
 		return response($response, 200);
     }
@@ -906,7 +906,7 @@ class LoginController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$city_id = isset($content->city_id) ? $content->city_id : '';
@@ -920,11 +920,11 @@ class LoginController extends Controller
 					'name' => $value->name
 				];
 			}
-			$response['status'] = 200; 
+			$response['status'] = 200;
 			$response['message'] = 'station List';
 			$response['data'] = $station_list;
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 		}
 		return response($response, 200);
     }
@@ -945,11 +945,11 @@ class LoginController extends Controller
 					'name' => $value->name
 				];
 			}
-			$response['status'] = 200; 
+			$response['status'] = 200;
 			$response['message'] = 'Buyer Type List';
 			$response['data'] = $buyer_type_list;
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 		}
 		return response($response, 200);
     }
@@ -970,11 +970,11 @@ class LoginController extends Controller
 					'name' => $value->name
 				];
 			}
-			$response['status'] = 200; 
+			$response['status'] = 200;
 			$response['message'] = 'Seller Type List';
 			$response['data'] = $seller_type_list;
 		}else{
-			$response['status'] = 404; 
+			$response['status'] = 404;
 		}
 		return response($response, 200);
     }
@@ -1032,32 +1032,32 @@ class LoginController extends Controller
 			'business_type' => $business_type_list,
 			'registration_as' => $registration_type_list
 		];
-		$response['status'] = 200; 
+		$response['status'] = 200;
 		$response['data'] = $sellertype_buyertype_businesstype_registrationas;
 		return response($response, 200);
     }
-	
+
 	public function news_list(Request $request)
     {
         $response = array();
         $response['status'] = 200;
         $response['message'] = '';
         $response['data'] = (object)array();
-		
-		$data = $request->input('data');	
+
+		$data = $request->input('data');
 		$content = json_decode($data);
-		
+
 		$offset = isset($content->offset) ? $content->offset : 10;
 		$limit = isset($content->limit) ? $content->limit : 0;
-		
+
         $news_list = [];
         $news = News::select('id', 'name', 'image')->skip($offset)->take($limit)->get();
-		
+
         if (count($news) > 0) {
             foreach ($news as $value) {
 				$image = '';
 				if(file_exists(storage_path('app/public/news/' . $value->image))){
-                    $image = url('storage/app/public/news/'.$value->image);                    
+                    $image = url('storage/app/public/news/'.$value->image);
                 }
                 $news_list[] = [
                     'id' => $value->id,
@@ -1066,24 +1066,24 @@ class LoginController extends Controller
                 ];
             }
         }
-		
+
         $response['status'] = 200;
         $response['data'] = $news_list;
         return response($response, 200);
     }
-	
+
 	public function news_details(Request $request)
     {
         $response = array();
         $response['status'] = 200;
         $response['message'] = '';
         $response['data'] = (object)array();
-		
+
 		$data = $request->input('data');
         $content = json_decode($data);
 
         $news_id = isset($content->news_id) ? $content->news_id : '';
-		
+
 		$params = [
             'news_id' => $news_id
         ];
@@ -1097,14 +1097,14 @@ class LoginController extends Controller
             $response['message'] = $validator->errors()->first();
             return response($response, 200);
         }
-		
+
         $news_list = [];
         $news = News::where('id', $news_id)->first();
         if (!empty($news)) {
-            
+
 			$image = '';
 			if(file_exists(storage_path('app/public/news/' . $news->image))){
-				$image = url('storage/app/public/news/'.$news->image);                    
+				$image = url('storage/app/public/news/'.$news->image);
 			}
 			$news_list = [
 				'id' => $news->id,
@@ -1116,12 +1116,12 @@ class LoginController extends Controller
         } else {
 			$response['status'] = 404;
 		}
-		
-        
+
+
         $response['data'] = $news_list;
         return response($response, 200);
     }
-	
+
 	public function broker_list(Request $request)
     {
 		$data = $request->input('data');
@@ -1129,7 +1129,7 @@ class LoginController extends Controller
 
         if (isset($content->seller_id)) {
 			$seller_id = isset($content->seller_id) ? $content->seller_id : '';
-			
+
 			$params = [
 				'seller_id' => $seller_id
 			];
@@ -1137,12 +1137,12 @@ class LoginController extends Controller
 			$validator = Validator::make($params, [
 				'seller_id' => 'required|exists:tbl_sellers,id',
 			]);
-			
-			$code = Sellers::select('referral_code')->where('id', $buyer_id)->first();
+
+			$code = Sellers::select('referral_code')->where('id', $seller_id)->first();
 			$code = isset($code->referral_code) ? $code->referral_code : '';
 		} else if (isset($content->buyer_id)) {
 			$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
-			
+
 			$params = [
 				'buyer_id' => $buyer_id
 			];
@@ -1150,7 +1150,7 @@ class LoginController extends Controller
 			$validator = Validator::make($params, [
 				'buyer_id' => 'required|exists:tbl_buyers,id',
 			]);
-			
+
 			$code = Buyers::select('referral_code')->where('id', $buyer_id)->first();
 			$code = isset($code->referral_code) ? $code->referral_code : '';
 		} else {
@@ -1164,12 +1164,12 @@ class LoginController extends Controller
             $response['message'] = $validator->errors()->first();
             return response($response, 200);
         }
-        
+
 		$broker_list = [];
 		if (!empty($code)) {
 			$broker_list = Brokers::select('id', 'name')->where(['is_approve' => 1, 'code' => $code])->get();
-		}        
-		
+		}
+
 		$response['message'] = 'Broker List';
         $response['status'] = 200;
         $response['data'] = $broker_list;

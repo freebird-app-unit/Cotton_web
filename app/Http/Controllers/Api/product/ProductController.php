@@ -5566,6 +5566,7 @@ class ProductController extends Controller
 		$broker_id = isset($content->broker_id) ? $content->broker_id : '';
 		$header = isset($content->header) ? $content->header : '';
 		$notes = isset($content->notes) ? $content->notes : '';
+		$deal_id = isset($content->deal_id) ? $content->deal_id : '';
 
 		$params = [
 			'seller_id' => $seller_id,
@@ -5605,6 +5606,22 @@ class ProductController extends Controller
 			return response($response, 200);
 	    }
 
+        if(!empty($deal_id)){
+            $params = [
+                'deal_id' => $deal_id,
+            ];
+
+            $validator = Validator::make($params, [
+                'deal_id' => 'required|exists:tbl_negotiation_complete,id',
+            ]);
+
+            if ($validator->fails()) {
+                $response['status'] = 404;
+                $response['message'] =$validator->errors()->first();
+                return response($response, 200);
+            }
+        }
+
 	    if($negotiation_type == "post"){
 	    	 $post_remain = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
 		   	if($no_of_bales > $post_remain->no_of_bales){
@@ -5617,6 +5634,7 @@ class ProductController extends Controller
 		    	$negotiation = new Negotiation();
 				$negotiation->seller_id = $seller_id;
 				$negotiation->buyer_id = $buyer_id;
+                $negotiation->negotiation_complete_id = $deal_id;
 				$negotiation->post_notification_id = $post_notification_id;
 				$negotiation->negotiation_type = $negotiation_type;
 				$negotiation->negotiation_by = $negotiation_by;
@@ -5781,7 +5799,6 @@ class ProductController extends Controller
 		$type = isset($content->type) ? $content->type : '';
 		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
 		$done_by = isset($content->done_by) ? $content->done_by : '';
-		$negotiation_complete_id = isset($content->negotiation_complete_id) ? $content->negotiation_complete_id : '';
 
 		$params = [
 			'seller_id' => $seller_id,
@@ -5884,13 +5901,14 @@ class ProductController extends Controller
             }
             // $make_deal->negotiation_id = $negotiation_comp->id;
             $history_type = 'negotiation';
-            if(!empty($negotiation_complete_id)){
+            if(!empty($negotiation_comp->negotiation_complete_id)){
                 $history_type = 're-negotiation';
-                $make_deal = NegotiationComplete::where('id',$negotiation_complete_id)->first();
+                $make_deal = NegotiationComplete::where('id',$negotiation_comp->negotiation_complete_id)->first();
             }
 
             $make_deal->buyer_id = $negotiation_comp->buyer_id;
             $make_deal->seller_id = $negotiation_comp->seller_id;
+            $make_deal->broker_id = $negotiation_comp->broker_id;
             $make_deal->negotiation_by = $negotiation_comp->negotiation_by;
             $make_deal->post_notification_id = $negotiation_comp->post_notification_id;
             $make_deal->negotiation_type = $negotiation_comp->negotiation_type;
@@ -5899,6 +5917,8 @@ class ProductController extends Controller
             $make_deal->payment_condition = $negotiation_comp->payment_condition;
             $make_deal->transmit_condition = $negotiation_comp->transmit_condition;
             $make_deal->lab = $negotiation_comp->lab;
+            $make_deal->notes = $negotiation_comp->notes;
+            $make_deal->header = $negotiation_comp->header;
             $make_deal->deal_type = 'negotiation';
 
             $status = "";
@@ -6555,7 +6575,6 @@ class ProductController extends Controller
 		}
 		return response($response, 200);
 	}
-
     public function negotiation_list_new_v2(Request $request)
 	{
 		$response = array();
@@ -7736,5 +7755,94 @@ class ProductController extends Controller
         $response['message'] = 'completed deal';
         $response['data'] = $negotiation_array;
         return response($response, 200);
+	}
+
+    public function negotiation_detail_by_deal_new_v2(Request $request)
+	{
+		$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$seller_id = isset($content->seller_id) ? $content->seller_id : '';
+		$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
+		$post_notification_id = isset($content->post_notification_id) ? $content->post_notification_id : '';
+		$deal_id = isset($content->deal_id) ? $content->deal_id : '';
+
+		$params = [
+			'seller_id' => $seller_id,
+			'buyer_id' => $buyer_id,
+			'post_notification_id' => $post_notification_id,
+			'deal_id' => $deal_id,
+		];
+
+		$validator = Validator::make($params, [
+            'seller_id' => 'required|exists:tbl_sellers,id',
+            'buyer_id' => 'required|exists:tbl_buyers,id',
+            'post_notification_id' => 'required',
+            'deal_id' => 'required|exists:tbl_negotiation_complete,id',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+            $response['message'] =$validator->errors()->first();
+            return response($response, 200);
+	    }
+
+		$negotiation_array = [];
+		$negotiation = NegotiationComplete::with('seller','buyer','broker','transmit_conditions','payment_conditions','labs')->where(['id'=>$deal_id,'seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id])->first();
+        // dd($negotiation);
+		if(!empty($negotiation)) {
+            $seller_name = !empty($negotiation->seller->name) ? $negotiation->seller->name :'';
+            $buyer_name = !empty($negotiation->buyer->name) ? $negotiation->buyer->name :'';
+            $broker_name = !empty($negotiation->broker->name) ? $negotiation->broker->name :'';
+
+            $transmit_condition_name = !empty($negotiation->transmit_conditions->name) ? $negotiation->transmit_conditions->name :'';
+
+            $payment_condition_name = !empty($negotiation->payment_conditions->name) ? $negotiation->payment_conditions->name :'';
+
+            $lab_name = !empty($negotiation->labs->name) ? $negotiation->labs->name :'';
+
+            if($negotiation->negotiation_type == 'post'){
+                $post = Post::with('product')->where('id',$negotiation->post_notification_id)->first();
+                $product_id = $post->product_id;
+                $product_name = $post->product->name;
+            }
+            if($negotiation->negotiation_type == 'notification'){
+                $notification = Notification::with('product')->where('id',$negotiation->post_notification_id)->first();
+                $product_id = $notification->product_id;
+                $product_name = $notification->product->name;
+            }
+			$negotiation_array = [
+                'negotiation_id' => $negotiation->id,
+                'seller_id' => $negotiation->seller_id,
+                'seller_name' => $seller_name,
+                'buyer_id' => $negotiation->buyer_id,
+                'buyer_name' => $buyer_name,
+                'broker_id' => $negotiation->broker_id,
+                'broker_name' => $broker_name,
+                'negotiation_by' => $negotiation->negotiation_by,
+                'post_notification_id' => $negotiation->post_notification_id,
+                'negotiation_type' => $negotiation->negotiation_type,
+                'current_price' => $negotiation->price,
+                'prev_price' => $negotiation->prev_price,
+                'current_no_of_bales' => $negotiation->no_of_bales,
+                'prev_no_of_bales' => $negotiation->prev_bales,
+                'transmit_condition' => $transmit_condition_name,
+                'payment_condition' => $payment_condition_name,
+                'lab' => $lab_name,
+                'notes' => $negotiation->notes,
+                'header' => $negotiation->header,
+                'product_id' => $product_id,
+                'product_name' => $product_name,
+			];
+			$response['status'] = 200;
+			$response['message'] = 'Negotiation Detail';
+			$response['data'] = $negotiation_array;
+		}
+		return response($response, 200);
 	}
 }
