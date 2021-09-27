@@ -5902,7 +5902,7 @@ class ProductController extends Controller
             }
             // $make_deal->negotiation_id = $negotiation_comp->id;
             $history_type = 'negotiation';
-            if(!empty($negotiation_comp->negotiation_complete_id)){
+            if(!empty($negotiation_comp->negotiation_complete_id) && $negotiation_comp->negotiation_complete_id != 0){
                 $history_type = 're-negotiation';
                 $make_deal = NegotiationComplete::where('id',$negotiation_comp->negotiation_complete_id)->first();
             }
@@ -7220,7 +7220,6 @@ class ProductController extends Controller
 		$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
 		$post_notification_id = isset($content->post_notification_id) ? $content->post_notification_id : '';
 
-
 		$params = [
 			'seller_id' => $seller_id,
 			'buyer_id' => $buyer_id,
@@ -7253,15 +7252,44 @@ class ProductController extends Controller
 
             $lab_name = !empty($negotiation->labs->name) ? $negotiation->labs->name :'';
 
+            $attribute_array = [];
+            $post_price = "";
+            $post_bales = "";
             if($negotiation->negotiation_type == 'post'){
                 $post = Post::with('product')->where('id',$negotiation->post_notification_id)->first();
                 $product_id = $post->product_id;
                 $product_name = $post->product->name;
+                $post_price = $post->price;
+                $post_bales = $post->no_of_bales;
+
+                $attribute = PostDetails::where('post_id',$post->id)->get();
+                foreach ($attribute as $val) {
+                    $attribute_array[] = [
+                        'id' => $val->id,
+                        'post_id' => $val->post_id,
+                        'attribute' => $val->attribute,
+                        'attribute_value' => $val->attribute_value,
+                    ];
+                }
             }
             if($negotiation->negotiation_type == 'notification'){
                 $notification = Notification::with('product')->where('id',$negotiation->post_notification_id)->first();
                 $product_id = $notification->product_id;
                 $product_name = $notification->product->name;
+                $post_price = $notification->price;
+                $post_bales = $notification->no_of_bales;
+
+                $attribute = NotificatonDetails::where('notification_id',$notification->id)->get();
+                foreach ($attribute as $val) {
+                    $attribute_array[] = [
+                        'id' => $val->id,
+                        'notification_id' => $val->notification_id,
+                        'attribute' => $val->attribute,
+                        'attribute_value' => $val->attribute_value,
+                    ];
+                }
+
+                // $attrinutes = ProductAttribute::select('label')->where('product_id',$product_id)->get();
             }
 			$negotiation_array = [
                 'negotiation_id' => $negotiation->id,
@@ -7285,6 +7313,9 @@ class ProductController extends Controller
                 'header' => $negotiation->header,
                 'product_id' => $product_id,
                 'product_name' => $product_name,
+                'post_price' => $post_price,
+                'post_bales' => $post_bales,
+                'attribute_array' => $attribute_array,
 			];
 			$response['status'] = 200;
 			$response['message'] = 'Negotiation Detail';
@@ -8001,15 +8032,44 @@ class ProductController extends Controller
 
             $lab_name = !empty($negotiation->labs->name) ? $negotiation->labs->name :'';
 
+            $attribute_array = [];
+            $post_price = "";
+            $post_bales = "";
+
             if($negotiation->negotiation_type == 'post'){
                 $post = Post::with('product')->where('id',$negotiation->post_notification_id)->first();
                 $product_id = $post->product_id;
                 $product_name = $post->product->name;
+                $post_price = $post->price;
+                $post_bales = $post->no_of_bales;
+
+                $attribute = PostDetails::where('post_id',$post->id)->get();
+                foreach ($attribute as $val) {
+                    $attribute_array[] = [
+                        'id' => $val->id,
+                        'post_id' => $val->post_id,
+                        'attribute' => $val->attribute,
+                        'attribute_value' => $val->attribute_value,
+                    ];
+                }
             }
             if($negotiation->negotiation_type == 'notification'){
                 $notification = Notification::with('product')->where('id',$negotiation->post_notification_id)->first();
                 $product_id = $notification->product_id;
                 $product_name = $notification->product->name;
+                $post_price = $notification->price;
+                $post_bales = $notification->no_of_bales;
+
+                $attribute = NotificatonDetails::where('notification_id',$notification->id)->get();
+                foreach ($attribute as $val) {
+                    $attribute_array[] = [
+                        'id' => $val->id,
+                        'notification_id' => $val->notification_id,
+                        'attribute' => $val->attribute,
+                        'attribute_value' => $val->attribute_value,
+                    ];
+                }
+
             }
 			$negotiation_array = [
                 'negotiation_id' => $negotiation->id,
@@ -8033,6 +8093,9 @@ class ProductController extends Controller
                 'header' => $negotiation->header,
                 'product_id' => $product_id,
                 'product_name' => $product_name,
+                'post_price' => $post_price,
+                'post_bales' => $post_bales,
+                'attribute_array' => $attribute_array,
 			];
 			$response['status'] = 200;
 			$response['message'] = 'Negotiation Detail';
