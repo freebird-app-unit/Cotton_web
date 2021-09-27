@@ -4842,7 +4842,7 @@ class ProductController extends Controller
 
 		$product_id = isset($content->product_id) ? $content->product_id : '';
 		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
-		$required = isset($content->required) ? $content->required : '';
+		// $required = isset($content->required) ? $content->required : '';
 		$non_required = isset($content->non_required) ? $content->non_required : '';
 		$d_e = isset($content->d_e) ? $content->d_e : '';
 
@@ -4853,29 +4853,29 @@ class ProductController extends Controller
         $city_arr = [];
         $station_arr = [];
 
-        $cnt_required = count($required);
-        if (!empty($required)) {
-            $temp = 0;
-            foreach ($required as $val) {
-            	$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0])->where('tbl_post_details.attribute',$val->attribute)->where('tbl_post_details.attribute_value', $val->attribute_value)->get();
-            	 if(count($query)>0){
-            	 	$temp++;
-            	 }
-            }
-            if($cnt_required == $temp){
-            	 foreach ($query as $value) {
-	                $post_arr[] = $value->id;
-	                $country_arr[] = $value->user_detail->country->id;
-	                $state_arr[] = $value->user_detail->state->id;
-	                $city_arr[] = $value->user_detail->city->id;
-	                $station_arr[] = $value->user_detail->station->id;
-	            }
-            }
-        }
+        // $cnt_required = count($required);
+        // if (!empty($required)) {
+        //     $temp = 0;
+        //     foreach ($required as $val) {
+        //     	$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0])->where('tbl_post_details.attribute',$val->attribute)->where('tbl_post_details.attribute_value', $val->attribute_value)->get();
+        //     	 if(count($query)>0){
+        //     	 	$temp++;
+        //     	 }
+        //     }
+        //     if($cnt_required == $temp){
+        //     	 foreach ($query as $value) {
+	    //             $post_arr[] = $value->id;
+	    //             $country_arr[] = $value->user_detail->country->id;
+	    //             $state_arr[] = $value->user_detail->state->id;
+	    //             $city_arr[] = $value->user_detail->city->id;
+	    //             $station_arr[] = $value->user_detail->station->id;
+	    //         }
+        //     }
+        // }
 
-        if(empty($required)){
+        if(!empty($non_required)){
         	foreach ($non_required as $key => $val) {
-        		$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0])->where('tbl_post_details.attribute',$val->attribute)->where('tbl_post_details.attribute_value', $val->attribute_value)->get();
+        		$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0])->where('tbl_post_details.attribute',$val->attribute)->whereBetween('tbl_post_details.attribute_value', [$val->from,$val->to])->get();
 
 	        	if(count($query)>0){
 	            	 foreach ($query as $value) {
@@ -5027,7 +5027,7 @@ class ProductController extends Controller
 		return response($response, 200);
     }
 
-     public function search_to_buy_new(Request $request)
+    public function search_to_buy_new(Request $request)
     {
     	$response = array();
 		$response['status'] = 200;
@@ -5039,7 +5039,7 @@ class ProductController extends Controller
 
 		$product_id = isset($content->product_id) ? $content->product_id : '';
 		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
-		$required = isset($content->required) ? $content->required : '';
+		// $required = isset($content->required) ? $content->required : '';
 		$non_required = isset($content->non_required) ? $content->non_required : '';
 
 		$search_array = [];
@@ -5049,29 +5049,29 @@ class ProductController extends Controller
         $city_arr = [];
         $station_arr = [];
 
-		$cnt_required = count($required);
-        if (!empty($required)) {
-            $temp = 0;
-            foreach ($required as $val) {
-            	$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute,'tbl_post_details.attribute_value'=>$val->attribute_value])->get();
-            	 if(count($query)>0){
-            	 	$temp++;
-            	 }
-            }
-            if($cnt_required == $temp){
-            	 foreach ($query as $value) {
-	                $post_arr[] = $value->id;
-	                $country_arr[] = $value->user_detail->country->id;
-	                $state_arr[] = $value->user_detail->state->id;
-	                $city_arr[] = $value->user_detail->city->id;
-	                $station_arr[] = $value->user_detail->station->id;
-	            }
-            }
-        }
+		// $cnt_required = count($required);
+        // if (!empty($required)) {
+        //     $temp = 0;
+        //     foreach ($required as $val) {
+        //     	$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute,'tbl_post_details.attribute_value'=>$val->attribute_value])->get();
+        //     	 if(count($query)>0){
+        //     	 	$temp++;
+        //     	 }
+        //     }
+        //     if($cnt_required == $temp){
+        //     	 foreach ($query as $value) {
+	    //             $post_arr[] = $value->id;
+	    //             $country_arr[] = $value->user_detail->country->id;
+	    //             $state_arr[] = $value->user_detail->state->id;
+	    //             $city_arr[] = $value->user_detail->city->id;
+	    //             $station_arr[] = $value->user_detail->station->id;
+	    //         }
+        //     }
+        // }
 
-        if(empty($required)){
+        if(!empty($non_required)){
         	foreach ($non_required as $key => $val) {
-        		$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute,'tbl_post_details.attribute_value'=>$val->attribute_value])->get();
+        		$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute])->whereBetween('tbl_post_details.attribute_value', [$val->from,$val->to])->get();
 
 	        	if(count($query)>0){
 	            	 foreach ($query as $value) {
@@ -5226,6 +5226,7 @@ class ProductController extends Controller
 		return response($response, 200);
 
 	}
+
 	public function notification_post_buy_list(Request $request)
 	{
 		$response = array();
@@ -7542,6 +7543,200 @@ class ProductController extends Controller
 
 		return response($response, 200);
     }
+
+    public function search_to_buy_new_v2(Request $request)
+    {
+    	$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$product_id = isset($content->product_id) ? $content->product_id : '';
+		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
+		$required = isset($content->required) ? $content->required : '';
+		// $non_required = isset($content->non_required) ? $content->non_required : '';
+
+		$search_array = [];
+		$post_arr = [];
+        $country_arr = [];
+        $state_arr = [];
+        $city_arr = [];
+        $station_arr = [];
+
+		$cnt_required = count($required);
+        if (!empty($required)) {
+            $temp = 0;
+            foreach ($required as $val) {
+            	$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute]);
+
+                $attr = explode(',',$val->attribute_value);
+
+                if(count($attr) > 1){
+                    $query->whereBetween('tbl_post_details.attribute_value', [$attr[0],$attr[1]]);
+                }else{
+                    $query->where('tbl_post_details.attribute_value', $val->attribute_value);
+                }
+                $query = $query->get();
+
+            	 if(count($query)>0){
+            	 	$temp++;
+            	 }
+            }
+            if($cnt_required == $temp){
+            	 foreach ($query as $value) {
+	                $post_arr[] = $value->id;
+	                $country_arr[] = $value->user_detail->country->id;
+	                $state_arr[] = $value->user_detail->state->id;
+	                $city_arr[] = $value->user_detail->city->id;
+	                $station_arr[] = $value->user_detail->station->id;
+	            }
+            }
+        }
+
+        $final_arr = [];
+        $state_arr_count = [];
+        $city_arr_count = [];
+        $station_arr_count = [];
+        if (count($country_arr) > 0) {
+            $country_arr = array_unique($country_arr);
+            $state_arr = array_unique($state_arr);
+            $city_arr = array_unique($city_arr);
+            $station_arr = array_unique($station_arr);
+
+			$search_array = [];
+            foreach($country_arr as $country_val) {
+
+                $country_result = Post::whereHas('user_detail.country', function($query)  use ($country_val) {
+                                    $query->where('id', $country_val);
+                                })
+                                ->select('tbl_post.id','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')
+                                ->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')
+                                ->where(['tbl_post.user_type'=>'seller','tbl_post.is_active'=>0,'tbl_post.status'=>'active'])
+                                ->whereIn('tbl_post.id', $post_arr)
+                                ->groupBy('tbl_post.id')
+                                ->get();
+
+                if (!empty($country_result) && count($country_result) > 0) {
+                    $state_arr_count = [];
+                    foreach($state_arr as $state_val) {
+                        $state_result = Post::whereHas('user_detail.country', function($query)  use ($country_val) {
+                                        $query->where('id', $country_val);
+                                    })
+                                    ->whereHas('user_detail.state', function($query)  use ($state_val) {
+                                        $query->where('id', $state_val);
+                                    })
+                                    ->select('tbl_post.id','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')
+                                    ->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')
+                                    ->where(['tbl_post.user_type'=>'seller','tbl_post.is_active'=>0,'tbl_post.status'=>'active'])
+                                    ->whereIn('tbl_post.id', $post_arr)
+                                    ->groupBy('tbl_post.id')
+                                    ->get();
+
+                        if (!empty($state_result) && count($state_result) > 0) {
+                            $city_arr_count = [];
+                            foreach($city_arr as $city_val) {
+                                $city_result = Post::whereHas('user_detail.country', function($query)  use ($country_val) {
+                                                $query->where('id', $country_val);
+                                            })
+                                            ->whereHas('user_detail.state', function($query)  use ($state_val) {
+                                                $query->where('id', $state_val);
+                                            })
+                                            ->whereHas('user_detail.city', function($query)  use ($city_val) {
+                                                $query->where('id', $city_val);
+                                            })
+                                            ->select('tbl_post.id','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')
+                                            ->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')
+                                            ->where(['tbl_post.user_type'=>'seller','tbl_post.is_active'=>0,'tbl_post.status'=>'active'])
+                                            ->whereIn('tbl_post.id', $post_arr)
+                                            ->groupBy('tbl_post.id')
+                                            ->get();
+
+                                if (!empty($city_result) && count($city_result)> 0) {
+                                    $station_arr_count = [];
+                                    foreach($station_arr as $station_val) {
+
+                                        $station_result = Post::with('user_detail.seller')
+                                                    ->whereHas('user_detail.country', function($query)  use ($country_val) {
+                                                        $query->where('id', $country_val);
+                                                    })
+                                                    ->whereHas('user_detail.state', function($query)  use ($state_val) {
+                                                        $query->where('id', $state_val);
+                                                    })
+                                                    ->whereHas('user_detail.city', function($query)  use ($city_val) {
+                                                        $query->where('id', $city_val);
+                                                    })
+                                                    ->whereHas('user_detail.station', function($query)  use ($station_val) {
+                                                        $query->where('id', $station_val);
+                                                    })
+                                                    ->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')
+                                                    ->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')
+                                                    ->where(['tbl_post.user_type'=>'seller','tbl_post.is_active'=>0,'tbl_post.status'=>'active'])
+                                                    ->whereIn('tbl_post.id', $post_arr)
+                                                    ->groupBy('tbl_post.id')
+                                                    ->orderBy('tbl_post.id','DESC')
+                                                    ->get();
+
+                                        if (!empty($station_result) && count($station_result)> 0) {
+
+                                            $search_array = [];
+                                            foreach($station_result as $station_result_val) {
+                                                $search_array[] = [
+                                                    'post_id' => $station_result_val->id,
+                                                    'name' => $station_result_val->user_detail->seller->name,
+                                                    'status' => $station_result_val->status,
+                                                    'seller_buyer_id' => $station_result_val->seller_buyer_id,
+                                                    'user_type' => $station_result_val->user_type,
+                                                    'product_id' => $station_result_val->product_id,
+                                                    'no_of_bales' => $station_result_val->no_of_bales,
+                                                    'price' => $station_result_val->price,
+                                                    'address' => $station_result_val->address,
+                                                    'd_e' => $station_result_val->d_e,
+                                                    'buy_for' => $station_result_val->buy_for,
+                                                    'spinning_meal_name' => $station_result_val->spinning_meal_name,
+                                                ];
+                                            }
+
+                                            $station_arr_count[] = [
+                                                'name' => $station_result[0]->user_detail->station->name,
+                                                'count' => count($station_result),
+                                                'data' => $search_array
+                                            ];
+                                        }
+
+                                    }
+                                    $city_arr_count[] = [
+                                        'name' => $city_result[0]->user_detail->city->name,
+                                        'count' => count($city_result),
+                                        'station' => $station_arr_count
+                                    ];
+                                }
+
+                            }
+                            $state_arr_count[] = [
+                                'name' => $state_result[0]->user_detail->state->name,
+                                'count' => count($state_result),
+                                'city' => $city_arr_count
+                            ];
+                        }
+                    }
+                    $final_arr[] = [
+                        'name' => $country_result[0]->user_detail->country->name,
+                        'count' => count($country_result),
+                        'state' => $state_arr_count
+                    ];
+                }
+            }
+        }
+        $response['status'] = 200;
+        $response['message'] = 'Search to buy';
+        $response['data'] = $final_arr;
+
+		return response($response, 200);
+
+	}
 
     public function completed_deal_new_v2(Request $request)
 	{
