@@ -394,22 +394,23 @@ class ProductController extends Controller
 					$select->save();
 
                     $buyer_data = DeviceDetails::select('fcm_token')->where('user_type','buyer')->where('user_id',$value)->first();
-                    array_push($fcm_token,$buyer_data->fcm_token);
+					if (!empty($buyer_data->fcm_token)) {
+						array_push($fcm_token,$buyer_data->fcm_token);
+					}
 				}
 			}
 
-            $json_array = [
-                "to" => $fcm_token,
-                "notification" => [
-                    "body" => "SOMETHING",
-                    "title" => "SOMETHING",
-                    "icon" => "ic_launcher"
-                ],
-                "data" => [
-                    "ANYTHING EXTRA HERE"
-                ]
-            ];
-            NotificationHelper::notification($json_array,'buyer');
+			if (!empty($fcm_token)) {
+				$json_array = [
+					"registration_ids" => $fcm_token,
+					"notification" => [
+						"body" => "SOMETHING",
+						"title" => "SOMETHING",
+						"icon" => "ic_launcher"
+					]
+				];
+				NotificationHelper::notification($json_array,'buyer');
+			}            
 
 			$response['status'] = 200;
 			$response['message'] = 'Notification Send Sucessfully!!';
@@ -819,22 +820,23 @@ class ProductController extends Controller
 					$select->save();
 
                     $seller_data = DeviceDetails::select('fcm_token')->where('user_type','seller')->where('user_id',$value)->first();
-                    array_push($fcm_token,$seller_data->fcm_token);
+                    if (!empty($seller_data->fcm_token)) {
+						array_push($fcm_token,$seller_data->fcm_token);
+					}
 				}
 			}
 
-            $json_array = [
-                "to" => $fcm_token,
-                "notification" => [
-                    "body" => "SOMETHING",
-                    "title" => "SOMETHING",
-                    "icon" => "ic_launcher"
-                ],
-                "data" => [
-                    "ANYTHING EXTRA HERE"
-                ]
-            ];
-            NotificationHelper::notification($json_array,'seller');
+            if (!empty($fcm_token)) {
+				$json_array = [
+					"registration_ids" => $fcm_token,
+					"notification" => [
+						"body" => "SOMETHING",
+						"title" => "SOMETHING",
+						"icon" => "ic_launcher"
+					]
+				];
+				NotificationHelper::notification($json_array,'seller');
+			}
 
 			$response['status'] = 200;
 			$response['message'] = 'Notification Send Sucessfully!!';
@@ -3913,7 +3915,7 @@ class ProductController extends Controller
 		$station_id = isset($content->station_id) ? $content->station_id : '';
 
 		$buyer_array =[];
-		$buyer = UserDetails::where(['user_type'=>'buyer','country_id'=>$country_id,'state_id'=>$state_id,'city_id'=>$city_id,'station_id'=>$station_id])->get();
+		$buyer = UserDetails::where(['user_type'=>'buyer','country_id'=>$country_id,'state_id'=>$state_id,'city_id'=>$city_id])->get();
 		if(count($buyer)>0){
 			foreach ($buyer as $value) {
 				$country = Country::where(['id'=>$value->country_id,'is_delete'=>1])->first();
