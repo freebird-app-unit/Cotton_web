@@ -31,6 +31,7 @@ use App\Models\NegotiationComplete;
 use App\Models\NegotiationLog;
 use App\Models\NegotiationHistory;
 use App\Models\SubjectTo;
+use App\Models\DeviceDetails;
 use App\Models\ConfirmTo;
 use Validator;
 use Carbon\Carbon;
@@ -38,7 +39,7 @@ use PDF;
 use Storage;
 use File;
 use Image;
-
+use App\Helper\NotificationHelper;
 class ProductController extends Controller
 {
     public function product_list(Request $request){
@@ -378,6 +379,8 @@ class ProductController extends Controller
 					$post_detail->save();
  				}
 			}
+
+            $fcm_token = [];
 			if(!empty($buyers)){
 				foreach ($buyers as $value) {
 					$select = new SelectionSellerBuyer();
@@ -389,8 +392,25 @@ class ProductController extends Controller
 						$select->broker_type = $val_broker->type;
 					}
 					$select->save();
+
+                    $buyer_data = DeviceDetails::select('fcm_token')->where('user_type','buyer')->where('user_id',$value)->first();
+                    array_push($fcm_token,$buyer_data->fcm_token);
 				}
 			}
+
+            $json_array = [
+                "to" => $fcm_token,
+                "notification" => [
+                    "body" => "SOMETHING",
+                    "title" => "SOMETHING",
+                    "icon" => "ic_launcher"
+                ],
+                "data" => [
+                    "ANYTHING EXTRA HERE"
+                ]
+            ];
+            NotificationHelper::notification($json_array,'buyer');
+
 			$response['status'] = 200;
 			$response['message'] = 'Notification Send Sucessfully!!';
 		}else{
@@ -698,7 +718,6 @@ class ProductController extends Controller
 		$sellers = isset($content->sellers) ? $content->sellers : '';
 		$attribute_array =  isset($content->attribute_array) ? $content->attribute_array : '';
 
-
 		$params = [
 			'seller_buyer_id' => $seller_buyer_id,
 			'product_id' => $product_id,
@@ -789,6 +808,8 @@ class ProductController extends Controller
 					$attribute->save();
 				}
 			}
+
+            $fcm_token = [];
 			if(!empty($sellers)){
 				foreach ($sellers as $value) {
 					$select = new SelectionSellerBuyer();
@@ -796,8 +817,25 @@ class ProductController extends Controller
 					$select->seller_buyer_id = $value;
 					$select->notification_id = $notification->id;
 					$select->save();
+
+                    $seller_data = DeviceDetails::select('fcm_token')->where('user_type','seller')->where('user_id',$value)->first();
+                    array_push($fcm_token,$seller_data->fcm_token);
 				}
 			}
+
+            $json_array = [
+                "to" => $fcm_token,
+                "notification" => [
+                    "body" => "SOMETHING",
+                    "title" => "SOMETHING",
+                    "icon" => "ic_launcher"
+                ],
+                "data" => [
+                    "ANYTHING EXTRA HERE"
+                ]
+            ];
+            NotificationHelper::notification($json_array,'seller');
+
 			$response['status'] = 200;
 			$response['message'] = 'Notification Send Sucessfully!!';
 		}else{
@@ -3931,11 +3969,13 @@ class ProductController extends Controller
 
 		$seller_buyer_id = isset($content->seller_buyer_id) ? $content->seller_buyer_id : '';
 		$user_type = isset($content->user_type) ? $content->user_type : '';
+        $offset = isset($content->offset) ? $content->offset : 0;
+		$limit = isset($content->limit) ? $content->limit : 10;
 
 		$final_arr = [];
 		$dates = [];
 		if($user_type == "seller"){
-		    $make_deals = NegotiationComplete::where(['seller_id'=>$seller_buyer_id])->get();
+		    $make_deals = NegotiationComplete::where(['seller_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
 			if(count($make_deals)>0){
 				foreach ($make_deals as $make_deal) {
 					array_push($dates,date('Y-m-d', strtotime($make_deal->updated_at)));
@@ -4205,7 +4245,7 @@ class ProductController extends Controller
 			}
 		}
 		if($user_type == "buyer"){
-		    $make_deals = NegotiationComplete::where(['buyer_id'=>$seller_buyer_id])->get();
+		    $make_deals = NegotiationComplete::where(['buyer_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
 			if(count($make_deals)>0){
 				foreach ($make_deals as $make_deal) {
 					array_push($dates,date('Y-m-d', strtotime($make_deal->updated_at)));
@@ -4215,6 +4255,276 @@ class ProductController extends Controller
 			foreach ($unique_date as $date) {
 
 				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->where(function($query) {
+                        $query->where('lab_report_status','pass')
+                            ->orWhere('lab_report_status',NULL);
+                        })->orderBy('id','DESC')->get();
+				foreach ($negotiation_data as $value) {
+					$dates = date('d-m-Y', strtotime($value->updated_at));
+
+					if($value->negotiation_type=="post"){
+							$post = Post::where('id',$value->post_notification_id)->first();
+							if(!empty($post)){
+								$product = Product::where(['id'=>$post->product_id,'is_delete'=>0])->first();
+								$product_name = '';
+								if(!empty($product)){
+									$product_name = $product->name;
+								}
+								$attribute_array = [];
+								$attribute = PostDetails::where('post_id',$post->id)->get();
+								foreach ($attribute as $val) {
+									$attribute_array[] = [
+										'id' => $val->id,
+										'attribute' => $val->attribute,
+										'attribute_value' => $val->attribute_value,
+									];
+								}
+								$post_price = '';
+								if(!empty($post->price)){
+									$post_price = $post->price;
+								}
+								$post_no_of_bales = '';
+								if(!empty($post->no_of_bales)){
+									$post_no_of_bales = $post->no_of_bales;
+								}
+								$post_date ='';
+								if(!empty($post->created_at)){
+									$post_date = date('d-m-Y, h:i a', strtotime($post->created_at));
+								}
+							}
+							$seller_name = '';
+							$seller = Sellers::where('id',$value->seller_id)->first();
+							if(!empty($seller)){
+								$seller_name = $seller->name;
+							}
+							$buyer_name = '';
+							$buyer = Buyers::where('id',$value->buyer_id)->first();
+							if(!empty($buyer)){
+								$buyer_name = $buyer->name;
+							}
+							$transmit_condition_name = '';
+							$transmit_condition = TransmitCondition::where('id',$value->transmit_condition)->first();
+							if(!empty($transmit_condition)){
+								$transmit_condition_name = $transmit_condition->name;
+							}
+							$payment_condition_name = '';
+							$payment_condition = PaymentCondition::where('id',$value->payment_condition)->first();
+							if(!empty($payment_condition)){
+								$payment_condition_name = $payment_condition->name;
+							}
+							$lab_name = '';
+							$lab = Lab::where('id',$value->lab)->first();
+							if(!empty($lab)){
+								$lab_name = $lab->name;
+							}
+							$url = '';
+							$url = DealPdf::where('deal_id',$value->id)->first();
+							if(!empty($url)){
+								if (!empty($url->filename)) {
+
+									$filename = storage_path('app/public/pdf/' . $url->filename);
+
+									if (File::exists($filename)) {
+										$url = asset('storage/app/public/pdf/' . $url->filename);
+									} else {
+										$url = '';
+									}
+								}
+							}
+
+						$lab_report = '';
+						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);
+						if (File::exists($lab_report_file) && !empty($value->lab_report)) {
+							$lab_report = asset('storage/app/public/transaction_tracking/' . $value->lab_report);
+						}
+
+						$transmit_deal = '';
+						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);
+						if (File::exists($transmit_deal_file) && !empty($value->transmit_deal)) {
+							$transmit_deal = asset('storage/app/public/transaction_tracking/' . $value->transmit_deal);
+						}
+
+						$without_gst = '';
+						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);
+						if (File::exists($without_gst_file) && !empty($value->without_gst)) {
+							$without_gst = asset('storage/app/public/transaction_tracking/' . $value->without_gst);
+						}
+
+						$gst_reciept = '';
+						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);
+						if (File::exists($gst_reciept_file) && !empty($value->gst_reciept)) {
+							$gst_reciept = asset('storage/app/public/transaction_tracking/' . $value->gst_reciept);
+						}
+
+						$final_arr[$dates][]  = [
+							'deal_id' => $value->id,
+							'post_notification_id' => $value->post_notification_id,
+							'post_date' => $post_date,
+							'buyer_id' => $value->buyer_id,
+							'buyer_name' =>$buyer_name,
+							'seller_id' => $value->seller_id,
+							'seller_name' => $seller_name,
+							'negotiation_by' => $value->negotiation_by,
+							'negotiation_type' => $value->negotiation_type,
+							'post_price' => $post_price,
+							'post_bales' => $post_no_of_bales,
+							'sell_bales' => $value->no_of_bales,
+							'sell_price' => $value->price,
+							'payment_condition' => $payment_condition_name,
+							'transmit_condition' => $transmit_condition_name,
+							'lab' => $lab_name,
+							'lab_report' => $lab_report,
+							'transmit_deal' => $transmit_deal,
+							'without_gst' => $without_gst,
+							'gst_reciept' => $gst_reciept,
+							'lab_report_mime' => !empty($value->lab_report_mime) ? $value->lab_report_mime : '',
+							'transmit_deal_mime' => !empty($value->transmit_deal_mime) ? $value->transmit_deal_mime : '',
+							'without_gst_mime' => !empty($value->without_gst_mime) ? $value->without_gst_mime : '',
+							'gst_reciept_mime' => !empty($value->gst_reciept_mime) ? $value->gst_reciept_mime : '',
+							'product_name' => $product_name,
+							'attribute_array' => $attribute_array,
+							'url'=>$url,
+							'lab_report_status' => $value->lab_report_status
+						];
+					}
+					if($value->negotiation_type=="notification"){
+							$notification = Notification::where('id',$value->post_notification_id)->first();
+							if(!empty($notification)){
+								$product = Product::where(['id'=>$notification->product_id,'is_delete'=>0])->first();
+								$product_name = '';
+								if(!empty($product)){
+									$product_name = $product->name;
+								}
+								$attribute_array = [];
+								$attribute = NotificatonDetails::where('notification_id',$notification->id)->get();
+								foreach ($attribute as $val) {
+									$attribute_array[] = [
+										'id' => $val->id,
+										'attribute' => $val->attribute,
+										'attribute_value' => $val->attribute_value,
+									];
+								}
+								$post_price = '';
+								if(!empty($notification->price)){
+									$post_price = $notification->price;
+								}
+								$post_no_of_bales = '';
+								if(!empty($notification->no_of_bales)){
+									$post_no_of_bales = $notification->no_of_bales;
+								}
+								$post_date ='';
+								if(!empty($notification->created_at)){
+									$post_date = date('d-m-Y, h:i a', strtotime($notification->created_at));
+								}
+							}
+							$seller_name = '';
+							$seller = Sellers::where('id',$value->seller_id)->first();
+							if(!empty($seller)){
+								$seller_name = $seller->name;
+							}
+							$buyer_name = '';
+							$buyer = Buyers::where('id',$value->buyer_id)->first();
+							if(!empty($buyer)){
+								$buyer_name = $buyer->name;
+							}
+							$transmit_condition_name = '';
+							$transmit_condition = TransmitCondition::where('id',$value->transmit_condition)->first();
+							if(!empty($transmit_condition)){
+								$transmit_condition_name = $transmit_condition->name;
+							}
+							$payment_condition_name = '';
+							$payment_condition = PaymentCondition::where('id',$value->payment_condition)->first();
+							if(!empty($payment_condition)){
+								$payment_condition_name = $payment_condition->name;
+							}
+							$lab_name = '';
+							$lab = Lab::where('id',$value->lab)->first();
+							if(!empty($lab)){
+								$lab_name = $lab->name;
+							}
+							$url = '';
+							$url = DealPdf::where('deal_id',$value->id)->first();
+							if(!empty($url)){
+								if (!empty($url->filename)) {
+
+									$filename = storage_path('app/public/pdf/' . $url->filename);
+
+									if (File::exists($filename)) {
+										$url = asset('storage/app/public/pdf/' . $url->filename);
+									} else {
+										$url = '';
+									}
+								}
+							}
+
+						$lab_report = '';
+						$lab_report_file = storage_path('app/public/transaction_tracking/' . $value->lab_report);
+						if (File::exists($lab_report_file) && !empty($value->lab_report)) {
+							$lab_report = asset('storage/app/public/transaction_tracking/' . $value->lab_report);
+						}
+
+						$transmit_deal = '';
+						$transmit_deal_file = storage_path('app/public/transaction_tracking/' . $value->transmit_deal);
+						if (File::exists($transmit_deal_file) && !empty($value->transmit_deal)) {
+							$transmit_deal = asset('storage/app/public/transaction_tracking/' . $value->transmit_deal);
+						}
+
+						$without_gst = '';
+						$without_gst_file = storage_path('app/public/transaction_tracking/' . $value->without_gst);
+						if (File::exists($without_gst_file) && !empty($value->without_gst)) {
+							$without_gst = asset('storage/app/public/transaction_tracking/' . $value->without_gst);
+						}
+
+						$gst_reciept = '';
+						$gst_reciept_file = storage_path('app/public/transaction_tracking/' . $value->gst_reciept);
+						if (File::exists($gst_reciept_file) && !empty($value->gst_reciept)) {
+							$gst_reciept = asset('storage/app/public/transaction_tracking/' . $value->gst_reciept);
+						}
+
+						$final_arr[$dates][]  = [
+							'deal_id' => $value->id,
+							'post_notification_id' => $value->post_notification_id,
+							'post_date' => $post_date,
+							'buyer_id' => $value->buyer_id,
+							'buyer_name' =>$buyer_name,
+							'seller_id' => $value->seller_id,
+							'seller_name' => $seller_name,
+							'negotiation_by' => $value->negotiation_by,
+							'negotiation_type' => $value->negotiation_type,
+							'post_price' => $post_price,
+							'post_bales' => $post_no_of_bales,
+							'sell_bales' => $value->no_of_bales,
+							'sell_price' => $value->price,
+							'payment_condition' => $payment_condition_name,
+							'transmit_condition' => $transmit_condition_name,
+							'lab' => $lab_name,
+							'lab_report' => $lab_report,
+							'transmit_deal' => $transmit_deal,
+							'without_gst' => $without_gst,
+							'gst_reciept' => $gst_reciept,
+							'lab_report_mime' => !empty($value->lab_report_mime) ? $value->lab_report_mime : '',
+							'transmit_deal_mime' => !empty($value->transmit_deal_mime) ? $value->transmit_deal_mime : '',
+							'without_gst_mime' => !empty($value->without_gst_mime) ? $value->without_gst_mime : '',
+							'gst_reciept_mime' => !empty($value->gst_reciept_mime) ? $value->gst_reciept_mime : '',
+							'product_name' => $product_name,
+							'attribute_array' => $attribute_array,
+							'url'=>$url,
+							'lab_report_status' => $value->lab_report_status
+						];
+					}
+				}
+			}
+		}
+        if($user_type == "broker"){
+		    $make_deals = NegotiationComplete::where(['broker_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
+			if(count($make_deals)>0){
+				foreach ($make_deals as $make_deal) {
+					array_push($dates,date('Y-m-d', strtotime($make_deal->updated_at)));
+				}
+			}
+			$unique_date = array_unique($dates);
+			foreach ($unique_date as $date) {
+
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('broker_id',$seller_buyer_id)->where(function($query) {
                         $query->where('lab_report_status','pass')
                             ->orWhere('lab_report_status',NULL);
                         })->orderBy('id','DESC')->get();
@@ -6657,7 +6967,7 @@ class ProductController extends Controller
                     $post =  Post::where('id',$value->post_notification_id)->first();
                     if(!empty($post)){
                     	if($post->remain_bales <> 0){
-                    		array_push($post_ids, $post->id);		
+                    		array_push($post_ids, $post->id);
                     	}
                     }
                     array_push($post_negotiation_buyer_ids, $value->buyer_id);
@@ -6985,7 +7295,7 @@ class ProductController extends Controller
                     $post =  Post::where('id',$value->post_notification_id)->first();
                     if(!empty($post)){
                     	if($post->remain_bales <> 0){
-                    		array_push($post_ids, $post->id);		
+                    		array_push($post_ids, $post->id);
                     	}
                     }
 					array_push($post_negotiation_seller_ids, $value->seller_id);
@@ -7558,7 +7868,7 @@ class ProductController extends Controller
 	        }
         }
         //when status fail_with_renegotiation no_of_bales add
-        
+
 
         $data = [];
         $data = [
