@@ -401,11 +401,13 @@ class ProductController extends Controller
 			}
 
 			if (!empty($fcm_token)) {
+				$seller = Sellers::where('id',$seller_buyer_id)->first();
+				
 				$json_array = [
 					"registration_ids" => $fcm_token,
 					"notification" => [
-						"body" => "SOMETHING",
-						"title" => "SOMETHING",
+						"body" => "Notification send by ".$seller->name,
+						"title" => "Sell Notification",
 						"icon" => "ic_launcher"
 					]
 				];
@@ -827,11 +829,13 @@ class ProductController extends Controller
 			}
 
             if (!empty($fcm_token)) {
+				$buyer = Buyers::where('id',$seller_buyer_id)->first();
+				
 				$json_array = [
 					"registration_ids" => $fcm_token,
 					"notification" => [
-						"body" => "SOMETHING",
-						"title" => "SOMETHING",
+						"body" => "Notification send by ".$buyer->name,
+						"title" => "Buy Notification",
 						"icon" => "ic_launcher"
 					]
 				];
