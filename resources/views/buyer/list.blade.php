@@ -55,6 +55,69 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="add_service" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="myModalLabel">Select Broker</h4>
+        </div>
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-lg-12">
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Broker</label>
+                        <div class="col-sm-8">
+                            <select class="form-control" name="broker_id" id="broker_id">
+                                @if(!empty($brokers) && count($brokers) > 0)
+                                    @foreach ($brokers as $val)
+                                        <option value="{{$val->id}}">{{$val->name}}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default close_model" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary send_otp">Send OTP</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+<div class="modal fade" id="verify_otp" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="myModalLabel">Verify OTP</h4>
+        </div>
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-lg-12">
+                    <input type="hidden" name="hidden_broker_id" id="hidden_broker_id">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">OTP</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="otp" id="otp">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default close_model1" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary verify_otp">Verify OTP</button>
+        </div>
+      </div>
+    </div>
+</div>
+
 @endsection
 @section('script')
 <script src="{{asset('public/assets/plugins/datatables/jquery.dataTables.min.js')}}"></script>
@@ -116,8 +179,71 @@
             });
         }
     });
+
+    $(document.body).on('click', '.send_otp', function(e) {
+        var broker_id = $('#broker_id option:selected').val();
+        $.ajax({
+            type: "POST",
+            url: "{{route('send_broker_otp')}}",
+            data: {
+                "_token": "{{ csrf_token() }}",
+                broker_id: broker_id,
+            },
+            success: function(data) {
+                $('#hidden_broker_id').val(broker_id);
+                toastr.success(data.message);
+                $("#add_service .close_model").click();
+                $("#verify_otp").modal('show');
+            }
+        });
+    });
+    var ids = 0;
+    $(document.body).on('click', '.verify_otp', function(e) {
+        var otp = $('#otp').val();
+        var broker_id = $('#hidden_broker_id').val();
+        var buyer_id = ids;
+        $.ajax({
+            type: "POST",
+            url: "{{route('verify_buyer_broker_otp')}}",
+            data: {
+                "_token": "{{ csrf_token() }}",
+                broker_id: broker_id,
+                buyer_id: buyer_id,
+                otp: otp,
+            },
+            success: function(data) {
+                if(data.response_status == "success"){
+                    approve_buyer(ids);
+                    toastr.success(data.message);
+                    $("#verify_otp .close_model1").click();
+                }else{
+                    toastr.error(data.message);
+                }
+            }
+        });
+    });
+
     $(document.body).on('click', '.approved', function(e) {
-       var buyer_id = $(this).data('id');
+        var buyer_id = $(this).data('id');
+        ids = buyer_id;
+        $.ajax({
+            type: "POST",
+            url: "{{route('check_buyer_code')}}",
+            data: {
+                "_token": "{{ csrf_token() }}",
+                buyer_id: buyer_id,
+            },
+            success: function(data) {
+                if(data.response_status == "success"){
+                    approve_buyer(buyer_id);
+                }else{
+                    $("#add_service").modal('show');
+                }
+            }
+        });
+    });
+
+    function approve_buyer(buyer_id){
        $.ajax({
            type: "POST",
            url: "{{route('buyer_approval')}}",
@@ -131,45 +257,40 @@
                $('.is_approved_'+buyer_id).html('<span class="label label-success">Approved</span>');
            }
        });
-   });
-   $(document.body).on('click', '.reject', function(e) {
-       var buyer_id = $(this).data('id');
-       $.ajax({
-           type: "POST",
-           url: "{{route('buyer_approval')}}",
-           data: {
-               "_token": "{{ csrf_token() }}",
-               buyer_id: buyer_id,
-               is_approved : 2,
-           },
-           success: function(data) {
-               toastr.success(data.message);
-               $('.is_approved_'+buyer_id).html('<span class="label label-danger">Rejected</span>');
-           }
-       });
-   });
-    // $(document.body).on('click', '.approval', function(e) {
-    //     var buyer_id = $(this).data('id');
-    //     $.ajax({
-    //         type: "POST",
-    //         url: "{{route('buyer_approval')}}",
-    //         data: {
-    //             "_token": "{{ csrf_token() }}",
-    //             buyer_id: buyer_id,
-    //         },
-    //         success: function(data) {
-    //             toastr.success(data.message);
-    //             if(data.data == 0 )
-    //             {
-    //                 $('#approved_'+buyer_id).attr("id","approve_"+buyer_id).removeClass("label-success").addClass("label-danger").html ("Approve");
-    //             }
-    //             else
-    //             {
-    //                 $('#approve_'+buyer_id).attr("id","approved_"+buyer_id).removeClass("label-danger").addClass("label-success").html( "Approved");
-    //             }
-    //         }
-    //     });
-    // });
+    }
+
+    //   $(document.body).on('click', '.approved', function(e) {
+    //      var buyer_id = $(this).data('id');
+    //      $.ajax({
+    //          type: "POST",
+    //          url: "{{route('buyer_approval')}}",
+    //          data: {
+    //              "_token": "{{ csrf_token() }}",
+    //              buyer_id: buyer_id,
+    //              is_approved : 1,
+    //          },
+    //          success: function(data) {
+    //              toastr.success(data.message);
+    //              $('.is_approved_'+buyer_id).html('<span class="label label-success">Approved</span>');
+    //          }
+    //      });
+    //  });
+    $(document.body).on('click', '.reject', function(e) {
+        var buyer_id = $(this).data('id');
+        $.ajax({
+            type: "POST",
+            url: "{{route('buyer_approval')}}",
+            data: {
+                "_token": "{{ csrf_token() }}",
+                buyer_id: buyer_id,
+                is_approved : 2,
+            },
+            success: function(data) {
+                toastr.success(data.message);
+                $('.is_approved_'+buyer_id).html('<span class="label label-danger">Rejected</span>');
+            }
+        });
+    });
     $(document.body).on('click', '.status', function(e) {
         var buyer_id = $(this).data('id');
         $.ajax({

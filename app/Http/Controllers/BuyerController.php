@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BankDetails;
 use App\Models\UserDetails;
 use App\Models\Buyers;
+use App\Models\Brokers;
 use Illuminate\Http\Request;
 use Response;
 use Validator;
@@ -14,6 +15,7 @@ class BuyerController extends Controller
 {
     public function index(Request $request)
     {
+        $brokers = Brokers::where('is_delete',1)->get();
         if ($request->ajax()) {
             $buyer = Buyers::where('is_delete',1)->get();
 
@@ -53,7 +55,7 @@ class BuyerController extends Controller
             ->make(true);
         }
 
-    	return view('buyer.list');
+    	return view('buyer.list',compact('brokers'));
     }
 
     public function destroy($id) {
@@ -125,5 +127,67 @@ class BuyerController extends Controller
         $user = UserDetails::where('user_id',$id)->where('user_type','buyer')->get();
         $bank = BankDetails::where('user_id',$id)->where('user_type','buyer')->get();
         return view('buyer.detail',compact('buyer','user','bank'));
+    }
+
+    public function check_buyer_code(Request $request){
+        $buyer = Buyers::select('referral_code')->where('id',$request->buyer_id)->first();
+
+        if(!empty($buyer->referral_code)){
+            $status = "success";
+        }else{
+            $status = "error";
+        }
+
+        return Response::json([
+            "code" => 200,
+            "response_status" => $status,
+            "message"         => "",
+            "data"            => "",
+        ]);
+    }
+
+    public function verify_buyer_broker_otp(Request $request){
+
+    	$otp_verify = Brokers::where('id',$request->broker_id)->first();
+
+        $otp = $request->otp;
+        if($otp == $otp_verify->otp){
+            $current = date("Y-m-d H:i:s");
+            $otp_time = $otp_verify->otp_time;
+            $diff = strtotime($current) - strtotime($otp_time);
+            $days    = floor($diff / 86400);
+            $hours   = floor(($diff - ($days * 86400)) / 3600);
+            $minutes = floor(($diff - ($days * 86400) - ($hours * 3600)) / 60);
+            if (($diff > 0) && ($minutes <= 180)) {
+
+                $save = Buyers::updateOrCreate(
+                    [
+                        'id' => $request->buyer_id
+                    ],
+                    [
+                        'referral_code'  => $otp_verify->code,
+                    ]
+                );
+                $save->save();
+
+                $status = "success";
+                $message = 'OTP verified successfully';
+                // $otp_verify->is_otp_verify = 1;
+                // $otp_verify->save();
+            }else{
+                    $status = "error";
+                    $message = 'OTP expired';
+                }
+        }else{
+                $status = "error";
+                $message = 'OTP is not valid';
+        }
+
+        return Response::json([
+            "code" => 200,
+            "response_status" => $status,
+            "message"         => $message,
+            "data"            => "",
+        ]);
     }
 }

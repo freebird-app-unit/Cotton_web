@@ -40,4 +40,14 @@ class NotificationHelper
         curl_close($ch);
 
     }
+
+    public static function send_otp($mobile_no,$message){
+
+        $auth_key = env('AUTH_KEY');
+        $route_id = env('ROUTE_ID');
+        $sender_id = env('SENDER_ID');
+        $api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=".$auth_key."&routeId=".$route_id."&senderId=".$sender_id."&mobileNos='".$mobile_no."'&message=" . urlencode($message);
+		$sms = file_get_contents($api);
+        return true;
+    }
 }

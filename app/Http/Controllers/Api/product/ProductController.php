@@ -402,7 +402,7 @@ class ProductController extends Controller
 
 			if (!empty($fcm_token)) {
 				$seller = Sellers::where('id',$seller_buyer_id)->first();
-				
+
 				$json_array = [
 					"registration_ids" => $fcm_token,
 					"notification" => [
@@ -412,7 +412,7 @@ class ProductController extends Controller
 					]
 				];
 				NotificationHelper::notification($json_array,'buyer');
-			}            
+			}
 
 			$response['status'] = 200;
 			$response['message'] = 'Notification Send Sucessfully!!';
@@ -830,7 +830,7 @@ class ProductController extends Controller
 
             if (!empty($fcm_token)) {
 				$buyer = Buyers::where('id',$seller_buyer_id)->first();
-				
+
 				$json_array = [
 					"registration_ids" => $fcm_token,
 					"notification" => [
@@ -1832,6 +1832,39 @@ class ProductController extends Controller
 				}
 	    	}
 	    }
+
+        $fcm_token = "";
+        $user = [];
+        if ($negotiation_by == "seller") {
+            $user_type = "buyer";
+            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$buyer_id)->first();
+
+            if (!empty($seller_data->fcm_token)) {
+                $fcm_token = $seller_data->fcm_token;
+            }
+            $user = Sellers::select('name')->where('id',$seller_id)->first();
+        }else if($negotiation_by == 'buyer'){
+            $user_type = "seller";
+            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$seller_id)->first();
+
+            if (!empty($seller_data->fcm_token)) {
+                $fcm_token = $seller_data->fcm_token;
+            }
+            $user = Buyers::select('name')->where('id',$buyer_id)->first();
+        }
+
+        if (!empty($fcm_token)) {
+            $json_array = [
+                "registration_ids" => $fcm_token,
+                "notification" => [
+                    "body" => "Notification send by ".$user->name,
+                    "title" => "Buy Notification",
+                    "icon" => "ic_launcher"
+                ]
+            ];
+            NotificationHelper::notification($json_array,$user_type);
+        }
+
 		return response($response, 200);
 	}
 	public function negotiation_list(Request $request)
@@ -3277,6 +3310,39 @@ class ProductController extends Controller
 			}
 
 		}
+
+        $fcm_token = "";
+        $user = [];
+        if ($done_by == "seller") {
+            $user_type = "buyer";
+            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$buyer_id)->first();
+
+            if (!empty($seller_data->fcm_token)) {
+                $fcm_token = $seller_data->fcm_token;
+            }
+            $user = Sellers::select('name')->where('id',$seller_id)->first();
+        }else if($done_by == 'buyer'){
+            $user_type = "seller";
+            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$seller_id)->first();
+
+            if (!empty($seller_data->fcm_token)) {
+                $fcm_token = $seller_data->fcm_token;
+            }
+            $user = Buyers::select('name')->where('id',$buyer_id)->first();
+        }
+
+        if (!empty($fcm_token)) {
+            $json_array = [
+                "registration_ids" => $fcm_token,
+                "notification" => [
+                    "body" => "Notification send by ".$user->name,
+                    "title" => "Buy Notification",
+                    "icon" => "ic_launcher"
+                ]
+            ];
+            NotificationHelper::notification($json_array,$user_type);
+        }
+
 		return response($response, 200);
 	}
 
@@ -6131,6 +6197,39 @@ class ProductController extends Controller
 				}
 	    	}
 	    }
+
+        $fcm_token = "";
+        $user = [];
+        if ($negotiation_by == "seller") {
+            $user_type = "buyer";
+            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$buyer_id)->first();
+
+            if (!empty($seller_data->fcm_token)) {
+                $fcm_token = $seller_data->fcm_token;
+            }
+            $user = Sellers::select('name')->where('id',$seller_id)->first();
+        }else if($negotiation_by == 'buyer'){
+            $user_type = "seller";
+            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$seller_id)->first();
+
+            if (!empty($seller_data->fcm_token)) {
+                $fcm_token = $seller_data->fcm_token;
+            }
+            $user = Buyers::select('name')->where('id',$buyer_id)->first();
+        }
+
+        if (!empty($fcm_token)) {
+            $json_array = [
+                "registration_ids" => $fcm_token,
+                "notification" => [
+                    "body" => "Notification send by ".$user->name,
+                    "title" => "Buy Notification",
+                    "icon" => "ic_launcher"
+                ]
+            ];
+            NotificationHelper::notification($json_array,$user_type);
+        }
+
 		return response($response, 200);
 	}
 
@@ -6924,6 +7023,39 @@ class ProductController extends Controller
 			}
 
 		}
+
+        $fcm_token = "";
+        $user = [];
+        if ($done_by == "seller") {
+            $user_type = "buyer";
+            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$buyer_id)->first();
+
+            if (!empty($seller_data->fcm_token)) {
+                $fcm_token = $seller_data->fcm_token;
+            }
+            $user = Sellers::select('name')->where('id',$seller_id)->first();
+        }else if($done_by == 'buyer'){
+            $user_type = "seller";
+            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$seller_id)->first();
+
+            if (!empty($seller_data->fcm_token)) {
+                $fcm_token = $seller_data->fcm_token;
+            }
+            $user = Buyers::select('name')->where('id',$buyer_id)->first();
+        }
+
+        if (!empty($fcm_token)) {
+            $json_array = [
+                "registration_ids" => $fcm_token,
+                "notification" => [
+                    "body" => "Notification send by ".$user->name,
+                    "title" => "Buy Notification",
+                    "icon" => "ic_launcher"
+                ]
+            ];
+            NotificationHelper::notification($json_array,$user_type);
+        }
+
 		return response($response, 200);
 	}
     public function negotiation_list_new_v2(Request $request)
