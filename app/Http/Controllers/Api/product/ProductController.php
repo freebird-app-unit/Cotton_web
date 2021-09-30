@@ -4884,6 +4884,21 @@ class ProductController extends Controller
 		$time_duration = isset($content->time_duration) ? $content->time_duration : '';
 		$date_to = isset($content->date_to) ? $content->date_to : '';
 		$date_from = isset($content->date_from) ? $content->date_from : '';
+		$seller_buyer = isset($content->seller_buyer) ? $content->seller_buyer : '';
+
+        $params = [
+			'seller_buyer' => $seller_buyer,
+		];
+
+		$validator = Validator::make($params, [
+            'seller_buyer' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+				$response['message'] =$validator->errors()->first();
+				return response($response, 200);
+	    }
 
 		$final_arr = [];
 		$dates = [];
@@ -4891,13 +4906,13 @@ class ProductController extends Controller
 				if($time_duration == "monthly"){
 					$start_date = date('Y-m-01'); // hard-coded '01' for first day
                		$end_date  = date('Y-m-t');
-					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[$start_date,$end_date])->where('seller_id',$seller_buyer_id)->get();
+					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[$start_date,$end_date])->where('seller_id',$seller_buyer_id)->whereIn('buyer_id',$seller_buyer)->get();
 				}
 				if($time_duration == "custom"){
-					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[$date_to,$date_from])->where('seller_id',$seller_buyer_id)->get();
+					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[$date_to,$date_from])->where('seller_id',$seller_buyer_id)->whereIn('buyer_id',$seller_buyer)->get();
 				}
 				if($time_duration == "weekly"){
-					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->where('seller_id',$seller_buyer_id)->get();
+					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->where('seller_id',$seller_buyer_id)->whereIn('buyer_id',$seller_buyer)->get();
 				}
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
@@ -5065,13 +5080,13 @@ class ProductController extends Controller
 				if($time_duration == "monthly"){
 					$start_date = date('Y-m-01'); // hard-coded '01' for first day
                		$end_date  = date('Y-m-t');
-					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[$start_date,$end_date])->where('buyer_id',$seller_buyer_id)->get();
+					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[$start_date,$end_date])->where('buyer_id',$seller_buyer_id)->whereIn('seller_id',$seller_buyer)->get();
 				}
 				if($time_duration == "custom"){
-					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[$date_to,$date_from])->where('buyer_id',$seller_buyer_id)->get();
+					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[$date_to,$date_from])->where('buyer_id',$seller_buyer_id)->whereIn('seller_id',$seller_buyer)->get();
 				}
 				if($time_duration == "weekly"){
-					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->where('seller_id',$seller_buyer_id)->get();
+					$negotiation_data = NegotiationComplete::whereBetween('updated_at',[Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->where('buyer_id',$seller_buyer_id)->whereIn('seller_id',$seller_buyer)->get();
 				}
 
 				foreach ($negotiation_data as $value) {
