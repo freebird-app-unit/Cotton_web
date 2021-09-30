@@ -5265,7 +5265,55 @@ class ProductController extends Controller
 		return response($response, 200);
 	}
 
-	 public function search_to_sell_new(Request $request)
+    public function my_contract_list(Request $request)
+	{
+		$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$seller_buyer_id = isset($content->seller_buyer_id) ? $content->seller_buyer_id : '';
+		$user_type = isset($content->user_type) ? $content->user_type : '';
+        $offset = isset($content->offset) ? $content->offset : 0;
+		$limit = isset($content->limit) ? $content->limit : 10;
+
+		$final_arr = [];
+
+        if($user_type == "seller"){
+            $make_deals = NegotiationComplete::with('buyer')->where(['seller_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
+
+            if(!empty($make_deals) && count($make_deals) > 0){
+                foreach($make_deals as $val){
+                    $final_arr [] = [
+                        'buyer_id' => $val->buyer_id,
+                        'buyer_name' => $val->buyer->name
+                    ];
+                }
+            }
+
+        }else if($user_type == "buyer"){
+            $make_deals = NegotiationComplete::with('seller')->where(['buyer_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
+
+            if(!empty($make_deals) && count($make_deals) > 0){
+                foreach($make_deals as $val){
+                    $final_arr [] = [
+                        'seller_id' => $val->seller_id,
+                        'seller_name' => $val->seller->name
+                    ];
+                }
+            }
+        }
+
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = $final_arr;
+		return response($response, 200);
+	}
+
+	public function search_to_sell_new(Request $request)
     {
     	$response = array();
 		$response['status'] = 200;

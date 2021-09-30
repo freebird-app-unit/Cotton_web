@@ -129,6 +129,7 @@ Route::group(['namespace' => 'Api\product'], function () {
     Route::post('/completed_deal_buyer_new_v2', 'ProductController@completed_deal_buyer_new_v2');
     Route::post('/completed_deal_detail_new_v2', 'ProductController@completed_deal_detail_new_v2');
     Route::post('/negotiation_detail_by_deal_new_v2', 'ProductController@negotiation_detail_by_deal_new_v2');
+    Route::post('/my_contract_list', 'ProductController@my_contract_list');
 
 });
 Route::post('/news', 'Api\seller\LoginController@news_list');
