@@ -32,7 +32,7 @@ use App\Models\NegotiationLog;
 use App\Models\NegotiationHistory;
 use App\Models\SubjectTo;
 use App\Models\DeviceDetails;
-use App\Models\ConfirmTo;
+use App\Models\DealQueue;
 use Validator;
 use Carbon\Carbon;
 use PDF;
@@ -404,7 +404,7 @@ class ProductController extends Controller
 				$seller = Sellers::where('id',$seller_buyer_id)->first();
 
 				$json_array = [
-					"registration_ids" => $fcm_token,
+					"registration_ids" => [$fcm_token],
 					"notification" => [
 						"body" => "Notification send by ".$seller->name,
 						"title" => "Sell Notification",
@@ -832,7 +832,7 @@ class ProductController extends Controller
 				$buyer = Buyers::where('id',$seller_buyer_id)->first();
 
 				$json_array = [
-					"registration_ids" => $fcm_token,
+					"registration_ids" => [$fcm_token],
 					"notification" => [
 						"body" => "Notification send by ".$buyer->name,
 						"title" => "Buy Notification",
@@ -981,20 +981,7 @@ class ProductController extends Controller
 		if(!empty($attribute_array)){
 			foreach ($attribute_array as $val) {
 				//$search = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute,'tbl_post_details.attribute_value'=>$val->attribute_value])->get();
-				$search = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute])->whereBetween('tbl_post_details.attribute_value',[$val->from,$val->to]);
-
-                if($d_e == "Domestic"){
-                    $search->whereHas('user_detail', function($query) {
-                        $query->whereIn('seller_buyer_type',['Spinner','Trader']);
-                        $query->where('user_type','buyer');
-                    });
-                }else if($d_e == 'Export'){
-                    $search->whereHas('user_detail', function($query) {
-                        $query->where('seller_buyer_type','Ginner');
-                        $query->where('user_type','buyer');
-                    });
-                }
-                $search = $search->get();
+				$search = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute])->whereBetween('tbl_post_details.attribute_value',[$val->from,$val->to])->get();
 
                 // dd($search);
                 if(count($search)>0){
@@ -1868,7 +1855,7 @@ class ProductController extends Controller
 
         if (!empty($fcm_token)) {
             $json_array = [
-                "registration_ids" => $fcm_token,
+                "registration_ids" => [$fcm_token],
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
                     "title" => "Buy Notification",
@@ -3346,7 +3333,7 @@ class ProductController extends Controller
 
         if (!empty($fcm_token)) {
             $json_array = [
-                "registration_ids" => $fcm_token,
+                "registration_ids" => [$fcm_token],
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
                     "title" => "Buy Notification",
@@ -4060,7 +4047,8 @@ class ProductController extends Controller
 		$final_arr = [];
 		$dates = [];
 		if($user_type == "seller"){
-		    $make_deals = NegotiationComplete::where(['seller_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
+		    // $make_deals = NegotiationComplete::where(['seller_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
+		    $make_deals = NegotiationComplete::where(['seller_id'=>$seller_buyer_id])->get();
 			if(count($make_deals)>0){
 				foreach ($make_deals as $make_deal) {
 					array_push($dates,date('Y-m-d', strtotime($make_deal->updated_at)));
@@ -4069,10 +4057,12 @@ class ProductController extends Controller
 			$unique_date = array_unique($dates);
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->where(function($query) {
-                        $query->where('lab_report_status','pass')
-                            ->orWhere('lab_report_status',NULL);
-                        })->orderBy('id','DESC')->get();
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->orderBy('id','DESC')->get();
+
+				// $negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->where(function($query) {
+                        // $query->where('lab_report_status','pass')
+                            // ->orWhere('lab_report_status',NULL);
+                        // })->orderBy('id','DESC')->get();
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
 
@@ -4330,19 +4320,18 @@ class ProductController extends Controller
 			}
 		}
 		if($user_type == "buyer"){
-		    $make_deals = NegotiationComplete::where(['buyer_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
+		    // $make_deals = NegotiationComplete::where(['buyer_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
+		    $make_deals = NegotiationComplete::where(['buyer_id'=>$seller_buyer_id])->get();
 			if(count($make_deals)>0){
 				foreach ($make_deals as $make_deal) {
 					array_push($dates,date('Y-m-d', strtotime($make_deal->updated_at)));
 				}
 			}
 			$unique_date = array_unique($dates);
+
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->where(function($query) {
-                        $query->where('lab_report_status','pass')
-                            ->orWhere('lab_report_status',NULL);
-                        })->orderBy('id','DESC')->get();
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
 
@@ -4600,7 +4589,8 @@ class ProductController extends Controller
 			}
 		}
         if($user_type == "broker"){
-		    $make_deals = NegotiationComplete::where(['broker_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
+		    // $make_deals = NegotiationComplete::where(['broker_id'=>$seller_buyer_id])->skip($offset)->take($limit)->get();
+		    $make_deals = NegotiationComplete::where(['broker_id'=>$seller_buyer_id])->get();
 			if(count($make_deals)>0){
 				foreach ($make_deals as $make_deal) {
 					array_push($dates,date('Y-m-d', strtotime($make_deal->updated_at)));
@@ -4609,10 +4599,7 @@ class ProductController extends Controller
 			$unique_date = array_unique($dates);
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('broker_id',$seller_buyer_id)->where(function($query) {
-                        $query->where('lab_report_status','pass')
-                            ->orWhere('lab_report_status',NULL);
-                        })->orderBy('id','DESC')->get();
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('broker_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
 
@@ -5371,20 +5358,7 @@ class ProductController extends Controller
 
         if(!empty($non_required)){
         	foreach ($non_required as $key => $val) {
-        		$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0])->where('tbl_post_details.attribute',$val->attribute)->whereBetween('tbl_post_details.attribute_value', [$val->from,$val->to]);
-
-                if($d_e == "Domestic"){
-                    $query->whereHas('user_detail', function($query) {
-                        $query->whereIn('seller_buyer_type',['Spinner','Trader']);
-                        $query->where('user_type','buyer');
-                    });
-                }else if($d_e == 'Export'){
-                    $query->whereHas('user_detail', function($query) {
-                        $query->where('seller_buyer_type','Ginner');
-                        $query->where('user_type','buyer');
-                    });
-                }
-                $query = $query->get();
+        		$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e,'tbl_post.is_active'=>0])->where('tbl_post_details.attribute',$val->attribute)->whereBetween('tbl_post_details.attribute_value', [$val->from,$val->to])->get();
 
 	        	if(count($query)>0){
 	            	 foreach ($query as $value) {
@@ -5548,8 +5522,8 @@ class ProductController extends Controller
 
 		$product_id = isset($content->product_id) ? $content->product_id : '';
 		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
-		// $required = isset($content->required) ? $content->required : '';
-		$non_required = isset($content->non_required) ? $content->non_required : '';
+		$required = isset($content->required) ? $content->required : '';
+		// $non_required = isset($content->non_required) ? $content->non_required : '';
 
 		$search_array = [];
 		$post_arr = [];
@@ -5578,8 +5552,8 @@ class ProductController extends Controller
         //     }
         // }
 
-        if(!empty($non_required)){
-        	foreach ($non_required as $key => $val) {
+        if(!empty($required)){
+        	foreach ($required as $key => $val) {
         		$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'seller','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.is_active'=>0,'tbl_post_details.attribute'=>$val->attribute])->whereBetween('tbl_post_details.attribute_value', [$val->from,$val->to])->get();
 
 	        	if(count($query)>0){
@@ -6133,7 +6107,7 @@ class ProductController extends Controller
         }
 
 	    if($negotiation_type == "post"){
-	    	 $post_remain = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
+	    	$post_remain = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
 		   	if($no_of_bales > $post_remain->no_of_bales){
 		   		$response['status'] = 404;
 		   		$response['message'] = 'Please Enter Less Bales';
@@ -6149,7 +6123,10 @@ class ProductController extends Controller
                     $negotiation = Negotiation::where('id',$negotia->id)->first();
                     $prev_price = $negotia->price;
                     $prev_bales = $negotia->bales;
-                }
+                } else {
+					$prev_price = $post_remain->price;
+                    $prev_bales = $post_remain->no_of_bales;
+				}
 				$negotiation->seller_id = $seller_id;
 				$negotiation->buyer_id = $buyer_id;
                 $negotiation->negotiation_complete_id = $deal_id;
@@ -6309,10 +6286,10 @@ class ProductController extends Controller
 
         if (!empty($fcm_token)) {
             $json_array = [
-                "registration_ids" => $fcm_token,
+                "registration_ids" => [$fcm_token],
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
-                    "title" => "Buy Notification",
+                    "title" => "Negotiation Notification",
                     "icon" => "ic_launcher"
                 ]
             ];
@@ -6365,11 +6342,11 @@ class ProductController extends Controller
 
 		$negotiation_comp = Negotiation::where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type])->first();
 
-		if(!empty($negotiation_comp)){
+        if (!empty($negotiation_comp)) {
 
-            if($negotiation_comp->negotiation_type == "post"){
+            if ($negotiation_comp->negotiation_type == "post") {
                 $post_remain = Post::where(['id'=>$negotiation_comp->post_notification_id,'is_active'=>0])->first();
-                if($no_of_bales > $post_remain->no_of_bales){
+                if ($no_of_bales > $post_remain->no_of_bales) {
                     $response['status'] = 404;
                     $response['message'] = 'Please Enter Less Bales';
                 }else{
@@ -6385,6 +6362,17 @@ class ProductController extends Controller
                     }
                 }
             }
+
+            $check = $this->check_queue($buyer_id, $seller_id, $post_notification_id, $type);
+
+            if ($check == 2) {
+                DealQueue::where(['buyer_id' => $buyer_id, 'seller_id' => $seller_id, 'post_notification_id' => $post_notification_id, 'post_type'=> $type])->delete();
+
+                $response['status'] = 404;
+                $response['message'] = 'Deal already done sorry for inconvenience!';
+                return response($response, 200);
+            }
+
             if($negotiation_comp->negotiation_type == "notification"){
                 $notification_remain = Notification::where(['id'=>$negotiation_comp->post_notification_id,'is_active'=>0])->first();
                 if($no_of_bales > $notification_remain->no_of_bales){
@@ -6408,88 +6396,88 @@ class ProductController extends Controller
 
 			if(!empty($negotiation_comp)){
 
-            if($type == "post"){
-                $post = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
-                if(!empty($post)){
+                if($type == "post"){
+                    $post = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                    if(!empty($post)){
 
-                    $post->sold_bales = $post->sold_bales + $no_of_bales;
-                    $post->remain_bales = $post->no_of_bales - $post->sold_bales;
-                    $make_deal->no_of_bales = $no_of_bales;
-                    if($post->remain_bales <= 0){
+                        $post->sold_bales = $post->sold_bales + $no_of_bales;
+                        $post->remain_bales = $post->no_of_bales - $post->sold_bales;
+                        $make_deal->no_of_bales = $no_of_bales;
+                        if($post->remain_bales <= 0){
 
-                        $post->status = 'complete';
-                        $post->updated_at = date('Y-m-d H:i:s');
+                            $post->status = 'complete';
+                            $post->updated_at = date('Y-m-d H:i:s');
+                        }
+                        $post->save();
                     }
-                    $post->save();
                 }
-            }
-            if($type == "notification"){
-                $notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0])->first();
-                if(!empty($notification)){
+                if($type == "notification"){
+                    $notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                    if(!empty($notification)){
 
-                    $notification->sold_bales = $notification->sold_bales +  $no_of_bales;
-                    $notification->remain_bales = $notification->no_of_bales - $notification->sold_bales;
-                    $make_deal->no_of_bales = $no_of_bales;
-                    if($notification->remain_bales <= 0){
+                        $notification->sold_bales = $notification->sold_bales +  $no_of_bales;
+                        $notification->remain_bales = $notification->no_of_bales - $notification->sold_bales;
+                        $make_deal->no_of_bales = $no_of_bales;
+                        if($notification->remain_bales <= 0){
 
-                        $notification->status = 'complete';
-                        $notification->updated_at = date('Y-m-d H:i:s');
+                            $notification->status = 'complete';
+                            $notification->updated_at = date('Y-m-d H:i:s');
+                        }
+                        $notification->save();
                     }
-                    $notification->save();
                 }
-            }
-            // $make_deal->negotiation_id = $negotiation_comp->id;
-            $history_type = 'negotiation';
-            if(!empty($negotiation_comp->negotiation_complete_id) && $negotiation_comp->negotiation_complete_id != 0){
-                $history_type = 're-negotiation';
-                $make_deal = NegotiationComplete::where('id',$negotiation_comp->negotiation_complete_id)->first();
-            }
+                // $make_deal->negotiation_id = $negotiation_comp->id;
+                $history_type = 'negotiation';
+                if(!empty($negotiation_comp->negotiation_complete_id) && $negotiation_comp->negotiation_complete_id != 0){
+                    $history_type = 're-negotiation';
+                    $make_deal = NegotiationComplete::where('id',$negotiation_comp->negotiation_complete_id)->first();
+                }
 
-            $make_deal->buyer_id = $negotiation_comp->buyer_id;
-            $make_deal->seller_id = $negotiation_comp->seller_id;
-            $make_deal->broker_id = $negotiation_comp->broker_id;
-            $make_deal->negotiation_by = $negotiation_comp->negotiation_by;
-            $make_deal->post_notification_id = $negotiation_comp->post_notification_id;
-            $make_deal->negotiation_type = $negotiation_comp->negotiation_type;
-            $make_deal->price = $negotiation_comp->price;
-            $make_deal->done_by = $done_by;
-            $make_deal->payment_condition = $negotiation_comp->payment_condition;
-            $make_deal->transmit_condition = $negotiation_comp->transmit_condition;
-            $make_deal->lab = $negotiation_comp->lab;
-            $make_deal->notes = $negotiation_comp->notes;
-            $make_deal->header = $negotiation_comp->header;
-            $make_deal->deal_type = 'negotiation';
+                $make_deal->buyer_id = $negotiation_comp->buyer_id;
+                $make_deal->seller_id = $negotiation_comp->seller_id;
+                $make_deal->broker_id = $negotiation_comp->broker_id;
+                $make_deal->negotiation_by = $negotiation_comp->negotiation_by;
+                $make_deal->post_notification_id = $negotiation_comp->post_notification_id;
+                $make_deal->negotiation_type = $negotiation_comp->negotiation_type;
+                $make_deal->price = $negotiation_comp->price;
+                $make_deal->done_by = $done_by;
+                $make_deal->payment_condition = $negotiation_comp->payment_condition;
+                $make_deal->transmit_condition = $negotiation_comp->transmit_condition;
+                $make_deal->lab = $negotiation_comp->lab;
+                $make_deal->notes = $negotiation_comp->notes;
+                $make_deal->header = $negotiation_comp->header;
+                $make_deal->deal_type = 'negotiation';
 
-            $status = "";
-            if(!empty($complete)){
-                $make_deal->status = $complete->status;
-                $status =  $complete->status;
-            }else{
-                $make_deal->status = $negotiation_comp->status;
-                $status =  $negotiation_comp->status;
-            }
-            $make_deal->save();
+                $status = "";
+                if(!empty($complete)){
+                    $make_deal->status = $complete->status;
+                    $status =  $complete->status;
+                }else{
+                    $make_deal->status = $negotiation_comp->status;
+                    $status =  $negotiation_comp->status;
+                }
+                $make_deal->save();
 
-            $history = new NegotiationHistory();
-            $history->negotiation_complete_id = $make_deal->id;
-            $history->negotiation_id = $negotiation_comp->id;
-            $history->type = $history_type;
-            $history->save();
+                $history = new NegotiationHistory();
+                $history->negotiation_complete_id = $make_deal->id;
+                $history->negotiation_id = $negotiation_comp->id;
+                $history->type = $history_type;
+                $history->save();
 
-            $negotiation_log = new NegotiationLog();
-            $negotiation_log->negotiation_id = $negotiation_comp->id;
-            $negotiation_log->negotiation_by = $negotiation_comp->negotiation_by;
-            $negotiation_log->price = $negotiation_comp->price;
-            $negotiation_log->bales = $no_of_bales;
-            $negotiation_log->payment_condition_id = $negotiation_comp->payment_condition;
-            $negotiation_log->transmit_condition_id = $negotiation_comp->transmit_condition;
-            $negotiation_log->lab_id = $negotiation_comp->lab;
-            $negotiation_log->save();
+                $negotiation_log = new NegotiationLog();
+                $negotiation_log->negotiation_id = $negotiation_comp->id;
+                $negotiation_log->negotiation_by = $negotiation_comp->negotiation_by;
+                $negotiation_log->price = $negotiation_comp->price;
+                $negotiation_log->bales = $no_of_bales;
+                $negotiation_log->payment_condition_id = $negotiation_comp->payment_condition;
+                $negotiation_log->transmit_condition_id = $negotiation_comp->transmit_condition;
+                $negotiation_log->lab_id = $negotiation_comp->lab;
+                $negotiation_log->save();
 
-            if($status == 'complete'){
-                Negotiation::where('id',$negotiation_comp->id)->delete();
-            }
-            //pdf
+                if($status == 'complete'){
+                    Negotiation::where('id',$negotiation_comp->id)->delete();
+                }
+                //pdf
                 $broker_name = '';
                 $broker_address = '';
                 $broker_country = '';
@@ -6504,8 +6492,8 @@ class ProductController extends Controller
                 $buyer_station = '';
                 $product_name_pdf = '';
                 $deal_date = '';
-                $deal_no_of_bales = '';
-                $deal_price = '';
+                $deal_no_of_bales = $negotiation_comp->bales;
+                $deal_price = $negotiation_comp->price;
                 $ref_no = '';
                 $attribute_array_pdf = '';
                 $broker_stamp_image = '';
@@ -6514,9 +6502,9 @@ class ProductController extends Controller
                 $broker_header_image = '';
 
                 $deal_date = date('d-M-Y', strtotime($make_deal->created_at));
-                $deal_price = $make_deal->price;
+                // $deal_price = $make_deal->price;
                 $ref_no = $make_deal->id;
-                $deal_no_of_bales = $make_deal->no_of_bales;
+                // $deal_no_of_bales = $make_deal->no_of_bales;
                 if($done_by == "seller"){
                     $seller = Sellers::where('id',$seller_id)->first();
                     if(!empty($seller)){
@@ -6533,16 +6521,26 @@ class ProductController extends Controller
                                         $broker_country = $country->name;
                                         $broker_state = $state->name;
                                         $broker_mobile_number = $broker->mobile_number;
-                                        $broker_mobile_number_2 =$broker->mobile_number_2;
+                                        $broker_mobile_number_2 = $broker->mobile_number_2;
                                         $broker_email =$broker->email;
                                         $broker_url =$broker->website;
-                                        $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
-                                        $file1 = file_get_contents($broker_stamp_img);
-                                        $broker_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
 
-                                        $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
-                                        $file2 = file_get_contents($broker_header_img);
-                                        $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                        $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $broker->stamp_image);
+
+                                        $broker_stamp_image = '';
+									    if (File::exists($broker_stamp_img)) {
+                                            $file1 = file_get_contents($broker_stamp_img);
+                                            $broker_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
+                                        }
+
+                                        $broker_header_img = storage_path('app/public/broker/header_image/' . $broker->header_image);
+
+                                        $broker_header_image = '';
+									    if (File::exists($broker_header_img)) {
+                                            $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                                            $file2 = file_get_contents($broker_header_img);
+                                            $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                        }
                                     }
                                 }
                             }
@@ -6675,6 +6673,15 @@ class ProductController extends Controller
 			}
 		}
 		else{
+            $check = $this->check_queue($buyer_id, $seller_id, $post_notification_id, $type);
+
+            if ($check == 2) {
+                DealQueue::where(['buyer_id' => $buyer_id, 'seller_id' => $seller_id, 'post_notification_id' => $post_notification_id, 'post_type'=> $type])->delete();
+
+                $response['status'] = 404;
+                $response['message'] = 'Deal already done sorry for inconvenience!';
+                return response($response, 200);
+            }
 
 			if($type == "notification"){
 				$notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
@@ -6981,13 +6988,21 @@ class ProductController extends Controller
                                             $broker_email =$broker->email;
                                             $broker_url =$broker->website;
 
-                                            $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
-                                            $file1 = file_get_contents($broker_stamp_img);
-                                            $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+                                            $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $broker->stamp_image);
 
-                                            $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
-                                            $file2 = file_get_contents($broker_header_img);
-                                            $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                            $broker_stamp_image = '';
+                                            if (File::exists($broker_stamp_img)) {
+                                                $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+                                                $file1 = file_get_contents($broker_stamp_img);
+                                                $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+                                            }
+
+                                            $broker_header_img = storage_path('app/public/broker/stamp_image/' . $broker->header_image);
+                                            if (File::exists($broker_header_img)) {
+                                                $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                                                $file2 = file_get_contents($broker_header_img);
+                                                $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                            }
                                         }
                                     }
                                 }
@@ -7015,13 +7030,29 @@ class ProductController extends Controller
                                             $broker_email =$broker->email;
                                             $broker_url =$broker->website;
 
-                                            $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
-                                            $file1 = file_get_contents($broker_stamp_img);
-                                            $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+                                            // $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+                                            // $file1 = file_get_contents($broker_stamp_img);
+                                            // $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
 
-                                            $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
-                                            $file2 = file_get_contents($broker_header_img);
-                                            $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                            // $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                                            // $file2 = file_get_contents($broker_header_img);
+                                            // $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+
+                                            $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $broker->stamp_image);
+
+                                            $broker_stamp_image = '';
+                                            if (File::exists($broker_stamp_img)) {
+                                                $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+                                                $file1 = file_get_contents($broker_stamp_img);
+                                                $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+                                            }
+
+                                            $broker_header_img = storage_path('app/public/broker/stamp_image/' . $broker->header_image);
+                                            if (File::exists($broker_header_img)) {
+                                                $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                                                $file2 = file_get_contents($broker_header_img);
+                                                $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                            }
                                         }
                                     }
                                 }
@@ -7135,15 +7166,18 @@ class ProductController extends Controller
 
         if (!empty($fcm_token)) {
             $json_array = [
-                "registration_ids" => $fcm_token,
+                "registration_ids" => [$fcm_token],
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
-                    "title" => "Buy Notification",
+                    "title" => "Deal Done Notification",
                     "icon" => "ic_launcher"
                 ]
             ];
             NotificationHelper::notification($json_array,$user_type);
         }
+
+        // Remove deal queue
+        DealQueue::where(['buyer_id' => $buyer_id, 'seller_id' => $seller_id, 'post_notification_id' => $post_notification_id, 'post_type'=> $type])->delete();
 
 		return response($response, 200);
 	}
@@ -7850,12 +7884,16 @@ class ProductController extends Controller
             $attribute_array = [];
             $post_price = "";
             $post_bales = "";
+			$sold_bales = 0;
+            $remain_bales = 0;
             if($negotiation->negotiation_type == 'post'){
                 $post = Post::with('product')->where('id',$negotiation->post_notification_id)->first();
                 $product_id = $post->product_id;
                 $product_name = $post->product->name;
                 $post_price = $post->price;
                 $post_bales = $post->no_of_bales;
+				$sold_bales = $post->sold_bales;
+				$remain_bales = $post->remain_bales;
 
                 $attribute = PostDetails::where('post_id',$post->id)->get();
                 foreach ($attribute as $val) {
@@ -7917,6 +7955,8 @@ class ProductController extends Controller
                 'product_name' => $product_name,
                 'post_price' => $post_price,
                 'post_bales' => $post_bales,
+				'sold_bales' => $sold_bales,
+		        'remain_bales' => $remain_bales,
                 'attribute_array' => $attribute_array,
 			];
 			$response['status'] = 200;
@@ -7978,6 +8018,8 @@ class ProductController extends Controller
 		                'product_name' => $post->product->name,
 		                'post_price' => (Int)$post->price,
 		                'post_bales' => (Int)$post->no_of_bales,
+		                'sold_bales' => (Int)$post->sold_bales,
+		                'remain_bales' => (Int)$post->remain_bales,
 		                'attribute_array' => $attribute_array,
 					];
 					$response['status'] = 200;
@@ -8039,6 +8081,8 @@ class ProductController extends Controller
 		                'product_name' => $notification->product->name,
 		                'post_price' => (Int)$notification->price,
 		                'post_bales' => (Int)$notification->no_of_bales,
+						'sold_bales' => 0,
+						'remain_bales' => 0,
 		                'attribute_array' => $attribute_array,
 					];
 					$response['status'] = 200;
@@ -8140,20 +8184,15 @@ class ProductController extends Controller
             $temp = 0;
             foreach ($required as $val) {
 
-            	$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e])->where('tbl_post_details.attribute',$val->attribute)->whereBetween('tbl_post_details.attribute_value',[$val->from,$val->to]);
+            	$query = Post::with('user_detail','user_detail.country','user_detail.state','user_detail.city','user_detail.station')->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')->where(['tbl_post.user_type'=>'buyer','tbl_post.status'=>'active','tbl_post.is_active'=>0,'tbl_post.product_id'=>$product_id,'tbl_post.d_e'=>$d_e])->where('tbl_post_details.attribute',$val->attribute);
 
-                 if($d_e == "Domestic"){
-                    $query->whereHas('user_detail', function($query) {
-                        $query->whereIn('seller_buyer_type',['Spinner','Trader']);
-                        $query->where('user_type','buyer');
-                    });
-                }else if($d_e == 'Export'){
-                    $query->whereHas('user_detail', function($query) {
-                        $query->where('seller_buyer_type','Ginner');
-                        $query->where('user_type','buyer');
-                    });
+                 $attr = explode(',',$val->attribute_value);
+
+                if(count($attr) > 1){
+                    $query->whereBetween('tbl_post_details.attribute_value', [$attr[0],$attr[1]]);
+                }else{
+                    $query->where('tbl_post_details.attribute_value', $val->attribute_value);
                 }
-
                 $query = $query->get();
 
             	 if(count($query)>0){
@@ -8860,4 +8899,38 @@ class ProductController extends Controller
 		}
 		return response($response, 200);
 	}
+
+    private function check_queue($buyer_id, $seller_id, $post_notification_id, $type) {
+        $check = DealQueue::where(['post_notification_id' => $post_notification_id, 'post_type'=> $type])->orderBy('id', 'DESC')->first();
+        if (!empty($check) ) {
+            if ($check->status == 1) {
+                $deal_queue = new DealQueue();
+                $deal_queue->post_notification_id =  $post_notification_id;
+                $deal_queue->post_type = $type;
+                $deal_queue->seller_id = $seller_id;
+                $deal_queue->buyer_id = $buyer_id;
+                $deal_queue->status = 0;
+                $deal_queue->save();
+                sleep(3);
+                $this->check_queue($buyer_id, $seller_id, $post_notification_id, $type);
+            } else {
+                if ($check->seller_id == $seller_id && $check->buyer_id == $buyer_id) {
+                    return 2;
+                } else {
+                    sleep(3);
+                    $this->check_queue($buyer_id, $seller_id, $post_notification_id, $type);
+                }
+            }
+        } else {
+            $deal_queue = new DealQueue();
+            $deal_queue->post_notification_id =  $post_notification_id;
+            $deal_queue->post_type = $type;
+            $deal_queue->seller_id = $seller_id;
+            $deal_queue->buyer_id = $buyer_id;
+            $deal_queue->status = 1;
+            $deal_queue->save();
+
+            return 1;
+        }
+    }
 }

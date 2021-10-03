@@ -35,9 +35,14 @@ class NotificationHelper
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         $result = curl_exec($ch);
-        if ($result === FALSE) {
-            die('Oops! FCM Send Error: ' . curl_error($ch));
-        }
+        // if ($result === FALSE) {
+			
+            // $response['status'] = 404;
+			// $response['message'] = 'Success';
+            // $response['data'] = (object)array();
+            // return response($response, 200);
+            // die('Oops! FCM Send Error: ' . curl_error($ch));
+        // }
         curl_close($ch);
 
     }

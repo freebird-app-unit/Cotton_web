@@ -13,4 +13,9 @@ class Brokers extends Model
     protected $fillable = [
         'name','address','mobile_number','email','password','referral_code','is_approve','is_active','otp','otp_time','is_otp_verify','is_delete','created_at' ,'updated_at', 'header_image', 'stamp_image', 'website'
     ];
+
+    public function userDetails()
+    {
+        return $this->hasOne(UserDetails::class,'user_id','id');
+    }
 }

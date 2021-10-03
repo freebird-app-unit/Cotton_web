@@ -186,7 +186,7 @@ class SellerController extends Controller
         );
         $save->save();
 
-        $message = "OTP to verify your account is ". $otp ." - My Health Chart";
+        $message = "OTP to verify your account is ". $otp ." - E - Cotton";
         NotificationHelper::send_otp($broker->mobile_number,$message);
 
         return Response::json([

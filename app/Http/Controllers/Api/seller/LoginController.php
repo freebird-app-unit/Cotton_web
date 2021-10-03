@@ -25,6 +25,8 @@ use Validator;
 use Storage;
 use Image;
 use App\Models\AddBrokers;
+use App\Helper\NotificationHelper;
+
 class LoginController extends Controller
 {
      public function registration_seller(Request $request)
@@ -88,12 +90,12 @@ class LoginController extends Controller
 				return response($response, 200);
 	    }
 
-	      if(!empty($referral_code)){
+	    if (!empty($referral_code)) {
 	    	$broker = Brokers::where('code',$referral_code)->first();
-	    	if(empty($broker)){
+	    	if (empty($broker)) {
 	    		$response['status'] = 404;
 				$response['message'] = 'Referral Code is not avaialble';
-		    }else{
+		    } else {
 		    	$image_name = '';
                 if ($request->hasFile('image')) {
                     $image = $request->file('image');
@@ -102,6 +104,7 @@ class LoginController extends Controller
                     $img->stream(); // <-- Key point
                     Storage::disk('public')->put('seller/profile/' . $image_name, $img, 'public');
                 }
+
 		    	$seller = new Sellers();
 				$seller->name = $name;
 				$seller->password = Hash::make($password);
@@ -113,6 +116,7 @@ class LoginController extends Controller
 				$seller->otp_time = date('Y-m-d H:i:s');
 				$seller->image = $image_name;
 				$seller->referral_code=$referral_code;
+
 				if($seller->save()){
 					$id = $seller->id;
 					$user_details = new UserDetails();
@@ -167,22 +171,20 @@ class LoginController extends Controller
 				}
 
 				if($bank_details->save()){
-							//send otp
-							$message = "OTP to verify your account is ". $seller->otp ." - My Health Chart";
-							$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$seller->mobile_number."'&message=" . urlencode($message);
-							$sms = file_get_contents($api);
-							//send otp
+                    //send otp
+                    $message = "OTP to verify your account is ". $verification_code ." - E - Cotton";
+                    NotificationHelper::send_otp($seller->mobile_number,$message);
 
-							$response['data']->id=$seller->id;
-							$response['data']->mobile_number=$seller->mobile_number;
-							$response['data']->email=$seller->email;
-							$response['data']->api_token=$device_details->api_token;
+                    $response['data']->id=$seller->id;
+                    $response['data']->mobile_number=$seller->mobile_number;
+                    $response['data']->email=$seller->email;
+                    $response['data']->api_token=$device_details->api_token;
 
-							$response['status'] = 200;
-							$response['message'] = 'Congratulations, your account has been successfully created.';
-						}
+                    $response['status'] = 200;
+                    $response['message'] = 'Congratulations, your account has been successfully created.';
+                }
 		    }
-	    }else{
+	    } else {
 	    	$image_name = '';
 			if ($request->hasFile('image')) {
 				$image = $request->file('image');
@@ -191,77 +193,76 @@ class LoginController extends Controller
 				$img->stream(); // <-- Key point
 				Storage::disk('public')->put('seller/profile/' . $image_name, $img, 'public');
 			}
-	    	    $seller = new Sellers();
-				$seller->name = $name;
-				$seller->password = Hash::make($password);
-				$seller->address = $address;
-				$seller->mobile_number= $mobile_number;
-				$seller->email=$email;
-				$verification_code = mt_rand(100000,999999);
-				$seller->otp = $verification_code;
-				$seller->otp_time = date('Y-m-d H:i:s');
-				$seller->image = $image_name;
-				$seller->referral_code=$referral_code;
-				if($seller->save()){
-					$id = $seller->id;
-					$user_details = new UserDetails();
-					$user_details->user_id = $id;
-					$user_details->user_type = $user_type;
-					$user_details->seller_buyer_type = $seller_buyer_type;
-					$user_details->name_of_contact_person=$name_of_contact_person;
-					$user_details->business_type=$business_type;
-					$user_details->registration_no=$registration_no;
-					$user_details->registration_date=$registration_date;
-					$user_details->registration_as_msme=$registration_as_msme;
-					$user_details->turnover_year_one=$turnover_year_one;
-					$user_details->turnover_date_one=$turnover_date_one;
-					$user_details->turnover_year_two=$turnover_year_two;
-					$user_details->turnover_date_two=$turnover_date_two;
-					$user_details->turnover_year_three=$turnover_year_three;
-					$user_details->turnover_date_three=$turnover_date_three;
-					$user_details->oper_in_cotton_trade=$oper_in_cotton_trade;
-					$user_details->gst_no=$gst_no;
-					$user_details->pan_no_of_buyer=$pan_no_of_buyer;
-					$user_details->country_id=$country_id;
-					$user_details->state_id=$state_id;
-					$user_details->city_id=$city_id;
-					$user_details->station_id=$station_id;
-					$user_details->save();
 
-					$device_details = new DeviceDetails();
-					$device_details->user_id = $id;
-					$device_details->user_type = 'seller';
-					$device_details->fcm_token = $fcm_token;
-					$device_details->device_token = $device_type;
-					$device_details->api_token = str::random(100);
-					$device_details->save();
+            $seller = new Sellers();
+            $seller->name = $name;
+            $seller->password = Hash::make($password);
+            $seller->address = $address;
+            $seller->mobile_number= $mobile_number;
+            $seller->email=$email;
+            $verification_code = mt_rand(100000,999999);
+            $seller->otp = $verification_code;
+            $seller->otp_time = date('Y-m-d H:i:s');
+            $seller->image = $image_name;
+            $seller->referral_code=$referral_code;
+            if($seller->save()){
+                $id = $seller->id;
+                $user_details = new UserDetails();
+                $user_details->user_id = $id;
+                $user_details->user_type = $user_type;
+                $user_details->seller_buyer_type = $seller_buyer_type;
+                $user_details->name_of_contact_person=$name_of_contact_person;
+                $user_details->business_type=$business_type;
+                $user_details->registration_no=$registration_no;
+                $user_details->registration_date=$registration_date;
+                $user_details->registration_as_msme=$registration_as_msme;
+                $user_details->turnover_year_one=$turnover_year_one;
+                $user_details->turnover_date_one=$turnover_date_one;
+                $user_details->turnover_year_two=$turnover_year_two;
+                $user_details->turnover_date_two=$turnover_date_two;
+                $user_details->turnover_year_three=$turnover_year_three;
+                $user_details->turnover_date_three=$turnover_date_three;
+                $user_details->oper_in_cotton_trade=$oper_in_cotton_trade;
+                $user_details->gst_no=$gst_no;
+                $user_details->pan_no_of_buyer=$pan_no_of_buyer;
+                $user_details->country_id=$country_id;
+                $user_details->state_id=$state_id;
+                $user_details->city_id=$city_id;
+                $user_details->station_id=$station_id;
+                $user_details->save();
 
-					$bank_details = new BankDetails();
-					$bank_details->user_id = $id;
-					$bank_details->bank_name =$bank_name;
-					$bank_details->account_holder_name = $account_holder_name;
-					$bank_details->branch_address = $branch_address;
-					$bank_details->ifsc_code = $ifsc_code;
-					$bank_details->user_type = 'seller';
-					$bank_details->save();
+                $device_details = new DeviceDetails();
+                $device_details->user_id = $id;
+                $device_details->user_type = 'seller';
+                $device_details->fcm_token = $fcm_token;
+                $device_details->device_token = $device_type;
+                $device_details->api_token = str::random(100);
+                $device_details->save();
 
-				}
+                $bank_details = new BankDetails();
+                $bank_details->user_id = $id;
+                $bank_details->bank_name =$bank_name;
+                $bank_details->account_holder_name = $account_holder_name;
+                $bank_details->branch_address = $branch_address;
+                $bank_details->ifsc_code = $ifsc_code;
+                $bank_details->user_type = 'seller';
+                $bank_details->save();
 
-				if($bank_details->save()){
-							//send otp
-							$message = "OTP to verify your account is ". $seller->otp ." - My Health Chart";
-							$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$seller->mobile_number."'&message=" . urlencode($message);
-							$sms = file_get_contents($api);
-							//send otp
+            }
 
-							$response['data']->id=$seller->id;
-							$response['data']->mobile_number=$seller->mobile_number;
-							$response['data']->email=$seller->email;
-							$response['data']->api_token=$device_details->api_token;
+            if($bank_details->save()){
+                //send otp
+                $message = "OTP to verify your account is ". $seller->otp ." - E - Cotton";
+                NotificationHelper::send_otp($seller->mobile_number,$message);
 
-							$response['status'] = 200;
-							$response['message'] = 'Congratulations, your account has been successfully created.';
-						}
+                $response['data']->id=$seller->id;
+                $response['data']->mobile_number=$seller->mobile_number;
+                $response['data']->email=$seller->email;
+                $response['data']->api_token=$device_details->api_token;
+
+                $response['status'] = 200;
+                $response['message'] = 'Congratulations, your account has been successfully created.';
+            }
 	    }
 
         return response($response, 200);
@@ -436,10 +437,8 @@ class LoginController extends Controller
 							$forgot_password->save();
 
 							//send otp
-							$message = "OTP to verify your account is ". $forgot_password->otp ." - My Health Chart";
-							$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$forgot_password->mobile_number."'&message=" . urlencode($message);
-							$sms = file_get_contents($api);
-							//send otp
+							$message = "OTP to verify your account is ". $forgot_password->otp ." - E - Cotton";
+                            NotificationHelper::send_otp($forgot_password->mobile_number,$message);
 
 							$response['status'] = 200;
 							$response['message'] = 'Verification code successfully sent';
@@ -510,9 +509,10 @@ class LoginController extends Controller
 					$reset_password->otp = '';
 					$reset_password->save();
 
-					$message = "Congratulations! Your password has been reset successfully. - My Health Chart";
-					$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$reset_password->mobile_number."'&message=" . urlencode($message);
-					$sms = file_get_contents($api);
+                    // Send OTP
+					$message = "Congratulations! Your password has been reset successfully. - E - Cotton";
+                    NotificationHelper::send_otp($reset_password->mobile_number,$message);
+
 					$response['status'] = 200;
 					$response['message'] = 'Your password has been reset successfully';
 				}
@@ -574,9 +574,8 @@ class LoginController extends Controller
 						$change_password->otp = '';
 						$change_password->save();
 
-						$message = "Congratulations! Your password has been changed successfully. - My Health Chart";
-						$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$change_password->mobile_number."'&message=" . urlencode($message);
-						$sms = file_get_contents($api);
+						$message = "Congratulations! Your password has been changed successfully. - E - Cotton";
+                        NotificationHelper::send_otp($change_password->mobile_number,$message);
 
 						$response['status'] = 200;
 						$response['message'] = 'Your password has been successfully changed';
@@ -628,29 +627,29 @@ class LoginController extends Controller
 			$hours   = floor(($diff - ($days * 86400)) / 3600);
 			$minutes = floor(($diff - ($days * 86400) - ($hours * 3600)) / 60);
 			if (($diff > 0) && ($minutes <= 180)) {
-					//send otp
-					$message = "OTP to verify your account is ". $resend_data->otp ." - My Health Chart";
-					$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$resend_data->mobile_number."'&message=" . urlencode($message);
-					$sms = file_get_contents($api);
-							//send otp
-					$response['status'] = 200;
-					$response['message'] = 'Resend OTP successfully';
-			}else{
-					$verification_code = mt_rand(100000,999999);
-					$resend_data->otp = $verification_code;
-					$resend_data->otp_time = date('Y-m-d H:i:s');
-					$resend_data->save();
+                //send otp
+                $message = "OTP to verify your account is ". $resend_data->otp ." - E - Cotton";
+                NotificationHelper::send_otp($resend_data->mobile_number,$message);
 
-					$message = "OTP to verify your account is ". $resend_data->otp ." - My Health Chart";
-					$api = "http://message.smartwave.co.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY=6d1bdc8e4530149c49564516e213f7&routeId=8&senderId=HLTCHT&mobileNos='".$resend_data->mobile_number."'&message=" . urlencode($message);
-					$sms = file_get_contents($api);
-					$response['status'] = 200;
-					$response['message'] = 'Resend OTP successfully';
-						}
-			}else{
-					$response['status'] = 404;
-					$response['message'] = 'Mobile number not found';
-			}
+                $response['status'] = 200;
+                $response['message'] = 'Resend OTP successfully';
+			} else {
+                $verification_code = mt_rand(100000,999999);
+                $resend_data->otp = $verification_code;
+                $resend_data->otp_time = date('Y-m-d H:i:s');
+                $resend_data->save();
+
+                // Send OTP
+                $message = "OTP to verify your account is ". $resend_data->otp ." - E - Cotton";
+                NotificationHelper::send_otp($resend_data->mobile_number,$message);
+
+                $response['status'] = 200;
+                $response['message'] = 'Resend OTP successfully';
+            }
+        } else {
+            $response['status'] = 404;
+            $response['message'] = 'Mobile number not found';
+        }
 
 		return response($response, 200);
     }
@@ -1169,6 +1168,68 @@ class LoginController extends Controller
 		if (!empty($code)) {
 			$broker_list = Brokers::select('id', 'name')->where(['is_approve' => 1, 'code' => $code])->get();
 		}
+
+		$response['message'] = 'Broker List';
+        $response['status'] = 200;
+        $response['data'] = $broker_list;
+        return response($response, 200);
+    }
+
+    public function broker_list_v1(Request $request)
+    {
+		$data = $request->input('data');
+        $content = json_decode($data);
+
+        $seller_id = isset($content->seller_id) ? $content->seller_id : '';
+        $buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
+        $type = isset($content->type) ? $content->type : '';
+
+        $params = [
+            'seller_id' => $seller_id,
+            'buyer_id' => $buyer_id,
+            'type' => $type
+        ];
+
+        $validator = Validator::make($params, [
+            'seller_id' => 'required|exists:tbl_sellers,id',
+            'buyer_id' => 'required|exists:tbl_buyers,id',
+            'type' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $response['status'] = 404;
+            $response['message'] = $validator->errors()->first();
+            return response($response, 200);
+        }
+
+        $final_merged = [];
+        if ($type == 'seller') {
+
+            $seller_broker = AddBrokers::with('broker')->where(['user_type' => 'seller', 'buyer_id' => $seller_id, 'broker_type' => 'default'])->get();
+            $buyer_broker = AddBrokers::with('broker')->where(['user_type' => 'buyer', 'buyer_id' => $buyer_id, 'broker_type' => 'default'])->get();
+            $merged = $seller_broker->merge($buyer_broker);
+
+        } else {
+
+            $buyer_broker = AddBrokers::with('broker')->where(['user_type' => 'buyer', 'buyer_id' => $buyer_id, 'broker_type' => 'default'])->get();
+            $seller_broker = AddBrokers::with('broker')->where(['user_type' => 'seller', 'buyer_id' => $seller_id, 'broker_type' => 'default'])->get();
+            $merged = $buyer_broker->merge($seller_broker);
+
+        }
+
+        $buyer_brokers = AddBrokers::with('broker')->where(['user_type' => 'buyer', 'buyer_id' => $buyer_id, 'broker_type' => 'not_default'])->get();
+        $final_merged = $merged->merge($buyer_brokers);
+
+        $broker_list = [];
+        if (!empty($final_merged)) {
+            foreach($final_merged as $broker) {
+                $broker_list[] = [
+                    'id' => $broker->broker->id,
+                    'name' => $broker->broker->name,
+                    'type' => $broker->user_type,
+                ];
+            }
+        }
 
 		$response['message'] = 'Broker List';
         $response['status'] = 200;

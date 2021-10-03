@@ -13,9 +13,9 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:api')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
 
 
 Route::group(['namespace' => 'Api\seller'], function () {
@@ -135,3 +135,4 @@ Route::group(['namespace' => 'Api\product'], function () {
 Route::post('/news', 'Api\seller\LoginController@news_list');
 Route::post('/news_details', 'Api\seller\LoginController@news_details');
 Route::post('/broker_list', 'Api\seller\LoginController@broker_list');
+Route::post('/broker_list_v1', 'Api\seller\LoginController@broker_list_v1');
