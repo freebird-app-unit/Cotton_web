@@ -680,50 +680,41 @@ class LoginController extends Controller
 	    }
 
 
-		$token =  $request->bearerToken();
-		$seller = DeviceDetails::where(['user_id'=>$user_id,'api_token'=>$token,'user_type'=>'seller'])->first();
-		if(!empty($seller)){
-	    	$profile =  Sellers::leftJoin('tbl_bank_details', 'tbl_bank_details.user_id', '=', 'tbl_sellers.id')->leftJoin('tbl_user_details', 'tbl_user_details.user_id', '=', 'tbl_sellers.id')->where('tbl_sellers.id',$user_id)->first();
-		    if(!empty($profile)){
-		    	$response['data']->id=$profile->id;
-				$response['data']->mobile_number=($profile->mobile_number)?$profile->mobile_number:'';
-				$response['data']->email=($profile->email)?$profile->email:'';
-				$response['data']->password=($profile->password)?$profile->password:'';
-				$response['data']->user_type=($profile->user_type)?$profile->user_type:'';
-				$response['data']->seller_buyer_type=($profile->seller_buyer_type)?$profile->seller_buyer_type:'';
-				$response['data']->name=($profile->name)?$profile->name:'';
-				$response['data']->address=($profile->address)?$profile->address:'';
-				$response['data']->name_of_contact_person=($profile->name_of_contact_person)?$profile->name_of_contact_person:'';
-				$response['data']->business_type=($profile->business_type)?$profile->business_type:'';
-				$response['data']->registration_no=($profile->registration_no)?$profile->registration_no:'';
-				$response['data']->registration_date=($profile->registration_date)?$profile->registration_date:'';
-				$response['data']->registration_as_msme=($profile->registration_as_msme)?$profile->registration_as_msme:'';
-				$response['data']->turnover_year_one=($profile->turnover_year_one)?$profile->turnover_year_one:'';
-				$response['data']->turnover_date_one=($profile->turnover_date_one)?$profile->turnover_date_one:'';
-				$response['data']->turnover_year_two=($profile->turnover_year_two)?$profile->turnover_year_two:'';
-				$response['data']->turnover_date_two=($profile->turnover_date_two)?$profile->turnover_date_two:'';
-				$response['data']->turnover_year_three=($profile->turnover_year_three)?$profile->turnover_year_three:'';
-				$response['data']->turnover_date_three=($profile->turnover_date_three)?$profile->turnover_date_three:'';
-				$response['data']->oper_in_cotton_trade=($profile->oper_in_cotton_trade)?$profile->oper_in_cotton_trade:'';
-				$response['data']->gst_no=($profile->gst_no)?$profile->gst_no:'';
-				$response['data']->pan_no_of_buyer=($profile->pan_no_of_buyer)?$profile->pan_no_of_buyer:'';
-				$response['data']->bank_name=($profile->bank_name)?$profile->bank_name:'';
-				$response['data']->account_holder_name=($profile->account_holder_name)?$profile->account_holder_name:'';
-				$response['data']->branch_address=($profile->branch_address)?$profile->branch_address:'';
-				$response['data']->ifsc_code=($profile->ifsc_code)?$profile->ifsc_code:'';
-				$response['data']->referral_code=($profile->referral_code)?$profile->referral_code:'';
-				$response['data']->fcm_token=($profile->fcm_token)?$profile->fcm_token:'';
+        $profile =  Sellers::leftJoin('tbl_bank_details', 'tbl_bank_details.user_id', '=', 'tbl_sellers.id')->leftJoin('tbl_user_details', 'tbl_user_details.user_id', '=', 'tbl_sellers.id')->where('tbl_sellers.id',$user_id)->first();
+        if(!empty($profile)){
+            $response['data']->id=$profile->id;
+            $response['data']->mobile_number=($profile->mobile_number)?$profile->mobile_number:'';
+            $response['data']->email=($profile->email)?$profile->email:'';
+            $response['data']->user_type=($profile->user_details->user_type)?$profile->user_details->user_type:'';
+            $response['data']->seller_buyer_type=($profile->user_details->seller_buyer_type)?$profile->user_details->seller_buyer_type:'';
+            $response['data']->name=($profile->name)?$profile->name:'';
+            $response['data']->address=($profile->address)?$profile->address:'';
+            $response['data']->name_of_contact_person=($profile->user_details->name_of_contact_person)?$profile->user_details->name_of_contact_person:'';
+            $response['data']->business_type=($profile->user_details->business_type)?$profile->user_details->business_type:'';
+            $response['data']->registration_no=($profile->user_details->registration_no)?$profile->user_details->registration_no:'';
+            $response['data']->registration_date=($profile->user_details->registration_date)?$profile->user_details->registration_date:'';
+            $response['data']->registration_as_msme=($profile->user_details->registration_as_msme)?$profile->user_details->registration_as_msme:'';
+            $response['data']->turnover_year_one=($profile->user_details->turnover_year_one)?$profile->user_details->turnover_year_one:'';
+            $response['data']->turnover_date_one=($profile->user_details->turnover_date_one)?$profile->user_details->turnover_date_one:'';
+            $response['data']->turnover_year_two=($profile->user_details->turnover_year_two)?$profile->user_details->turnover_year_two:'';
+            $response['data']->turnover_date_two=($profile->user_details->turnover_date_two)?$profile->user_details->turnover_date_two:'';
+            $response['data']->turnover_year_three=($profile->user_details->turnover_year_three)?$profile->user_details->turnover_year_three:'';
+            $response['data']->turnover_date_three=($profile->user_details->turnover_date_three)?$profile->user_details->turnover_date_three:'';
+            $response['data']->oper_in_cotton_trade=($profile->user_details->oper_in_cotton_trade)?$profile->oper_in_cotton_trade:'';
+            $response['data']->gst_no=($profile->user_details->gst_no)?$profile->user_details->gst_no:'';
+            $response['data']->pan_no_of_buyer=($profile->user_details->pan_no_of_buyer)?$profile->user_details->pan_no_of_buyer:'';
+            $response['data']->bank_name=($profile->bank_details->bank_name)?$profile->bank_details->bank_name:'';
+            $response['data']->account_holder_name=($profile->bank_details->account_holder_name)?$profile->bank_details->account_holder_name:'';
+            $response['data']->branch_address=($profile->bank_details->branch_address)?$profile->bank_details->branch_address:'';
+            $response['data']->ifsc_code=($profile->bank_details->ifsc_code)?$profile->bank_details->ifsc_code:'';
+            $response['data']->referral_code=($profile->referral_code)?$profile->referral_code:'';
 
-				$response['status'] = 200;
-				$response['message'] = 'Profile';
-		    }else{
-				$response['status'] = 404;
-				$response['message'] = 'User not found';
-			}
-    	}else{
-	    	$response['status'] = 401;
-	        $response['message'] = 'Unauthenticated';
-		}
+            $response['status'] = 200;
+            $response['message'] = 'Profile';
+        }else{
+            $response['status'] = 404;
+            $response['message'] = 'User not found';
+        }
 
 		return response($response, 200);
     }
@@ -1126,37 +1117,15 @@ class LoginController extends Controller
 		$data = $request->input('data');
         $content = json_decode($data);
 
-        if (isset($content->seller_id)) {
-			$seller_id = isset($content->seller_id) ? $content->seller_id : '';
+        $buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
 
-			$params = [
-				'seller_id' => $seller_id
-			];
+        $params = [
+            'buyer_id' => $buyer_id,
+        ];
 
-			$validator = Validator::make($params, [
-				'seller_id' => 'required|exists:tbl_sellers,id',
-			]);
-
-			$code = Sellers::select('referral_code')->where('id', $seller_id)->first();
-			$code = isset($code->referral_code) ? $code->referral_code : '';
-		} else if (isset($content->buyer_id)) {
-			$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
-
-			$params = [
-				'buyer_id' => $buyer_id
-			];
-
-			$validator = Validator::make($params, [
-				'buyer_id' => 'required|exists:tbl_buyers,id',
-			]);
-
-			$code = Buyers::select('referral_code')->where('id', $buyer_id)->first();
-			$code = isset($code->referral_code) ? $code->referral_code : '';
-		} else {
-			$response['status'] = 404;
-            $response['message'] = 'Please enter valid input';
-            return response($response, 200);
-		}
+        $validator = Validator::make($params, [
+            'buyer_id' => 'required|exists:tbl_buyers,id',
+        ]);
 
         if ($validator->fails()) {
             $response['status'] = 404;
@@ -1164,10 +1133,21 @@ class LoginController extends Controller
             return response($response, 200);
         }
 
-		$broker_list = [];
-		if (!empty($code)) {
-			$broker_list = Brokers::select('id', 'name')->where(['is_approve' => 1, 'code' => $code])->get();
-		}
+        $buyer_broker = AddBrokers::with('broker')->where(['user_type' => 'buyer', 'buyer_id' => $buyer_id, 'broker_type' => 'default'])->get();
+
+        $buyer_brokers = AddBrokers::with('broker')->where(['user_type' => 'buyer', 'buyer_id' => $buyer_id, 'broker_type' => 'not_default'])->get();
+        $final_merged = $buyer_broker->merge($buyer_brokers);
+
+        $broker_list = [];
+        if (!empty($final_merged)) {
+            foreach($final_merged as $broker) {
+                $broker_list[] = [
+                    'id' => $broker->broker->id,
+                    'name' => $broker->broker->name,
+                    'type' => $broker->broker_type,
+                ];
+            }
+        }
 
 		$response['message'] = 'Broker List';
         $response['status'] = 200;
@@ -1204,7 +1184,6 @@ class LoginController extends Controller
 
         $final_merged = [];
         if ($type == 'seller') {
-
             $seller_broker = AddBrokers::with('broker')->where(['user_type' => 'seller', 'buyer_id' => $seller_id, 'broker_type' => 'default'])->get();
             $buyer_broker = AddBrokers::with('broker')->where(['user_type' => 'buyer', 'buyer_id' => $buyer_id, 'broker_type' => 'default'])->get();
             $merged = $seller_broker->merge($buyer_broker);
@@ -1226,7 +1205,7 @@ class LoginController extends Controller
                 $broker_list[] = [
                     'id' => $broker->broker->id,
                     'name' => $broker->broker->name,
-                    'type' => $broker->user_type,
+                    'type' => $broker->broker_type,
                 ];
             }
         }

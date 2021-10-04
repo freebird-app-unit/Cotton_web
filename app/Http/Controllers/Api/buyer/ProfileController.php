@@ -24,7 +24,7 @@ class ProfileController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$id = isset($content->id) ? $content->id : '';
@@ -55,11 +55,10 @@ class ProfileController extends Controller
 		$account_holder_name = isset($content->account_holder_name) ? $content->account_holder_name : '';
 		$branch_address = isset($content->branch_address) ? $content->branch_address : '';
 		$ifsc_code = isset($content->ifsc_code) ? $content->ifsc_code : '';
-		$device_type = isset($content->device_type) ? $content->device_type : '';
 
 		$params = [
 			'mobile_number' => $mobile_number,
-			'email' => $email,	
+			'email' => $email,
 		];
 
 		$validator = Validator::make($params, [
@@ -93,7 +92,7 @@ class ProfileController extends Controller
 				$buyer->email=(empty($email))?$buyer->email:$email;
 				$buyer->image = $image_name;
 				$buyer->save();
-	    	
+
 				$user_details = UserDetails::where(['user_id'=>$id,'user_type'=>'buyer'])->first();
 				if(!empty($user_details)){
 					$user_details->user_type = (empty($user_type))?$user_details->user_type:$user_type;
@@ -128,10 +127,10 @@ class ProfileController extends Controller
 					$bank_details->ifsc_code = (empty($ifsc_code))?$bank_details->ifsc_code:$ifsc_code;
 					$bank_details->save();
 				}
-				$response['status'] = 200; 
+				$response['status'] = 200;
 				$response['message'] = 'Profile has been successfully updated.';
 			}else{
-				$response['status'] = 404; 
+				$response['status'] = 404;
 			}
         	return response($response, 200);
     }

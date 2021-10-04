@@ -15,4 +15,14 @@ class Sellers extends Model
         'name','address','mobile_number','email','password','referral_code','is_approve','is_active','otp','otp_time','is_otp_verify','is_delete','created_at' ,'updated_at'
     ];
 
+    public function bank_details()
+    {
+        return $this->hasOne(BankDetails::class,'user_id','id');
+    }
+
+    public function user_details()
+    {
+        return $this->hasOne(UserDetails::class,'user_id','id');
+    }
+
 }

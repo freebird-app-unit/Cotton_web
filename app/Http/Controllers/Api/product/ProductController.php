@@ -5739,13 +5739,15 @@ class ProductController extends Controller
 		$notification_to_buy_list = [];
 		$post_to_buy_list = [];
 		$final_arr = [];
-		$post = Post::where(['seller_buyer_id'=>$buyer_id,'is_active'=>0,'user_type'=>'buyer'])->where('status','active')->orderBy('id', 'DESC')->get();
+		$post = Post::whereHas('product', function($q){
+                $q->where(['is_delete'=>0]);
+            })->where(['seller_buyer_id'=>$buyer_id,'is_active'=>0,'user_type'=>'buyer'])->where('status','active')->orderBy('id', 'DESC')->get();
 		if(count($post)>0){
 			foreach ($post as $value) {
-					$product = Product::where(['id'=>$value->product_id,'is_delete'=>0])->first();
+					// $product = Product::where(['id'=>$value->product_id,'is_delete'=>0])->first();
 					$product_name = '';
-					if(!empty($product)){
-						$product_name = $product->name;
+					if(!empty($value->product->name)){
+						$product_name = $value->product->name;
 					}
 					$attribute_array = [];
 					$attribute = PostDetails::where('post_id',$value->id)->get();
@@ -5767,8 +5769,9 @@ class ProductController extends Controller
 					'no_of_bales' => $value->no_of_bales,
 					'price' => $value->price,
 					'type' => 'post',
+					'remaining_bales' => $value->remain_bales,
+					'date' => $created_at,
 					'attribute_array' => $attribute_array,
-					'date' => $created_at
 				];
 			}
 		}
@@ -5816,9 +5819,10 @@ class ProductController extends Controller
 					'no_of_bales' => $value->no_of_bales,
 					'price' => $value->price,
 					'type' => 'notification',
-					'attribute_array' => $attribute_array,
-					'seller_array' => $seller_array,
 					'date' => $created_at,
+                    'remaining_bales' => 0,
+					'attribute_array' => $attribute_array,
+					'seller_array' => $seller_array
 				];
 			}
 		}
@@ -5860,13 +5864,15 @@ class ProductController extends Controller
 		$post_to_sell_list = [];
 		$notification_to_sell_list = [];
 		$final_arr = [];
-		$post = Post::where(['seller_buyer_id'=>$seller_id,'is_active'=>0,'user_type'=>'seller'])->where('status','active')->orderBy('id', 'DESC')->get();
+		$post = Post::whereHas('product', function($q){
+            $q->where(['is_delete'=>0]);
+        })->where(['seller_buyer_id'=>$seller_id,'is_active'=>0,'user_type'=>'seller'])->where('status','active')->orderBy('id', 'DESC')->get();
 		if(count($post)>0){
 			foreach ($post as $value) {
-					$product = Product::where(['id'=>$value->product_id,'is_delete'=>0])->first();
+					// $product = Product::where(['id'=>$value->product_id,'is_delete'=>0])->first();
 					$product_name = '';
-					if(!empty($product)){
-						$product_name = $product->name;
+					if(!empty($value->product->name)){
+						$product_name = $value->product->name;
 					}
 					$attribute_array = [];
 					$attribute = PostDetails::where('post_id',$value->id)->get();
@@ -5890,6 +5896,7 @@ class ProductController extends Controller
 					'address' => $value->address,
 					'date' => $created_at,
 					'type' => 'post',
+					'remaining_bales' => $value->remain_bales,
 					'attribute_array' => $attribute_array,
 				];
 			}
@@ -5938,9 +5945,10 @@ class ProductController extends Controller
 					'no_of_bales' => $value->no_of_bales,
 					'price' => $value->price,
 					'type' => 'notification',
+					'date' => $created_at,
+                    'remaining_bales' => 0,
 					'attribute_array' => $attribute_array,
 					'buyer_array' => $buyer_array,
-					'date' => $created_at,
 				];
 			}
 		}
@@ -6346,10 +6354,16 @@ class ProductController extends Controller
 
             if ($negotiation_comp->negotiation_type == "post") {
                 $post_remain = Post::where(['id'=>$negotiation_comp->post_notification_id,'is_active'=>0])->first();
+                $no_of_bales = $negotiation_comp->bales;
+
                 if ($no_of_bales > $post_remain->no_of_bales) {
                     $response['status'] = 404;
                     $response['message'] = 'Please Enter Less Bales';
-                }else{
+                } else if ($no_of_bales > $post_remain->remain_bales){
+                    $response['status'] = 404;
+                    $response['message'] = 'No of remain bales is not enough in post';
+                    return response($response, 200);
+                } else {
                     $complete = Negotiation::where('id',$negotiation_comp->id)->orderBy('id','DESC')->first();
                     if(!empty($complete)){
                         $complete->status = 'complete';
@@ -6567,13 +6581,28 @@ class ProductController extends Controller
                                         $broker_mobile_number_2 =$broker->mobile_number_2;
                                         $broker_email =$broker->email;
                                         $broker_url =$broker->website;
-                                        $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
-                                        $file1 = file_get_contents($broker_stamp_img);
-                                        $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+                                        // $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+                                        // $file1 = file_get_contents($broker_stamp_img);
+                                        // $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
 
-                                        $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
-                                        $file2 = file_get_contents($broker_header_img);
-                                        $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                        // $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                                        // $file2 = file_get_contents($broker_header_img);
+                                        // $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+
+                                        $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $broker->stamp_image);
+                                        $broker_stamp_image = '';
+									    if (File::exists($broker_stamp_img)) {
+                                            $file1 = file_get_contents($broker_stamp_img);
+                                            $broker_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
+                                        }
+
+                                        $broker_header_img = storage_path('app/public/broker/header_image/' . $broker->header_image);
+                                        $broker_header_image = '';
+									    if (File::exists($broker_header_img)) {
+                                            $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                                            $file2 = file_get_contents($broker_header_img);
+                                            $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                                        }
                                     }
                                 }
                             }
@@ -6621,9 +6650,13 @@ class ProductController extends Controller
                             $seller_name_address = $seller_details->name.' '.$seller_details->address;
                             $seller_station = $station->name;
                             if(!empty($seller_details->image)){
-                                $seller_stamp_img = asset('storage/app/public/seller/profile/' . $seller_details->image);
-                                $file3 = file_get_contents($seller_stamp_img);
-                                $seller_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file3);
+                                $seller_stamp_img = storage_path('app/public/seller/profile/' . $seller_details->image);
+
+                                if (File::exists($seller_stamp_img)) {
+                                    $seller_stamp_img = asset('storage/app/public/seller/profile/' . $seller_details->image);
+                                    $file1 = file_get_contents($seller_stamp_img);
+                                    $seller_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
+                                }
                             }
                         }
                     }
@@ -6638,9 +6671,13 @@ class ProductController extends Controller
                             $buyer_name_address = $buyer_details->name.' '.$buyer_details->address;
                             $buyer_station = $station->name;
                             if(!empty($buyer_details->image)){
-                                $buyer_stamp_img = asset('storage/app/public/buyer/profile/' . $buyer_details->image);
-                                $file4 = file_get_contents($buyer_stamp_img);
-                                $buyer_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file4);
+
+                                $buyer_stamp_img = storage_path('app/public/buyer/profile/' . $buyer_details->image);
+                                if (File::exists($buyer_stamp_img)) {
+                                    $buyer_stamp_img = asset('storage/app/public/buyer/profile/' . $buyer_details->image);
+                                    $file1 = file_get_contents($buyer_stamp_img);
+                                    $buyer_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
+                                }
                             }
                         }
                     }
@@ -7085,9 +7122,12 @@ class ProductController extends Controller
                                 $seller_name_address = $seller_details->name.' '.$seller_details->address;
                                 $seller_station = $station->name;
                                 if(!empty($seller_details->image)){
-                                    $seller_stamp_img = asset('storage/app/public/seller/profile/' . $seller_details->image);
-                                    $file3 = file_get_contents($seller_stamp_img);
-                                    $seller_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file3);
+                                    $seller_stamp_img = storage_path('app/public/seller/profile/' . $seller_details->image);
+                                    if (File::exists($seller_stamp_img)) {
+                                        $seller_stamp_img = asset('storage/app/public/seller/profile/' . $seller_details->image);
+                                        $file3 = file_get_contents($seller_stamp_img);
+                                        $seller_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file3);
+                                    }
                                 }
                             }
                         }
@@ -7217,8 +7257,7 @@ class ProductController extends Controller
         $post_negotiation_buyer_ids = [];
         $notification_negotiation_buyer_ids = [];
 
-        // dd($negotiation);
-		if(count($negotiation)>0){
+        if(count($negotiation)>0){
             foreach($negotiation as $value){
                 if($value->negotiation_type == 'post'){
                     // $post = Post::with('product')->where('id',$value->post_notification_id)->first();
@@ -7504,11 +7543,6 @@ class ProductController extends Controller
 		}else{
 			$response['status'] = 404;
 		}
-
-        // dd($post_ids);
-        // dd($post_negotiation_buyer_ids);
-        // dd($notification_ids);
-        // dd($notification_negotiation_buyer_ids);
 
 		return response($response, 200);
 	}

@@ -51,6 +51,7 @@ Route::group(['namespace' => 'Api\buyer'], function () {
 	Route::post('/profile_buyer', 'LoginController@profile_buyer');
 	Route::post('/logout_buyer', 'LoginController@logout_buyer');
 	Route::post('/edit_profile_buyer', 'ProfileController@edit_profile_buyer');
+	Route::post('/send_broker_request', 'LoginController@send_broker_request');
 });
 
 Route::group(['namespace' => 'Api\broker'], function () {
@@ -71,6 +72,8 @@ Route::group(['namespace' => 'Api\broker'], function () {
 	Route::post('/add_broker_verify', 'SearchController@add_broker_verify');
 	Route::post('/add_broker_list', 'SearchController@add_broker_list');
 	Route::post('/delete_broker', 'SearchController@delete_broker');
+	Route::post('/broker_request_list', 'SearchController@broker_request_list');
+	Route::post('/accept_broker_request', 'SearchController@accept_broker_request');
 });
 
 
