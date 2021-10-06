@@ -33,6 +33,7 @@ use App\Models\NegotiationHistory;
 use App\Models\SubjectTo;
 use App\Models\DeviceDetails;
 use App\Models\DealQueue;
+use App\Models\NegotiationDebitNote;
 use Validator;
 use Carbon\Carbon;
 use PDF;
@@ -4062,6 +4063,18 @@ class ProductController extends Controller
 
 				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 
+                $negotiation_debit_file = [];
+                $debit_note = NegotiationDebitNote::select('file_name')->where('negotiation_complete_id',$negotiation_data->id)->get();
+                if(!empty($debit_note)){
+                    foreach($debit_note as $val){
+                        $_file = storage_path('app/public/content_images/' . $val->file_name);
+						if (File::exists($_file) && !empty($val->file_name)) {
+                            $negotiation_debit_file [] = [
+                                'file_name' => asset('storage/app/public/content_images/' . $val->file_name),
+                            ];
+						}
+                    }
+                }
 				// $negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->where(function($query) {
                         // $query->where('lab_report_status','pass')
                             // ->orWhere('lab_report_status',NULL);
@@ -4191,7 +4204,8 @@ class ProductController extends Controller
 							'product_name' => $product_name,
 							'attribute_array' => $attribute_array,
 							'url'=>$url,
-							'lab_report_status' => $value->lab_report_status
+							'lab_report_status' => $value->lab_report_status,
+							'debit_note_file' =>  $negotiation_debit_file
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -4316,7 +4330,8 @@ class ProductController extends Controller
 							'product_name' => $product_name,
 							'attribute_array' => $attribute_array,
 							'url'=>$url,
-							'lab_report_status' => $value->lab_report_status
+							'lab_report_status' => $value->lab_report_status,
+                            'debit_note_file' =>  $negotiation_debit_file
 						];
 					}
 				}
@@ -4335,6 +4350,20 @@ class ProductController extends Controller
 			foreach ($unique_date as $date) {
 
 				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->orderBy('id','DESC')->get();
+
+                $negotiation_debit_file = [];
+                $debit_note = NegotiationDebitNote::select('file_name')->where('negotiation_complete_id',$negotiation_data->id)->get();
+                if(!empty($debit_note)){
+                    foreach($debit_note as $val){
+                        $_file = storage_path('app/public/content_images/' . $val->file_name);
+						if (File::exists($_file) && !empty($val->file_name)) {
+                            $negotiation_debit_file [] = [
+                                'file_name' => asset('storage/app/public/content_images/' . $val->file_name),
+                            ];
+						}
+                    }
+                }
+
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
 
@@ -4460,7 +4489,8 @@ class ProductController extends Controller
 							'product_name' => $product_name,
 							'attribute_array' => $attribute_array,
 							'url'=>$url,
-							'lab_report_status' => $value->lab_report_status
+							'lab_report_status' => $value->lab_report_status,
+                            'debit_note_file' =>  $negotiation_debit_file
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -4585,7 +4615,8 @@ class ProductController extends Controller
 							'product_name' => $product_name,
 							'attribute_array' => $attribute_array,
 							'url'=>$url,
-							'lab_report_status' => $value->lab_report_status
+							'lab_report_status' => $value->lab_report_status,
+                            'debit_note_file' =>  $negotiation_debit_file
 						];
 					}
 				}
@@ -8971,4 +9002,48 @@ class ProductController extends Controller
             return 1;
         }
     }
+
+    public function upload_debit_note(Request $request)
+    {
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$deal_id = isset($content->deal_id) ? $content->deal_id : '';
+		$upload_by = isset($content->upload_by) ? $content->upload_by : '';
+
+		$params = [
+			'deal_id' => $deal_id,
+		];
+
+		$validator = Validator::make($params, [
+            'deal_id' => 'required|exists:tbl_negotiation_complete,id',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+			$response['message'] =$validator->errors()->first();
+			return response($response, 200);
+	    }
+
+        if($request->hasFile('file')) {
+            foreach($request->file('file') as $key => $image)
+            {
+                $destinationPath = 'content_images/';
+                $filename = time().$key.'.'.$image->getClientOriginalExtension();
+                $image->move($destinationPath, $filename);
+
+                $debit_note = new NegotiationDebitNote();
+                $debit_note->negotiation_complete_id = $deal_id;
+                $debit_note->upload_by = $upload_by;
+                $debit_note->file_name = $filename;
+                $debit_note->save();
+
+            }
+        }
+
+		$response['status'] = 200;
+		$response['message'] = 'Save Successfully';
+		$response['data'] = (object)[];
+		return response($response, 200);
+	}
 }

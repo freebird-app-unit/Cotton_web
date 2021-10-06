@@ -308,11 +308,10 @@ class LoginController extends Controller
 								if($login->is_delete == 1){
 
 										$device_details = DeviceDetails::where(['user_id'=>$login->id,'user_type'=>'seller'])->first();
-										if(empty($device_details->api_token)){
-											$device_details->api_token = str::random(100);
-											$device_details->fcm_token=$fcm_token;
-											$device_details->save();
-										}
+                                        $device_details->api_token = str::random(100);
+                                        $device_details->fcm_token=$fcm_token;
+                                        $device_details->save();
+
 										$response['data']->id=$login->id;
 										$response['data']->api_token=$device_details->api_token;
 										$response['status'] = 200;
