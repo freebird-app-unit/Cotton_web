@@ -22,6 +22,6 @@ class Buyers extends Model
 
     public function user_details()
     {
-        return $this->hasOne(UserDetails::class,'user_id','id');
+        return $this->hasOne(UserDetails::class,'user_id','id')->where('user_type','buyer');
     }
 }

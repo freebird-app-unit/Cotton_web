@@ -693,7 +693,7 @@ class LoginController extends Controller
             $response['data']->turnover_date_two=($profile->user_details->turnover_date_two)?$profile->user_details->turnover_date_two:'';
             $response['data']->turnover_year_three=($profile->user_details->turnover_year_three)?$profile->user_details->turnover_year_three:'';
             $response['data']->turnover_date_three=($profile->user_details->turnover_date_three)?$profile->user_details->turnover_date_three:'';
-            $response['data']->oper_in_cotton_trade=($profile->user_details->oper_in_cotton_trade)?$profile->oper_in_cotton_trade:'';
+            $response['data']->oper_in_cotton_trade=!empty($profile->user_details->oper_in_cotton_trade)?$profile->user_details->oper_in_cotton_trade:'';
             $response['data']->gst_no=($profile->user_details->gst_no)?$profile->user_details->gst_no:'';
             $response['data']->pan_no_of_buyer=($profile->user_details->pan_no_of_buyer)?$profile->user_details->pan_no_of_buyer:'';
             $response['data']->bank_name=($profile->bank_details->bank_name)?$profile->bank_details->bank_name:'';
@@ -782,7 +782,7 @@ class LoginController extends Controller
 
 		$validator = Validator::make($params, [
             'buyer_id' => 'required|exists:tbl_buyers,id',
-            'broker_id' => 'required|exists:tbl_brokers,id'
+            'broker_id' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -791,37 +791,46 @@ class LoginController extends Controller
             return response($response, 200);
 	    }
 
-        $check_broker = AddBrokers::where(['buyer_id' => $buyer_id, 'broker_id' => $broker_id, 'user_type' => 'buyer'])->first();
-        if (!empty($check_broker)) {
-            $response['status'] = 404;
-            $response['message'] = 'Broker already added in your list!';
-            return response($response, 200);
-        }
+        if(!empty($broker_id)){
+            foreach($broker_id as $id){
 
-    	$broker_request = BrokerRequest::where(['buyer_id'=>$buyer_id,'broker_id'=> $broker_id])->first();
-	    if(empty($broker_request)){
-	    	$broker_request = new BrokerRequest();
-            $broker_request->status = 0;
-            $broker_request->buyer_id = $buyer_id;
-            $broker_request->broker_id = $broker_id;
-            $broker_request->save();
+                $broker_data = Brokers::find($id);
+                if(!empty($broker_data)){
+                    $check_broker = AddBrokers::where(['buyer_id' => $buyer_id, 'broker_id' => $id, 'user_type' => 'buyer'])->first();
+                    if (!empty($check_broker)) {
+                        $response['status'] = 404;
+                        $response['message'] = 'Broker already added in your list!';
+                        return response($response, 200);
+                    }
 
-            $response['message'] = 'Request sent successfully!';
+                    $broker_request = BrokerRequest::where(['buyer_id'=>$buyer_id,'broker_id'=> $id])->first();
+                    if(empty($broker_request)){
+                        $broker_request = new BrokerRequest();
+                        $broker_request->status = 0;
+                        $broker_request->buyer_id = $buyer_id;
+                        $broker_request->broker_id = $id;
+                        $broker_request->save();
 
-	    } else {
-            $response['status'] = 404;
-            if ($broker_request->status == 0) {
-                $response['message'] = 'You have already sent request';
-            } else if ($broker_request->status == 1) {
-                $response['message'] = 'Broker is already added';
-            } else {
-                $response['status'] = 200;
-                BrokerRequest::where(['buyer_id'=>$buyer_id,'broker_id'=> $broker_id])->update([
-                    'status' => 0
-                ]);
-                $response['message'] = 'Request sent successfully!';
+                        $response['message'] = 'Request sent successfully!';
+
+                    } else {
+                        $response['status'] = 404;
+                        if ($broker_request->status == 0) {
+                            $response['message'] = 'You have already sent request';
+                        } else if ($broker_request->status == 1) {
+                            $response['message'] = 'Broker is already added';
+                        } else {
+                            $response['status'] = 200;
+                            BrokerRequest::where(['buyer_id'=>$buyer_id,'broker_id'=> $id])->update([
+                                'status' => 0
+                            ]);
+                            $response['message'] = 'Request sent successfully!';
+                        }
+                    }
+                }
+
             }
-	    }
+        }
 
 		return response($response, 200);
     }

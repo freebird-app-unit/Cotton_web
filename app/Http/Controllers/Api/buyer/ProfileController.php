@@ -79,8 +79,8 @@ class ProfileController extends Controller
 	    	if(!empty($buyer)){
 
 	    		$image_name = '';
-				if ($request->hasFile('image')) {
-					$image = $request->file('image');
+				if ($request->hasFile('profile_image')) {
+					$image = $request->file('profile_image');
 					$image_name = time() . '.' . $image->getClientOriginalExtension();
 					$img = Image::make($image->getRealPath());
 					$img->stream(); // <-- Key point

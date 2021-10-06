@@ -16,6 +16,6 @@ class Brokers extends Model
 
     public function userDetails()
     {
-        return $this->hasOne(UserDetails::class,'user_id','id');
+        return $this->hasOne(UserDetails::class,'user_id','id')->where('user_type','broker');
     }
 }

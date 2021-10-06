@@ -34,7 +34,7 @@ class ProfileController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$id = isset($content->id) ? $content->id : '';
@@ -69,7 +69,7 @@ class ProfileController extends Controller
 
 		$params = [
 			'mobile_number' => $mobile_number,
-			'email' => $email,	
+			'email' => $email,
 		];
 
 		$validator = Validator::make($params, [
@@ -90,8 +90,8 @@ class ProfileController extends Controller
 	    	if(!empty($buyer)){
 
 	    		$image_name = '';
-				if ($request->hasFile('image')) {
-					$image = $request->file('image');
+				if ($request->hasFile('profile_image')) {
+					$image = $request->file('profile_image');
 					$image_name = time() . '.' . $image->getClientOriginalExtension();
 					$img = Image::make($image->getRealPath());
 					$img->stream(); // <-- Key point
@@ -103,7 +103,7 @@ class ProfileController extends Controller
 				$buyer->email=(empty($email))?$buyer->email:$email;
 				$buyer->image = $image_name;
 				$buyer->save();
-	    	
+
 				$user_details = UserDetails::where(['user_id'=>$id,'user_type'=>'seller'])->first();
 				if(!empty($user_details)){
 					$user_details->user_type = (empty($user_type))?$user_details->user_type:$user_type;
@@ -138,10 +138,10 @@ class ProfileController extends Controller
 					$bank_details->ifsc_code = (empty($ifsc_code))?$bank_details->ifsc_code:$ifsc_code;
 					$bank_details->save();
 				}
-				$response['status'] = 200; 
+				$response['status'] = 200;
 				$response['message'] = 'Profile has been successfully updated.';
 			}else{
-				$response['status'] = 404; 
+				$response['status'] = 404;
 			}
         	return response($response, 200);
     }
