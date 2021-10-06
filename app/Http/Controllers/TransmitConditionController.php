@@ -65,6 +65,7 @@ class TransmitConditionController extends Controller
             ],
             [
                 'name'    => $request->name,
+                'is_dispatch'    => $request->is_dispatch,
             ]
         );
         $transmit_condition->save();

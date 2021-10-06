@@ -36,6 +36,24 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
+                                    <label class="col-sm-3 control-label">Dispatch</label>
+                                    <div class="col-sm-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="is_dispatch" value="0" id="flexRadioDefault1" {{!empty($transmit) && $transmit->is_dispatch == 0 ? 'checked' : 'checked'}}>
+                                            <label class="form-check-label" for="flexRadioDefault1">
+                                            No
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="is_dispatch" value="1" id="flexRadioDefault2" {{!empty($transmit) && $transmit->is_dispatch == 0 ? 'checked' : ''}}>
+                                            <label class="form-check-label" for="flexRadioDefault2">
+                                            Yes
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-group">
                                     <div class="col-sm-offset-3 col-sm-9 m-t-15">
                                         <button type="button" class="btn btn-primary" id="btn_sub">
                                             Submit
@@ -65,9 +83,6 @@
     $("#transmit_form").validate({
         rules: {
             name: {
-                required : true,
-            },
-            description: {
                 required : true,
             },
         },

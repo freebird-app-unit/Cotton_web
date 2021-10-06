@@ -12,6 +12,6 @@ class TransmitCondition extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'name','is_delete','created_at' ,'updated_at'
+        'name','is_dispatch','is_delete','created_at' ,'updated_at'
     ];
 }

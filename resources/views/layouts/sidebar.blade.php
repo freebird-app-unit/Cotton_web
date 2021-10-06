@@ -62,13 +62,6 @@
 				<li class="has_sub">
                     <a href="{{url('/news')}}" class="waves-effect {{request()->segment(1) == 'news' ? 'active' : ''}}"><i class="fa fa-newspaper-o"></i> <span> News </span></a>
                 </li>
-				<li class="has_sub">
-                    <a href="{{url('/subject_to')}}" class="waves-effect {{request()->segment(1) == 'subject_to' ? 'active' : ''}}"><i class="fa fa-newspaper-o"></i> <span> Subject To </span></a>
-                </li> 
-				
-				<li class="has_sub">
-                    <a href="{{url('/confirm_to')}}" class="waves-effect {{request()->segment(1) == 'confirm_to' ? 'active' : ''}}"><i class="fa fa-newspaper-o"></i> <span> Confirm To </span></a>
-                </li>
 
             </ul>
             <div class="clearfix"></div>

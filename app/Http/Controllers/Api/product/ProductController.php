@@ -1536,6 +1536,7 @@ class ProductController extends Controller
 				$transmit[] = [
 					'id' => $value->id,
 					'name' => $value->name,
+					'is_dispatch' => $value->is_dispatch,
 				];
 			}
 		}
