@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 use Validator;
 use Storage;
 use Image;
+use File;
 use App\Helper\NotificationHelper;
 
 class LoginController extends Controller
@@ -29,40 +30,40 @@ class LoginController extends Controller
 		$data = $request->input('data');
 		$content = json_decode($data);
 
-		$user_type = isset($content->user_type) ? $content->user_type : '';
-		$seller_buyer_type = isset($content->seller_buyer_type) ? $content->seller_buyer_type : '';
-		$name = isset($content->name) ? $content->name : '';
-		$password = isset($content->password) ? $content->password : '';
-		$address = isset($content->address) ? $content->address : '';
-		$name_of_contact_person = isset($content->name_of_contact_person) ? $content->name_of_contact_person : '';
-		$mobile_number = isset($content->mobile_number) ? $content->mobile_number : '';
-		$email = isset($content->email) ? $content->email : '';
-		$business_type = isset($content->business_type) ? $content->business_type : '';
-		$registration_no = isset($content->registration_no) ? $content->registration_no : '';
-		$registration_date = isset($content->registration_date) ? $content->registration_date : '';
-		$registration_as_msme = isset($content->registration_as_msme) ? $content->registration_as_msme : '';
-		$turnover_year_one = isset($content->turnover_year_one) ? $content->turnover_year_one : '';
-		$turnover_date_one = isset($content->turnover_date_one) ? $content->turnover_date_one : '';
-		$turnover_year_two = isset($content->turnover_year_two) ? $content->turnover_year_two : '';
-		$turnover_date_two = isset($content->turnover_date_two) ? $content->turnover_date_two : '';
-		$turnover_year_three = isset($content->turnover_year_three) ? $content->turnover_year_three : '';
-		$turnover_date_three = isset($content->turnover_date_three) ? $content->turnover_date_three : '';
-		$oper_in_cotton_trade = isset($content->oper_in_cotton_trade) ? $content->oper_in_cotton_trade : '';
-		$gst_no = isset($content->gst_no) ? $content->gst_no : '';
-		$pan_no_of_buyer = isset($content->pan_no_of_buyer) ? $content->pan_no_of_buyer : '';
-		$country_id = isset($content->country_id) ? $content->country_id : '';
-		$state_id = isset($content->state_id) ? $content->state_id : '';
-		$city_id = isset($content->city_id) ? $content->city_id : '';
-		$station_id = isset($content->station_id) ? $content->station_id : '';
-		$bank_name = isset($content->bank_name) ? $content->bank_name : '';
-		$account_holder_name = isset($content->account_holder_name) ? $content->account_holder_name : '';
-		$branch_address = isset($content->branch_address) ? $content->branch_address : '';
-		$ifsc_code = isset($content->ifsc_code) ? $content->ifsc_code : '';
-		$referral_code = isset($content->referral_code) ? $content->referral_code : '';
-		$establish_year = isset($content->establish_year) ? $content->establish_year : '';
-		$company_name = isset($content->company_name) ? $content->company_name : '';
-		$fcm_token = isset($content->fcm_token) ? $content->fcm_token : '';
-		$device_type = isset($content->device_type) ? $content->device_type : '';
+		$user_type = !empty($content->user_type) ? $content->user_type : '';
+		$seller_buyer_type = !empty($content->seller_buyer_type) ? $content->seller_buyer_type : '';
+		$name = !empty($content->name) ? $content->name : '';
+		$password = !empty($content->password) ? $content->password : '';
+		$address = !empty($content->address) ? $content->address : '';
+		$name_of_contact_person = !empty($content->name_of_contact_person) ? $content->name_of_contact_person : '';
+		$mobile_number = !empty($content->mobile_number) ? $content->mobile_number : '';
+		$email = !empty($content->email) ? $content->email : '';
+		$business_type = !empty($content->business_type) ? $content->business_type : '';
+		$registration_no = !empty($content->registration_no) ? $content->registration_no : '';
+		$registration_date = !empty($content->registration_date) ? $content->registration_date : '';
+		$registration_as_msme = !empty($content->registration_as_msme) ? $content->registration_as_msme : '';
+		$turnover_year_one = !empty($content->turnover_year_one) ? $content->turnover_year_one : '';
+		$turnover_date_one = !empty($content->turnover_date_one) ? $content->turnover_date_one : '';
+		$turnover_year_two = !empty($content->turnover_year_two) ? $content->turnover_year_two : '';
+		$turnover_date_two = !empty($content->turnover_date_two) ? $content->turnover_date_two : '';
+		$turnover_year_three = !empty($content->turnover_year_three) ? $content->turnover_year_three : '';
+		$turnover_date_three = !empty($content->turnover_date_three) ? $content->turnover_date_three : '';
+		$oper_in_cotton_trade = !empty($content->oper_in_cotton_trade) ? $content->oper_in_cotton_trade : '';
+        $gst_no = !empty($content->gst_no) ? $content->gst_no : '';
+		$pan_no_of_buyer = !empty($content->pan_no_of_buyer) ? $content->pan_no_of_buyer : '';
+		$country_id = !empty($content->country_id) ? $content->country_id : '';
+		$state_id = !empty($content->state_id) ? $content->state_id : '';
+		$city_id = !empty($content->city_id) ? $content->city_id : '';
+		$station_id = !empty($content->station_id) ? $content->station_id : '';
+		$bank_name = !empty($content->bank_name) ? $content->bank_name : '';
+		$account_holder_name = !empty($content->account_holder_name) ? $content->account_holder_name : '';
+		$branch_address = !empty($content->branch_address) ? $content->branch_address : '';
+		$ifsc_code = !empty($content->ifsc_code) ? $content->ifsc_code : '';
+		$referral_code = !empty($content->referral_code) ? $content->referral_code : '';
+		$establish_year = !empty($content->establish_year) ? $content->establish_year : '';
+		$company_name = !empty($content->company_name) ? $content->company_name : '';
+		$fcm_token = !empty($content->fcm_token) ? $content->fcm_token : '';
+		$device_type = !empty($content->device_type) ? $content->device_type : '';
 
 		$params = [
 			'mobile_number' => $mobile_number,
@@ -700,6 +701,14 @@ class LoginController extends Controller
             $response['data']->branch_address=($profile->bank_details->branch_address)?$profile->bank_details->branch_address:'';
             $response['data']->ifsc_code=($profile->bank_details->ifsc_code)?$profile->bank_details->ifsc_code:'';
             $response['data']->referral_code=($profile->referral_code)?$profile->referral_code:'';
+
+            $image = '';
+            $buyer_stamp_img = storage_path('app/public/buyer/profile/' . $profile->image);
+            if (File::exists($buyer_stamp_img)) {
+                $image = asset('storage/app/public/buyer/profile/' . $profile->image);
+            }
+
+            $response['data']->profile_image = $image;
 
             $response['status'] = 200;
             $response['message'] = 'Profile';

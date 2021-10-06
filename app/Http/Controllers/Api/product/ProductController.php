@@ -1070,7 +1070,7 @@ class ProductController extends Controller
                                                     ->whereHas('user_detail.station', function($query)  use ($station_val) {
                                                         $query->where('id', $station_val);
                                                     })
-                                                    ->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')
+                                                    ->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name', 'tbl_post.remain_bales')
                                                     ->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')
                                                     ->where(['tbl_post.user_type'=>'buyer','tbl_post.is_active'=>0,'tbl_post.status'=>'active'])
                                                     ->whereIn('tbl_post.id', $post_arr)
@@ -1090,6 +1090,8 @@ class ProductController extends Controller
                                                     'user_type' => $station_result_val->user_type,
                                                     'product_id' => $station_result_val->product_id,
                                                     'no_of_bales' => $station_result_val->no_of_bales,
+                                                    'no_of_bales' => $station_result_val->remain_bales,
+                                                    'remaining_bales' => $station_result_val->remain_bales,
                                                     'price' => $station_result_val->price,
                                                     'address' => $station_result_val->address,
                                                     'd_e' => $station_result_val->d_e,
@@ -5643,7 +5645,7 @@ class ProductController extends Controller
                                                     ->whereHas('user_detail.station', function($query)  use ($station_val) {
                                                         $query->where('id', $station_val);
                                                     })
-                                                    ->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name')
+                                                    ->select('tbl_post.id','tbl_post.status','tbl_post.seller_buyer_id','tbl_post.user_type','tbl_post.product_id','tbl_post.no_of_bales','tbl_post.price','tbl_post.address','tbl_post.d_e','tbl_post.buy_for','tbl_post.spinning_meal_name', 'remain_bales')
                                                     ->leftJoin('tbl_post_details', 'tbl_post_details.post_id', '=', 'tbl_post.id')
                                                     ->where(['tbl_post.user_type'=>'seller','tbl_post.is_active'=>0,'tbl_post.status'=>'active'])
                                                     ->whereIn('tbl_post.id', $post_arr)
@@ -5663,6 +5665,7 @@ class ProductController extends Controller
                                                     'user_type' => $station_result_val->user_type,
                                                     'product_id' => $station_result_val->product_id,
                                                     'no_of_bales' => $station_result_val->no_of_bales,
+                                                    'remaining_bales' => $station_result_val->remain_bales,
                                                     'price' => $station_result_val->price,
                                                     'address' => $station_result_val->address,
                                                     'd_e' => $station_result_val->d_e,

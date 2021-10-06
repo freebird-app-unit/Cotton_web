@@ -24,6 +24,7 @@ use Illuminate\Validation\ValidationException;
 use Validator;
 use Storage;
 use Image;
+use File;
 use App\Models\AddBrokers;
 use App\Helper\NotificationHelper;
 
@@ -683,31 +684,39 @@ class LoginController extends Controller
         $profile =  Sellers::leftJoin('tbl_bank_details', 'tbl_bank_details.user_id', '=', 'tbl_sellers.id')->leftJoin('tbl_user_details', 'tbl_user_details.user_id', '=', 'tbl_sellers.id')->where('tbl_sellers.id',$user_id)->first();
         if(!empty($profile)){
             $response['data']->id=$profile->id;
-            $response['data']->mobile_number=($profile->mobile_number)?$profile->mobile_number:'';
-            $response['data']->email=($profile->email)?$profile->email:'';
-            $response['data']->user_type=($profile->user_details->user_type)?$profile->user_details->user_type:'';
-            $response['data']->seller_buyer_type=($profile->user_details->seller_buyer_type)?$profile->user_details->seller_buyer_type:'';
-            $response['data']->name=($profile->name)?$profile->name:'';
-            $response['data']->address=($profile->address)?$profile->address:'';
-            $response['data']->name_of_contact_person=($profile->user_details->name_of_contact_person)?$profile->user_details->name_of_contact_person:'';
-            $response['data']->business_type=($profile->user_details->business_type)?$profile->user_details->business_type:'';
-            $response['data']->registration_no=($profile->user_details->registration_no)?$profile->user_details->registration_no:'';
-            $response['data']->registration_date=($profile->user_details->registration_date)?$profile->user_details->registration_date:'';
-            $response['data']->registration_as_msme=($profile->user_details->registration_as_msme)?$profile->user_details->registration_as_msme:'';
-            $response['data']->turnover_year_one=($profile->user_details->turnover_year_one)?$profile->user_details->turnover_year_one:'';
-            $response['data']->turnover_date_one=($profile->user_details->turnover_date_one)?$profile->user_details->turnover_date_one:'';
-            $response['data']->turnover_year_two=($profile->user_details->turnover_year_two)?$profile->user_details->turnover_year_two:'';
-            $response['data']->turnover_date_two=($profile->user_details->turnover_date_two)?$profile->user_details->turnover_date_two:'';
-            $response['data']->turnover_year_three=($profile->user_details->turnover_year_three)?$profile->user_details->turnover_year_three:'';
-            $response['data']->turnover_date_three=($profile->user_details->turnover_date_three)?$profile->user_details->turnover_date_three:'';
-            $response['data']->oper_in_cotton_trade=($profile->user_details->oper_in_cotton_trade)?$profile->oper_in_cotton_trade:'';
-            $response['data']->gst_no=($profile->user_details->gst_no)?$profile->user_details->gst_no:'';
-            $response['data']->pan_no_of_buyer=($profile->user_details->pan_no_of_buyer)?$profile->user_details->pan_no_of_buyer:'';
-            $response['data']->bank_name=($profile->bank_details->bank_name)?$profile->bank_details->bank_name:'';
-            $response['data']->account_holder_name=($profile->bank_details->account_holder_name)?$profile->bank_details->account_holder_name:'';
-            $response['data']->branch_address=($profile->bank_details->branch_address)?$profile->bank_details->branch_address:'';
-            $response['data']->ifsc_code=($profile->bank_details->ifsc_code)?$profile->bank_details->ifsc_code:'';
-            $response['data']->referral_code=($profile->referral_code)?$profile->referral_code:'';
+            $response['data']->mobile_number=!empty($profile->mobile_number)?$profile->mobile_number:'';
+            $response['data']->email=!empty($profile->email)?$profile->email:'';
+            $response['data']->user_type=!empty($profile->user_details->user_type)?$profile->user_details->user_type:'';
+            $response['data']->seller_buyer_type=!empty($profile->user_details->seller_buyer_type)?$profile->user_details->seller_buyer_type:'';
+            $response['data']->name=!empty($profile->name)?$profile->name:'';
+            $response['data']->address=!empty($profile->address)?$profile->address:'';
+            $response['data']->name_of_contact_person=!empty($profile->user_details->name_of_contact_person)?$profile->user_details->name_of_contact_person:'';
+            $response['data']->business_type=!empty($profile->user_details->business_type)?$profile->user_details->business_type:'';
+            $response['data']->registration_no=!empty($profile->user_details->registration_no)?$profile->user_details->registration_no:'';
+            $response['data']->registration_date=!empty($profile->user_details->registration_date)?$profile->user_details->registration_date:'';
+            $response['data']->registration_as_msme=!empty($profile->user_details->registration_as_msme)?$profile->user_details->registration_as_msme:'';
+            $response['data']->turnover_year_one=!empty($profile->user_details->turnover_year_one)?$profile->user_details->turnover_year_one:'';
+            $response['data']->turnover_date_one=!empty($profile->user_details->turnover_date_one)?$profile->user_details->turnover_date_one:'';
+            $response['data']->turnover_year_two=!empty($profile->user_details->turnover_year_two)?$profile->user_details->turnover_year_two:'';
+            $response['data']->turnover_date_two=!empty($profile->user_details->turnover_date_two)?$profile->user_details->turnover_date_two:'';
+            $response['data']->turnover_year_three=!empty($profile->user_details->turnover_year_three)?$profile->user_details->turnover_year_three:'';
+            $response['data']->turnover_date_three=!empty($profile->user_details->turnover_date_three)?$profile->user_details->turnover_date_three:'';
+            $response['data']->oper_in_cotton_trade=!empty($profile->user_details->oper_in_cotton_trade)?$profile->oper_in_cotton_trade:'';
+            $response['data']->gst_no=!empty($profile->user_details->gst_no)?$profile->user_details->gst_no:'';
+            $response['data']->pan_no_of_buyer=!empty($profile->user_details->pan_no_of_buyer)?$profile->user_details->pan_no_of_buyer:'';
+            $response['data']->bank_name=!empty($profile->bank_details->bank_name)?$profile->bank_details->bank_name:'';
+            $response['data']->account_holder_name=!empty($profile->bank_details->account_holder_name)?$profile->bank_details->account_holder_name:'';
+            $response['data']->branch_address=!empty($profile->bank_details->branch_address)?$profile->bank_details->branch_address:'';
+            $response['data']->ifsc_code=!empty($profile->bank_details->ifsc_code)?$profile->bank_details->ifsc_code:'';
+            $response['data']->referral_code=!empty($profile->referral_code)?$profile->referral_code:'';
+
+            $image = '';
+            $seller_img = storage_path('app/public/seller/profile/' . $profile->image);
+            if (File::exists($seller_img)) {
+                $image = asset('storage/app/public/seller/profile/' . $profile->image);
+            }
+
+            $response['data']->profile_image = $image;
 
             $response['status'] = 200;
             $response['message'] = 'Profile';
