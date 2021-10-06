@@ -701,7 +701,7 @@ class LoginController extends Controller
             $response['data']->turnover_date_two=!empty($profile->user_details->turnover_date_two)?$profile->user_details->turnover_date_two:'';
             $response['data']->turnover_year_three=!empty($profile->user_details->turnover_year_three)?$profile->user_details->turnover_year_three:'';
             $response['data']->turnover_date_three=!empty($profile->user_details->turnover_date_three)?$profile->user_details->turnover_date_three:'';
-            $response['data']->oper_in_cotton_trade=!empty($profile->user_details->oper_in_cotton_trade)?$profile->oper_in_cotton_trade:'';
+            $response['data']->oper_in_cotton_trade=!empty($profile->user_details->oper_in_cotton_trade)?$profile->user_details->oper_in_cotton_trade:'';
             $response['data']->gst_no=!empty($profile->user_details->gst_no)?$profile->user_details->gst_no:'';
             $response['data']->pan_no_of_buyer=!empty($profile->user_details->pan_no_of_buyer)?$profile->user_details->pan_no_of_buyer:'';
             $response['data']->bank_name=!empty($profile->bank_details->bank_name)?$profile->bank_details->bank_name:'';
