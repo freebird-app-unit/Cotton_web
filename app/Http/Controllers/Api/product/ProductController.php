@@ -4063,24 +4063,25 @@ class ProductController extends Controller
 
 				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 
-                $negotiation_debit_file = [];
-                $debit_note = NegotiationDebitNote::select('file_name')->where('negotiation_complete_id',$negotiation_data->id)->get();
-                if(!empty($debit_note)){
-                    foreach($debit_note as $val){
-                        $_file = storage_path('app/public/content_images/' . $val->file_name);
-						if (File::exists($_file) && !empty($val->file_name)) {
-                            $negotiation_debit_file [] = [
-                                'file_name' => asset('storage/app/public/content_images/' . $val->file_name),
-                            ];
-						}
-                    }
-                }
 				// $negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->where(function($query) {
-                        // $query->where('lab_report_status','pass')
-                            // ->orWhere('lab_report_status',NULL);
-                        // })->orderBy('id','DESC')->get();
-				foreach ($negotiation_data as $value) {
-					$dates = date('d-m-Y', strtotime($value->updated_at));
+                    // $query->where('lab_report_status','pass')
+                    // ->orWhere('lab_report_status',NULL);
+                    // })->orderBy('id','DESC')->get();
+                    foreach ($negotiation_data as $value) {
+
+                        $negotiation_debit_file = [];
+                        $debit_note = NegotiationDebitNote::select('file_name')->where('negotiation_complete_id',$value->id)->get();
+                        if(!empty($debit_note)){
+                            foreach($debit_note as $val){
+                                $_file = storage_path('app/public/content_images/' . $val->file_name);
+                                if (File::exists($_file) && !empty($val->file_name)) {
+                                    $negotiation_debit_file [] = [
+                                        'file_name' => asset('storage/app/public/content_images/' . $val->file_name),
+                                    ];
+                                }
+                            }
+                        }
+                        $dates = date('d-m-Y', strtotime($value->updated_at));
 
 					if($value->negotiation_type=="post"){
 							$post = Post::where('id',$value->post_notification_id)->first();
@@ -4205,7 +4206,7 @@ class ProductController extends Controller
 							'attribute_array' => $attribute_array,
 							'url'=>$url,
 							'lab_report_status' => $value->lab_report_status,
-							'debit_note_file' =>  $negotiation_debit_file
+							'debit_note_array' =>  $negotiation_debit_file
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -4331,7 +4332,7 @@ class ProductController extends Controller
 							'attribute_array' => $attribute_array,
 							'url'=>$url,
 							'lab_report_status' => $value->lab_report_status,
-                            'debit_note_file' =>  $negotiation_debit_file
+                            'debit_note_array' =>  $negotiation_debit_file
 						];
 					}
 				}
@@ -4351,20 +4352,22 @@ class ProductController extends Controller
 
 				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 
-                $negotiation_debit_file = [];
-                $debit_note = NegotiationDebitNote::select('file_name')->where('negotiation_complete_id',$negotiation_data->id)->get();
-                if(!empty($debit_note)){
-                    foreach($debit_note as $val){
-                        $_file = storage_path('app/public/content_images/' . $val->file_name);
-						if (File::exists($_file) && !empty($val->file_name)) {
-                            $negotiation_debit_file [] = [
-                                'file_name' => asset('storage/app/public/content_images/' . $val->file_name),
-                            ];
-						}
-                    }
-                }
-
 				foreach ($negotiation_data as $value) {
+
+                    $negotiation_debit_file = [];
+                    $debit_note = NegotiationDebitNote::select('file_name')->where('negotiation_complete_id',$value->id)->get();
+                    if(!empty($debit_note)){
+                        foreach($debit_note as $val){
+                            // dd($val);
+                            $_file = storage_path('app/public/content_images/' . $val->file_name);
+                            if (File::exists($_file) && !empty($val->file_name)) {
+                                $negotiation_debit_file [] = [
+                                     'file' => asset('storage/app/public/content_images/' . $val->file_name),
+                                ];
+                            }
+                        }
+                    }
+
 					$dates = date('d-m-Y', strtotime($value->updated_at));
 
 					if($value->negotiation_type=="post"){
@@ -4461,6 +4464,7 @@ class ProductController extends Controller
 							$gst_reciept = asset('storage/app/public/transaction_tracking/' . $value->gst_reciept);
 						}
 
+
 						$final_arr[$dates][]  = [
 							'deal_id' => $value->id,
 							'post_notification_id' => $value->post_notification_id,
@@ -4490,7 +4494,7 @@ class ProductController extends Controller
 							'attribute_array' => $attribute_array,
 							'url'=>$url,
 							'lab_report_status' => $value->lab_report_status,
-                            'debit_note_file' =>  $negotiation_debit_file
+                            'debit_note_array' =>  $negotiation_debit_file
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -4616,7 +4620,7 @@ class ProductController extends Controller
 							'attribute_array' => $attribute_array,
 							'url'=>$url,
 							'lab_report_status' => $value->lab_report_status,
-                            'debit_note_file' =>  $negotiation_debit_file
+                            'debit_note_array' =>  $negotiation_debit_file
 						];
 					}
 				}
@@ -9028,7 +9032,7 @@ class ProductController extends Controller
         if($request->hasFile('file')) {
             foreach($request->file('file') as $key => $image)
             {
-                $destinationPath = 'content_images/';
+                $destinationPath = storage_path('app/public/content_images/');
                 $filename = time().$key.'.'.$image->getClientOriginalExtension();
                 $image->move($destinationPath, $filename);
 
