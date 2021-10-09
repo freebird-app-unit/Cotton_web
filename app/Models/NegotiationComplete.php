@@ -42,4 +42,12 @@ class NegotiationComplete extends Model
     {
         return $this->hasOne(Lab::class,'id','lab');
     }
+    public function deal_pdf()
+    {
+        return $this->hasOne(DealPdf::class,'deal_id','id');
+    }
+    public function debit_note()
+    {
+        return $this->hasMany(DealPdf::class,'deal_id','id');
+    }
 }

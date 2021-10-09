@@ -25,4 +25,8 @@ class Post extends Model
     {
         return $this->hasOne(Buyers::class,'id','seller_buyer_id');
     }
+    public function post_details()
+    {
+        return $this->hasMany(PostDetails::class,'post_id','id');
+    }
 }

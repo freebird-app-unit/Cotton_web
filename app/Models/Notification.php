@@ -14,4 +14,9 @@ class Notification extends Model
      {
          return $this->hasOne(Product::class,'id','product_id');
      }
+
+     public function notification_details()
+    {
+        return $this->hasMany(NotificatonDetails::class,'notification_id','id');
+    }
 }

@@ -115,6 +115,9 @@ Route::group(['namespace' => 'Api\product'], function () {
 	Route::post('/search_to_sell_new', 'ProductController@search_to_sell_new');
 	Route::post('/search_to_buy_new', 'ProductController@search_to_buy_new');
 	Route::post('/update_transaction_tracking', 'ProductController@update_transaction_tracking');
+	Route::post('/update_transaction_sample', 'ProductController@update_transaction_sample');
+	Route::post('/my_contract_list_v1', 'ProductController@my_contract_list_v1');
+	Route::post('/contract_details', 'ProductController@contract_details');
 
 	Route::post('/negotiation_list_new', 'NegotiationController@negotiation_list_new');
 	Route::post('/negotiation_list_buyer_new', 'NegotiationController@negotiation_list_buyer_new');
