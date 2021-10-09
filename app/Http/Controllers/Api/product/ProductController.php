@@ -9406,7 +9406,7 @@ class ProductController extends Controller
 
 
         $negotiation_debit_file = [];
-        if(!empty($negotiation_data->debit_note)){
+		if(!empty($negotiation_data->debit_note)){
             foreach($negotiation_data->debit_note as $val){
                 $_file = storage_path('app/public/content_images/' . $val->file_name);
                 if (File::exists($_file) && !empty($val->file_name)) {

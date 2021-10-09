@@ -48,6 +48,6 @@ class NegotiationComplete extends Model
     }
     public function debit_note()
     {
-        return $this->hasMany(DealPdf::class,'deal_id','id');
+        return $this->hasMany(NegotiationDebitNote::class,'negotiation_complete_id','id');
     }
 }
