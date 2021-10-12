@@ -24,4 +24,8 @@ class Buyers extends Model
     {
         return $this->hasOne(UserDetails::class,'user_id','id')->where('user_type','buyer');
     }
+
+    public function user_plan() {
+        return $this->hasOne(UserPlan::class,'user_id','id')->where('user_type','buyer')->orderBy('id', 'DESC');
+    }
 }

@@ -34,6 +34,7 @@ use App\Models\SubjectTo;
 use App\Models\DeviceDetails;
 use App\Models\DealQueue;
 use App\Models\NegotiationDebitNote;
+use App\Helper\CommonHelper;
 use Validator;
 use Carbon\Carbon;
 use PDF;
@@ -164,6 +165,17 @@ class ProductController extends Controller
 				$response['message'] =$validator->errors()->first();
 				return response($response, 200);
 	    }
+
+        $check_data = CommonHelper::check_user_amount($seller_buyer_id,'seller');
+
+        if (!$check_data['success']) {
+            $response['status'] = 404;
+		    $response['message'] = $check_data['message'];
+            return response($response, 200);
+        }
+
+		$response['data'] = (object)[];
+		return response($response, 200);
 
 		$post_to_sell = new Post();
 		$post_to_sell->seller_buyer_id = $seller_buyer_id;
@@ -355,6 +367,14 @@ class ProductController extends Controller
 					return response($response, 200);
 		    }
 	    }
+
+        $check_data = CommonHelper::check_user_amount($seller_buyer_id,'seller');
+        if (!$check_data['success']) {
+            $response['status'] = 404;
+		    $response['message'] = $check_data['message'];
+            return response($response, 200);
+        }
+
 		$notification = new Notification();
 		$notification->seller_buyer_id = $seller_buyer_id;
 		$notification->user_type = 'seller';
@@ -604,6 +624,15 @@ class ProductController extends Controller
 					return response($response, 200);
 		    }
 	    }
+
+        $check_data = CommonHelper::check_user_amount($seller_buyer_id,'buyer');
+
+        if (!$check_data['success']) {
+            $response['status'] = 404;
+		    $response['message'] = $check_data['message'];
+            return response($response, 200);
+        }
+
 		$post_to_buy = new Post();
 		$post_to_buy->seller_buyer_id = $seller_buyer_id;
 		$post_to_buy->user_type = 'buyer';
@@ -787,6 +816,14 @@ class ProductController extends Controller
 					return response($response, 200);
 		    }
 	    }
+
+        $check_data = CommonHelper::check_user_amount($seller_buyer_id,'buyer');
+        if (!$check_data['success']) {
+            $response['status'] = 404;
+		    $response['message'] = $check_data['message'];
+            return response($response, 200);
+        }
+
 		$notification = new Notification();
 		$notification->seller_buyer_id = $seller_buyer_id;
 		$notification->user_type = 'buyer';
@@ -973,6 +1010,15 @@ class ProductController extends Controller
 		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
 		$attribute_array = isset($content->attribute_array) ? $content->attribute_array : '';
 		$d_e = isset($content->d_e) ? $content->d_e : '';
+		$seller_id = isset($content->seller_buyer_id) ? $content->seller_buyer_id : '';
+
+        $check_data = CommonHelper::check_user_amount($seller_id,'seller');
+
+        if (!$check_data['success']) {
+            $response['status'] = 404;
+		    $response['message'] = $check_data['message'];
+            return response($response, 200);
+        }
 
 		$search_array = [];
 		$post_arr = [];
@@ -1264,6 +1310,15 @@ class ProductController extends Controller
 		$product_id = isset($content->product_id) ? $content->product_id : '';
 		$no_of_bales = isset($content->no_of_bales) ? $content->no_of_bales : '';
 		$attribute_array = isset($content->attribute_array) ? $content->attribute_array : '';
+		$buyer_id = isset($content->buyer_id) ? $content->buyer_id : '';
+
+        $check_data = CommonHelper::check_user_amount($buyer_id,'buyer');
+
+        if (!$check_data['success']) {
+            $response['status'] = 404;
+		    $response['message'] = $check_data['message'];
+            return response($response, 200);
+        }
 
 		$search_array = [];
 		$post_arr = [];
@@ -6208,6 +6263,18 @@ class ProductController extends Controller
             }
         }
 
+        if ($negotiation_by == 'seller') {
+            $check_data = CommonHelper::check_user_amount($seller_id,'seller');
+        } else {
+            $check_data = CommonHelper::check_user_amount($buyer_id,'buyer');
+        }
+
+        if (!$check_data['success']) {
+            $response['status'] = 404;
+		    $response['message'] = $check_data['message'];
+            return response($response, 200);
+        }
+
 	    if($negotiation_type == "post"){
 	    	$post_remain = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
 		   	if($no_of_bales > $post_remain->no_of_bales){
@@ -6442,7 +6509,9 @@ class ProductController extends Controller
             return response($response, 200);
 	    }
 
-		$negotiation_comp = Negotiation::where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type])->first();
+        $settings = Settings::first();
+
+		$negotiation_comp = Negotiation::with('seller', 'buyer')->where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type])->first();
 
         if (!empty($negotiation_comp)) {
 
@@ -6458,8 +6527,29 @@ class ProductController extends Controller
                     $response['message'] = 'No of remain bales is not enough in post';
                     return response($response, 200);
                 } else {
+                    if ($done_by == 'seller') {
+                        $check_data = CommonHelper::check_user_amount($seller_id,'seller');
+                    } else {
+                        $check_data = CommonHelper::check_user_amount($buyer_id,'buyer');
+                    }
+
+                    if (!$check_data['success']) {
+                        $response['status'] = 404;
+                        $response['message'] = $check_data['message'];
+                        return response($response, 200);
+                    }
+
                     $complete = Negotiation::where('id',$negotiation_comp->id)->orderBy('id','DESC')->first();
                     if(!empty($complete)){
+
+                        $bales_amt = $settings->company_commission * $no_of_bales;
+
+                        if (!empty($check_data['data']) && $bales_amt > $check_data['data']->wallet_amount) {
+                            $response['status'] = 404;
+                            $response['message'] = ' ';
+                            return response($response, 200);
+                        }
+
                         $complete->status = 'complete';
                         $complete->updated_at = date('Y-m-d H:i:s');
                         $complete->save();
@@ -6802,8 +6892,7 @@ class ProductController extends Controller
                 $save->save();
                 //pdf
 			}
-		}
-		else{
+		} else {
             $check = $this->check_queue($buyer_id, $seller_id, $post_notification_id, $type);
 
             if ($check == 2) {
@@ -9662,6 +9751,40 @@ class ProductController extends Controller
 		$response['status'] = 200;
 		$response['message'] = '';
 		$response['data'] = $negotiation_array;
+		return response($response, 200);
+	}
+
+    public function test_api(Request $request)
+	{
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$seller_id = isset($content->seller_id) ? $content->seller_id : '';
+
+        $params = [
+			'seller_id' => $seller_id,
+		];
+
+		$validator = Validator::make($params, [
+            'seller_id' => 'required|exists:tbl_sellers,id',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+			$response['message'] =$validator->errors()->first();
+			return response($response, 200);
+	    }
+
+        $check_data = CommonHelper::check_user_amount($seller_id,'seller');
+
+        $response['status'] = 200;
+		$response['message'] = 'Success';
+        if (!$check_data['success']) {
+            $response['status'] = 404;
+		    $response['message'] = $check_data['message'];
+        }
+
+		$response['data'] = (object)[];
 		return response($response, 200);
 	}
 }

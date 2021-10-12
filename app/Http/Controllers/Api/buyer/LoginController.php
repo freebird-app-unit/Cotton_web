@@ -20,7 +20,7 @@ use App\Helper\NotificationHelper;
 
 class LoginController extends Controller
 {
-     public function registration_buyer(Request $request)
+    public function registration_buyer(Request $request)
     {
     	$response = array();
 		$response['status'] = 200;
@@ -174,7 +174,7 @@ class LoginController extends Controller
 					$response['message'] = 'Congratulations, your account has been successfully created.';
 				}
 		    }
-	    }else{
+	    } else {
 	    	$image_name = '';
 			if ($request->hasFile('image')) {
 				$image = $request->file('image');

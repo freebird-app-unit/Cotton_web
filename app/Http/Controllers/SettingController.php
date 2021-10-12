@@ -64,6 +64,8 @@ class SettingController extends Controller
                 'site_logo'    =>  $site_logo,
                 'negotiation_count'    => $request->negotiation_count,
                 'bunch'    => $request->bunch,
+                'company_commission' => $request->company_commission,
+                'broker_commission' => $request->broker_commission,
             ]
         );
         $setting->save();

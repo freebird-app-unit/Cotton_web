@@ -199,6 +199,8 @@ Route::group(['middleware' => ['auth:web']], function() {
         Route::post('delete/{id}', ['as' => 'confirm_to_delete', 'uses' => 'ConfirmToController@destroy']);
     });
 
+    Route::resource('plan', 'PlanController');
+
     Route::post('check_seller_code', ['as' => 'check_seller_code', 'uses' => 'SellerController@check_seller_code']);
     Route::post('send_broker_otp', ['as' => 'send_broker_otp', 'uses' => 'SellerController@send_broker_otp']);
     Route::post('verify_broker_otp', ['as' => 'verify_broker_otp', 'uses' => 'SellerController@verify_broker_otp']);

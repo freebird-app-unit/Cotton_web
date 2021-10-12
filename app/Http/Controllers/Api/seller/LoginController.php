@@ -18,19 +18,20 @@ use App\Models\BuyerType;
 use App\Models\SellerType;
 use App\Models\Brokers;
 use App\Models\News;
-use App\Models\Buyers;
+use App\Models\UserPlan;
+use App\Models\Plan;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Validator;
 use Storage;
 use Image;
 use File;
 use App\Models\AddBrokers;
 use App\Helper\NotificationHelper;
+use Carbon\Carbon;
 
 class LoginController extends Controller
 {
-     public function registration_seller(Request $request)
+    public function registration_seller(Request $request)
     {
     	$response = array();
 		$response['status'] = 200;
@@ -74,15 +75,18 @@ class LoginController extends Controller
 		$company_name = isset($content->company_name) ? $content->company_name : '';
 		$fcm_token = isset($content->fcm_token) ? $content->fcm_token : '';
 		$device_type = isset($content->device_type) ? $content->device_type : '';
+		$plan_id = isset($content->plan_id) ? $content->plan_id : '';
 
 		$params = [
 			'mobile_number' => $mobile_number,
-			'email' => $email
+			'email' => $email,
+			'plan_id' => $plan_id,
 		];
 
 		$validator = Validator::make($params, [
             'mobile_number' => 'required|digits:10|unique:tbl_sellers,mobile_number',
             'email' => 'required|email|unique:tbl_sellers,email|max:255',
+            'plan_id' => 'required|exists:tbl_plans,id',
         ]);
 
         if ($validator->fails()) {
@@ -106,6 +110,8 @@ class LoginController extends Controller
                     Storage::disk('public')->put('seller/profile/' . $image_name, $img, 'public');
                 }
 
+                $plan_detail = Plan::where('id', $plan_id)->first();
+
 		    	$seller = new Sellers();
 				$seller->name = $name;
 				$seller->password = Hash::make($password);
@@ -117,9 +123,23 @@ class LoginController extends Controller
 				$seller->otp_time = date('Y-m-d H:i:s');
 				$seller->image = $image_name;
 				$seller->referral_code=$referral_code;
+				$seller->wallet_amount=$plan_detail->price;
 
 				if($seller->save()){
 					$id = $seller->id;
+
+                    $date = Carbon::now();
+                    $date->addDays($plan_detail->validity);
+
+                    UserPlan::create([
+                        'user_id' => $id,
+                        'user_type' => 'seller',
+                        'plan_id' => $plan_id,
+                        'status' => 1,
+                        'purchase_date' => date('Y-m-d'),
+                        'expiry_date' => $date
+                    ]);
+
 					$user_details = new UserDetails();
 					$user_details->user_id = $id;
 					$user_details->user_type = $user_type;
@@ -174,7 +194,7 @@ class LoginController extends Controller
 				if($bank_details->save()){
                     //send otp
                     $message = "OTP to verify your account is ". $verification_code ." - E - Cotton";
-                    NotificationHelper::send_otp($seller->mobile_number,$message);
+                    // NotificationHelper::send_otp($seller->mobile_number,$message);
 
                     $response['data']->id=$seller->id;
                     $response['data']->mobile_number=$seller->mobile_number;
@@ -195,6 +215,8 @@ class LoginController extends Controller
 				Storage::disk('public')->put('seller/profile/' . $image_name, $img, 'public');
 			}
 
+            $plan_detail = Plan::where('id', $plan_id)->first();
+
             $seller = new Sellers();
             $seller->name = $name;
             $seller->password = Hash::make($password);
@@ -206,8 +228,23 @@ class LoginController extends Controller
             $seller->otp_time = date('Y-m-d H:i:s');
             $seller->image = $image_name;
             $seller->referral_code=$referral_code;
+            $seller->wallet_amount=$plan_detail->price;
+
             if($seller->save()){
                 $id = $seller->id;
+
+                $date = Carbon::now();
+                $date->addDays($plan_detail->validity);
+
+                UserPlan::create([
+                    'user_id' => $id,
+                    'user_type' => 'seller',
+                    'plan_id' => $plan_id,
+                    'status' => 1,
+                    'purchase_date' => date('Y-m-d'),
+                    'expiry_date' => $date
+                ]);
+
                 $user_details = new UserDetails();
                 $user_details->user_id = $id;
                 $user_details->user_type = $user_type;
@@ -254,7 +291,7 @@ class LoginController extends Controller
             if($bank_details->save()){
                 //send otp
                 $message = "OTP to verify your account is ". $seller->otp ." - E - Cotton";
-                NotificationHelper::send_otp($seller->mobile_number,$message);
+                // NotificationHelper::send_otp($seller->mobile_number,$message);
 
                 $response['data']->id=$seller->id;
                 $response['data']->mobile_number=$seller->mobile_number;
@@ -1221,6 +1258,15 @@ class LoginController extends Controller
 		$response['message'] = 'Broker List';
         $response['status'] = 200;
         $response['data'] = $broker_list;
+        return response($response, 200);
+    }
+
+    public function plan_list(Request $request) {
+        $plan_detail = Plan::get();
+
+        $response['message'] = 'Plan List';
+        $response['status'] = 200;
+        $response['data'] = $plan_detail;
         return response($response, 200);
     }
 }

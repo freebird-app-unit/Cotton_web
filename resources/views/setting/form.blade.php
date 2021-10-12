@@ -91,6 +91,18 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
+                                    <label class="col-sm-3 control-label">Broker Commission <small>(Per Bales)</small></label>
+                                    <div class="col-sm-6">
+                                        <input type="number" class="form-control" name="broker_commission" id="broker_commission" value="{{!empty($setting) ? $setting->broker_commission : ''}}" required placeholder="Enter Broker Commission" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Company Commission <small>(Per Bales)</small></label>
+                                    <div class="col-sm-6">
+                                        <input type="number" class="form-control" name="company_commission" id="company_commission" value="{{!empty($setting) ? $setting->company_commission : ''}}" required placeholder="Enter Company Commission" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
                                     <div class="col-sm-offset-3 col-sm-9 m-t-15">
                                         <button type="button" class="btn btn-primary" id="btn_sub">
                                             Submit
@@ -150,11 +162,11 @@
         e.preventDefault();
         var hidden_site_logo = $('#hidden_site_logo').val();
 
-        if(!hidden_site_logo){
-            $('#site_logo').prop('required',true);
-        }else{
-            $('#site_logo').prop('required',false);
-        }
+        // if (!hidden_site_logo) {
+        //     $('#site_logo').prop('required',true);
+        // } else {
+        //     $('#site_logo').prop('required',false);
+        // }
 
         var formData = new FormData($("#setting_form")[0]);
         if ($("#setting_form").valid()) {
@@ -171,7 +183,7 @@
                     if(data.response_status == "success")
                     {
                         toastr.success(data.message);
-                        window.location.href= "{{url('/settings')}}";
+                        // window.location.href= "{{url('/settings')}}";
                     }else{
                         toastr.error(data.message);
                     }

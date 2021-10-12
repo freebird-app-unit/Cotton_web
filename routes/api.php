@@ -38,6 +38,7 @@ Route::group(['namespace' => 'Api\seller'], function () {
 	Route::post('/seller_type', 'LoginController@seller_type');
 	Route::post('/sellertype_buyertype_businesstype_registrationas', 'LoginController@sellertype_buyertype_businesstype_registrationas');
 	Route::post('/edit_profile_seller', 'ProfileController@edit_profile_seller');
+	Route::get('/plan_list', 'LoginController@plan_list');
 });
 
 Route::group(['namespace' => 'Api\buyer'], function () {
@@ -137,6 +138,7 @@ Route::group(['namespace' => 'Api\product'], function () {
     Route::post('/negotiation_detail_by_deal_new_v2', 'ProductController@negotiation_detail_by_deal_new_v2');
     Route::post('/my_contract_list', 'ProductController@my_contract_list');
     Route::post('/upload_debit_note', 'ProductController@upload_debit_note');
+    Route::post('/test_api', 'ProductController@test_api');
 
 });
 Route::post('/news', 'Api\seller\LoginController@news_list');
