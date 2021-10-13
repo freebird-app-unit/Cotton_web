@@ -698,6 +698,10 @@ class LoginController extends Controller
             $response['data']->branch_address=($profile->bank_details->branch_address)?$profile->bank_details->branch_address:'';
             $response['data']->ifsc_code=($profile->bank_details->ifsc_code)?$profile->bank_details->ifsc_code:'';
             $response['data']->referral_code=($profile->referral_code)?$profile->referral_code:'';
+            $response['data']->country=!empty($profile->user_details->country)?$profile->user_details->country->name:'';
+            $response['data']->state=!empty($profile->user_details->state)?$profile->user_details->state->name:'';
+            $response['data']->city=!empty($profile->user_details->city)?$profile->user_details->city->name:'';
+            $response['data']->station=!empty($profile->user_details->station)?$profile->user_details->station->name:'';
 
             $image = '';
             $buyer_stamp_img = storage_path('app/public/buyer/profile/' . $profile->image);

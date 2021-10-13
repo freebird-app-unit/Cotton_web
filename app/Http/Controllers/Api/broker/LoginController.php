@@ -593,6 +593,10 @@ class LoginController extends Controller
             $response['data']->ifsc_code=!empty($profile->bank_details->ifsc_code)?$profile->bank_details->ifsc_code:'';
             $response['data']->referral_code=!empty($profile->referral_code)?$profile->referral_code:'';
             $response['data']->website=!empty($profile->website)?$profile->website:'';
+            $response['data']->country=!empty($profile->userDetails->country)?$profile->userDetails->country->name:'';
+            $response['data']->state=!empty($profile->userDetails->state)?$profile->userDetails->state->name:'';
+            $response['data']->city=!empty($profile->userDetails->city)?$profile->userDetails->city->name:'';
+            $response['data']->station=!empty($profile->userDetails->station)?$profile->userDetails->station->name:'';
 
             $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $profile->stamp_image);
             $broker_stamp_image = '';
