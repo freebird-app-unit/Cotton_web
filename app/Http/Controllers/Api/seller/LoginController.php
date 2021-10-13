@@ -717,7 +717,7 @@ class LoginController extends Controller
 	    }
 
 
-        $profile =  Sellers::leftJoin('tbl_bank_details', 'tbl_bank_details.user_id', '=', 'tbl_sellers.id')->leftJoin('tbl_user_details', 'tbl_user_details.user_id', '=', 'tbl_sellers.id')->where('tbl_sellers.id',$user_id)->first();
+        $profile =  Sellers::with('bank_details', 'user_details')->where('tbl_sellers.id',$user_id)->first();
         if(!empty($profile)){
             $response['data']->id=$profile->id;
             $response['data']->mobile_number=!empty($profile->mobile_number)?$profile->mobile_number:'';

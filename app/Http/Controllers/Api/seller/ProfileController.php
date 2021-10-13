@@ -27,7 +27,7 @@ use Image;
 use Illuminate\Validation\Rule;
 class ProfileController extends Controller
 {
-    public function edit_profile_seller(Request $request)
+    public function edit_profile(Request $request)
     {
     	$response = array();
 		$response['status'] = 200;
@@ -130,6 +130,7 @@ class ProfileController extends Controller
 				}
 
 				$bank_details = BankDetails::where(['user_id'=>$id,'user_type'=>'seller'])->first();
+                
 				if(!empty($bank_details)){
 					$bank_details->user_type = 'seller';
 					$bank_details->bank_name =(empty($bank_name))?$bank_details->bank_name:$bank_name;

@@ -16,6 +16,7 @@ use Illuminate\Validation\ValidationException;
 use Validator;
 use Storage;
 use Image;
+use File;
 use App\Helper\NotificationHelper;
 
 class LoginController extends Controller
@@ -562,32 +563,57 @@ class LoginController extends Controller
 				$response['message'] =$validator->errors()->first();
 				return response($response, 200);
 	    }
-		$token =  $request->bearerToken();
-		$broker = DeviceDetails::where(['user_id'=>$user_id,'api_token'=>$token,'user_type'=>'broker'])->first();
-		if(!empty($broker)){
-	    	$profile =  Brokers::leftJoin('tbl_bank_details', 'tbl_bank_details.user_id', '=', 'tbl_brokers.id')->leftJoin('tbl_user_details', 'tbl_user_details.user_id', '=', 'tbl_brokers.id')->where('tbl_brokers.id',$user_id)->first();
-		    if(!empty($profile)){
-		    	$response['data']->id=$profile->id;
-				$response['data']->mobile_number=($profile->mobile_number)?$profile->mobile_number:'';
-				$response['data']->password=($profile->password)?$profile->password:'';
-				$response['data']->user_type=($profile->user_type)?$profile->user_type:'';
-				$response['data']->name_of_contact_person=($profile->name_of_contact_person)?$profile->name_of_contact_person:'';
-				$response['data']->gst_no=($profile->gst_no)?$profile->gst_no:'';
-				$response['data']->code=($profile->code)?$profile->code:'';
-				$response['data']->company_name=($profile->company_name)?$profile->company_name:'';
-				$response['data']->establish_year=($profile->establish_year)?$profile->establish_year:'';
-				$response['data']->fcm_token=($profile->fcm_token)?$profile->fcm_token:'';
 
-				$response['status'] = 200;
-				$response['message'] = 'Profile';
-		    }else{
-				$response['status'] = 404;
-				$response['message'] = 'User not found';
-			}
-    	}else{
-	    	$response['status'] = 401;
-	        $response['message'] = 'Unauthenticated';
-		}
+        $profile =  Brokers::with('bank_details', 'userDetails')->where('tbl_brokers.id',$user_id)->first();
+        if(!empty($profile)){
+            $response['data']->id=$profile->id;
+            $response['data']->mobile_number=!empty($profile->mobile_number)?$profile->mobile_number:'';
+            $response['data']->email=!empty($profile->email)?$profile->email:'';
+            $response['data']->user_type=!empty($profile->userDetails->user_type)?$profile->userDetails->user_type:'';
+            $response['data']->seller_buyer_type=!empty($profile->userDetails->seller_buyer_type)?$profile->userDetails->seller_buyer_type:'';
+            $response['data']->name=!empty($profile->name)?$profile->name:'';
+            $response['data']->address=!empty($profile->address)?$profile->address:'';
+            $response['data']->name_of_contact_person=!empty($profile->userDetails->name_of_contact_person)?$profile->userDetails->name_of_contact_person:'';
+            $response['data']->business_type=!empty($profile->userDetails->business_type)?$profile->userDetails->business_type:'';
+            $response['data']->registration_no=!empty($profile->userDetails->registration_no)?$profile->userDetails->registration_no:'';
+            $response['data']->registration_date=!empty($profile->userDetails->registration_date)?$profile->userDetails->registration_date:'';
+            $response['data']->registration_as_msme=!empty($profile->userDetails->registration_as_msme)?$profile->userDetails->registration_as_msme:'';
+            $response['data']->turnover_year_one=!empty($profile->userDetails->turnover_year_one)?$profile->userDetails->turnover_year_one:'';
+            $response['data']->turnover_date_one=!empty($profile->userDetails->turnover_date_one)?$profile->userDetails->turnover_date_one:'';
+            $response['data']->turnover_year_two=!empty($profile->userDetails->turnover_year_two)?$profile->userDetails->turnover_year_two:'';
+            $response['data']->turnover_date_two=!empty($profile->userDetails->turnover_date_two)?$profile->userDetails->turnover_date_two:'';
+            $response['data']->turnover_year_three=!empty($profile->userDetails->turnover_year_three)?$profile->userDetails->turnover_year_three:'';
+            $response['data']->turnover_date_three=!empty($profile->userDetails->turnover_date_three)?$profile->userDetails->turnover_date_three:'';
+            $response['data']->oper_in_cotton_trade=!empty($profile->userDetails->oper_in_cotton_trade)?$profile->userDetails->oper_in_cotton_trade:'';
+            $response['data']->gst_no=!empty($profile->userDetails->gst_no)?$profile->userDetails->gst_no:'';
+            $response['data']->pan_no_of_buyer=!empty($profile->userDetails->pan_no_of_buyer)?$profile->userDetails->pan_no_of_buyer:'';
+            $response['data']->bank_name=!empty($profile->bank_details->bank_name)?$profile->bank_details->bank_name:'';
+            $response['data']->account_holder_name=!empty($profile->bank_details->account_holder_name)?$profile->bank_details->account_holder_name:'';
+            $response['data']->branch_address=!empty($profile->bank_details->branch_address)?$profile->bank_details->branch_address:'';
+            $response['data']->ifsc_code=!empty($profile->bank_details->ifsc_code)?$profile->bank_details->ifsc_code:'';
+            $response['data']->referral_code=!empty($profile->referral_code)?$profile->referral_code:'';
+            $response['data']->website=!empty($profile->website)?$profile->website:'';
+
+            $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $profile->stamp_image);
+            $broker_stamp_image = '';
+            if (!empty($profile->stamp_image) && File::exists($broker_stamp_img)) {
+                $broker_stamp_image = asset('storage/app/public/broker/stamp_image/' . $profile->stamp_image);
+            }
+
+            $broker_header_img = storage_path('app/public/broker/header_image/' . $profile->header_image);
+            $broker_header_image = '';
+            if (!empty($profile->header_image) && File::exists($broker_header_img)) {
+                $broker_header_image = asset('storage/app/public/broker/header_image/' . $profile->header_image);
+            }
+            $response['data']->header_image = $broker_header_image;
+            $response['data']->stamp_image = $broker_stamp_image;
+
+            $response['status'] = 200;
+            $response['message'] = 'Profile';
+        } else {
+            $response['status'] = 404;
+            $response['message'] = 'User not found';
+        }
 
 		return response($response, 200);
     }
