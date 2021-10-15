@@ -42,6 +42,9 @@ use Storage;
 use File;
 use Image;
 use App\Helper\NotificationHelper;
+use App\Models\AddBrokers;
+use App\Models\Transactions;
+
 class ProductController extends Controller
 {
     public function product_list(Request $request){
@@ -6344,6 +6347,9 @@ class ProductController extends Controller
                     $negotiation_log = new NegotiationLog();
                     $negotiation_log->negotiation_id = $negotiation->id;
                     $negotiation_log->negotiation_by = $negotiation_by;
+                    $negotiation_log->seller_id = $seller_id;
+				    $negotiation_log->buyer_id = $buyer_id;
+				    $negotiation_log->broker_id = $broker_id;
                     $negotiation_log->price = $price;
                     $negotiation_log->bales = $no_of_bales;
                     $negotiation_log->payment_condition_id = $payment_condition;
@@ -6418,6 +6424,9 @@ class ProductController extends Controller
                     $negotiation_log = new NegotiationLog();
                     $negotiation_log->negotiation_id = $negotiation->id;
                     $negotiation_log->negotiation_by = $negotiation_by;
+                    $negotiation_log->seller_id = $seller_id;
+				    $negotiation_log->buyer_id = $buyer_id;
+				    $negotiation_log->broker_id = $broker_id;
                     $negotiation_log->price = $price;
                     $negotiation_log->bales = $no_of_bales;
                     $negotiation_log->payment_condition_id = $payment_condition;
@@ -6510,14 +6519,39 @@ class ProductController extends Controller
 	    }
 
         $settings = Settings::first();
-
 		$negotiation_comp = Negotiation::with('seller', 'buyer')->where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type])->first();
 
         if (!empty($negotiation_comp)) {
 
+            $user_data = [];
+            $total_amt = 0;
+            $no_of_bales = $negotiation_comp->bales;
+            $total_amt = $no_of_bales * $settings->company_commission;
+            if ($done_by == 'seller') {
+                $user_id = $seller_id;
+                $user_data = Sellers::where('id',$user_id)->first();
+
+            } else {
+                $user_id = $buyer_id;
+                $user_data = Buyers::where('id',$user_id)->first();
+            }
+
+            if(!empty($user_data) && $user_data->wallet_amount < $total_amt){
+                $response['status'] = 404;
+                $response['message'] = 'Wallet amount not enough';
+                return response($response, 200);
+            }
+
+            // $logs = NegotiationLog::select('broker_id')->where('negotiation_id',$negotiation_comp->id)->get();
+            // $broker_commission = $no_of_bales * $settings->broker_commission;
+            // foreach($logs as $val){
+            //     $broker_data = Brokers::where('id',$val->broker_id)->first();
+            //     $broker_data->wallet_amount = $broker_commission;
+            //     $broker_data->save();
+            // }
+
             if ($negotiation_comp->negotiation_type == "post") {
                 $post_remain = Post::where(['id'=>$negotiation_comp->post_notification_id,'is_active'=>0])->first();
-                $no_of_bales = $negotiation_comp->bales;
 
                 if ($no_of_bales > $post_remain->no_of_bales) {
                     $response['status'] = 404;
@@ -6573,6 +6607,7 @@ class ProductController extends Controller
 
             if($negotiation_comp->negotiation_type == "notification"){
                 $notification_remain = Notification::where(['id'=>$negotiation_comp->post_notification_id,'is_active'=>0])->first();
+
                 if($no_of_bales > $notification_remain->no_of_bales){
                     $response['status'] = 404;
                     $response['message'] = 'Please Enter Less Bales';
@@ -6624,6 +6659,8 @@ class ProductController extends Controller
                         $notification->save();
                     }
                 }
+
+
                 // $make_deal->negotiation_id = $negotiation_comp->id;
                 $history_type = 'negotiation';
                 if(!empty($negotiation_comp->negotiation_complete_id) && $negotiation_comp->negotiation_complete_id != 0){
@@ -6665,12 +6702,26 @@ class ProductController extends Controller
                 $negotiation_log = new NegotiationLog();
                 $negotiation_log->negotiation_id = $negotiation_comp->id;
                 $negotiation_log->negotiation_by = $negotiation_comp->negotiation_by;
+                $negotiation_log->seller_id = $negotiation_comp->seller_id;
+                $negotiation_log->buyer_id = $negotiation_comp->buyer_id;
+                $negotiation_log->broker_id = $negotiation_comp->broker_id;
                 $negotiation_log->price = $negotiation_comp->price;
                 $negotiation_log->bales = $no_of_bales;
                 $negotiation_log->payment_condition_id = $negotiation_comp->payment_condition;
                 $negotiation_log->transmit_condition_id = $negotiation_comp->transmit_condition;
                 $negotiation_log->lab_id = $negotiation_comp->lab;
                 $negotiation_log->save();
+
+                $transactions = new Transactions();
+                $transactions->user_id = $user_id;
+                $transactions->user_type = $done_by;
+                $transactions->type = 'withdraw';
+                $transactions->amount = $total_amt;
+                $transactions->message = 'deal done by '.$user_data->name;
+                $transactions->save();
+
+                $user_data->wallet_amount = $user_data->wallet_amount - $total_amt;
+                $user_data->save();
 
                 if($status == 'complete'){
                     Negotiation::where('id',$negotiation_comp->id)->delete();
@@ -6893,19 +6944,40 @@ class ProductController extends Controller
                 //pdf
 			}
 		} else {
-            $check = $this->check_queue($buyer_id, $seller_id, $post_notification_id, $type);
-
-            if ($check == 2) {
-                DealQueue::where(['buyer_id' => $buyer_id, 'seller_id' => $seller_id, 'post_notification_id' => $post_notification_id, 'post_type'=> $type])->delete();
-
-                $response['status'] = 404;
-                $response['message'] = 'Deal already done sorry for inconvenience!';
-                return response($response, 200);
-            }
 
 			if($type == "notification"){
 				$notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
-				if(!empty($notification)){
+
+                if(!empty($notification)){
+
+                    $total_amt = $notification->no_of_bales * $settings->company_commission;
+                    if ($done_by == 'seller') {
+                        $user_id = $seller_id;
+                        $user_data = Sellers::where('id',$user_id)->first();
+
+                    } else {
+                        $user_id = $buyer_id;
+                        $user_data = Buyers::where('id',$user_id)->first();
+                    }
+
+                    if(!empty($user_data) && $user_data->wallet_amount < $total_amt){
+                        $response['status'] = 404;
+                        $response['message'] = 'Wallet amount not enough';
+                        return response($response, 200);
+                    }
+
+                    $check = $this->check_queue($buyer_id, $seller_id, $post_notification_id, $type);
+
+                    if ($check == 2) {
+                        DealQueue::where(['buyer_id' => $buyer_id, 'seller_id' => $seller_id, 'post_notification_id' => $post_notification_id, 'post_type'=> $type])->delete();
+
+                        $response['status'] = 404;
+                        $response['message'] = 'Deal already done sorry for inconvenience!';
+                        return response($response, 200);
+                    }
+
+                    $default_broker = AddBrokers::where('buyer_id',$user_id)->where('user_type',$done_by)->where('broker_type','default')->first();
+
                     $notification->sold_bales = $notification->no_of_bales;
                     $notification->remain_bales = 0;
                     $notification->status = 'complete';
@@ -6934,6 +7006,7 @@ class ProductController extends Controller
                         $without->save();
 
                         $make_deal->negotiation_by = 'seller';
+                        $make_deal->broker_id = $default_broker->broker_id;
                         $make_deal->post_notification_id = $notification->id;
                         $make_deal->negotiation_type = 'notification';
                         $make_deal->price = $notification->price;
@@ -6944,6 +7017,17 @@ class ProductController extends Controller
                         $make_deal->is_deal = '1';
                         $make_deal->status = 'complete';
                         $make_deal->save();
+
+                        $transactions = new Transactions();
+                        $transactions->user_id = $user_id;
+                        $transactions->user_type = $done_by;
+                        $transactions->type = 'withdraw';
+                        $transactions->amount = $total_amt;
+                        $transactions->message = 'deal done by '.$user_data->name;
+                        $transactions->save();
+
+                        $user_data->wallet_amount = $user_data->wallet_amount - $total_amt;
+                        $user_data->save();
 
                     //pdf
                     $broker_name = '';
@@ -7148,6 +7232,35 @@ class ProductController extends Controller
 			}elseif ($type == "post") {
 				$post = Post::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
 				if(!empty($post)){
+
+                    $total_amt = $post->no_of_bales * $settings->company_commission;
+                    if ($done_by == 'seller') {
+                        $user_id = $seller_id;
+                        $user_data = Sellers::where('id',$user_id)->first();
+
+                    } else {
+                        $user_id = $buyer_id;
+                        $user_data = Buyers::where('id',$user_id)->first();
+                    }
+
+                    if(!empty($user_data) && $user_data->wallet_amount < $total_amt){
+                        $response['status'] = 404;
+                        $response['message'] = 'Wallet amount not enough';
+                        return response($response, 200);
+                    }
+
+                    $check = $this->check_queue($buyer_id, $seller_id, $post_notification_id, $type);
+
+                    if ($check == 2) {
+                        DealQueue::where(['buyer_id' => $buyer_id, 'seller_id' => $seller_id, 'post_notification_id' => $post_notification_id, 'post_type'=> $type])->delete();
+
+                        $response['status'] = 404;
+                        $response['message'] = 'Deal already done sorry for inconvenience!';
+                        return response($response, 200);
+                    }
+
+                    $default_broker = AddBrokers::where('buyer_id',$user_id)->where('user_type',$done_by)->where('broker_type','default')->first();
+
                     $post->sold_bales = $post->no_of_bales;
                     $post->remain_bales = 0;
                     $post->status = 'complete';
@@ -7174,6 +7287,7 @@ class ProductController extends Controller
                         }
                         $without->save();
                         $make_deal->negotiation_by = 'seller';
+                        $make_deal->broker_id = $default_broker->broker_id;
                         $make_deal->post_notification_id = $post->id;
                         $make_deal->negotiation_type = 'post';
                         $make_deal->price = $post->price;
@@ -7184,6 +7298,17 @@ class ProductController extends Controller
                         $make_deal->is_deal = '1';
                         $make_deal->status = 'complete';
                         $make_deal->save();
+
+                        $transactions = new Transactions();
+                        $transactions->user_id = $user_id;
+                        $transactions->user_type = $done_by;
+                        $transactions->type = 'withdraw';
+                        $transactions->amount = $total_amt;
+                        $transactions->message = 'deal done by '.$user_data->name;
+                        $transactions->save();
+
+                        $user_data->wallet_amount = $user_data->wallet_amount - $total_amt;
+                        $user_data->save();
 
 
                     //pdf

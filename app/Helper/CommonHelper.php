@@ -23,13 +23,13 @@ class CommonHelper
             }
 
             if (empty($seller_details->user_plan)) {
-                $response['message'] = 'You have no active plan!';
+                $response['message'] = 'You have no active plan!222';
                 $response['success'] = false;
                 return $response;
             }
 
-            if (empty($seller_details->user_plan->status == 0)) {
-                $response['message'] = 'You have no active plan!';
+            if ($seller_details->user_plan->status == 0) {
+                $response['message'] = 'You have no active plan!000';
                 $response['success'] = false;
                 return $response;
             }
@@ -55,7 +55,7 @@ class CommonHelper
                 return $response;
             }
 
-            if (empty($buyer_details->user_plan->status == 0)) {
+            if ($buyer_details->user_plan->status == 0) {
                 $response['message'] = 'You have no active plan!';
                 $response['success'] = false;
                 return $response;
