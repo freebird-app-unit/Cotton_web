@@ -997,7 +997,7 @@ class ProductController extends Controller
 		}
 		return response($response, 200);
     }
-    public function negotiation_new_v2(Request $request)
+   public function negotiation_new_v2(Request $request)
 	{
 		$response = array();
 		$response['status'] = 200;
@@ -1230,6 +1230,7 @@ class ProductController extends Controller
 								$negotiationBuyerData->seller_id = $negotiation->seller_id;
 								$negotiationBuyerData->seller_name = $seller_name;
 								$negotiationBuyerData->negotiation_by = $negotiation_by;
+								$negotiationBuyerData->negotiation_type = $negotiation_type;
 								$negotiationBuyerData->product_name = $product_name;
 								$negotiationBuyerData->best_dealer_name = $best_dealer_name;
 								$negotiationBuyerData->base_price = $base_price;
@@ -1296,6 +1297,7 @@ class ProductController extends Controller
 								$negotiationBuyerData->seller_name = $seller_name;
 								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
 								$negotiationBuyerData->negotiation_by = $negotiation_by;
+								$negotiationBuyerData->negotiation_type = $negotiation_type;
 								$negotiationBuyerData->product_name = $product_name;
 								$negotiationBuyerData->post_by = $post_by;
 								$negotiationBuyerData->prev_price = $negotiation->prev_price;
@@ -1361,6 +1363,7 @@ class ProductController extends Controller
 							$negotiationBuyerData->seller_name = $seller_name;
 							$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
 							$negotiationBuyerData->negotiation_by = $negotiation_by;
+							$negotiationBuyerData->negotiation_type = $negotiation_type;
 							$negotiationBuyerData->product_name = $product_name;
 							$negotiationBuyerData->post_by = $post_by;
 							$negotiationBuyerData->prev_price = $negotiation->prev_price;
@@ -1450,6 +1453,7 @@ class ProductController extends Controller
 								$negotiationSellerData->seller_name = $seller_name;
 								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
 								$negotiationSellerData->negotiation_by = $negotiation_by;
+								$negotiationSellerData->negotiation_type = $negotiation_type;
 								$negotiationSellerData->product_name = $product_name;
 								$negotiationSellerData->best_dealer_name = $best_dealer_name;
 								$negotiationSellerData->base_price = $base_price;
@@ -1514,6 +1518,7 @@ class ProductController extends Controller
 								$negotiationSellerData->seller_name = $seller_name;
 								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
 								$negotiationSellerData->negotiation_by = $negotiation_by;
+								$negotiationSellerData->negotiation_type = $negotiation_type;
 								$negotiationSellerData->product_name = $product_name;
 								$negotiationSellerData->post_by = $post_by;
 								$negotiationSellerData->prev_price = $negotiation->prev_price;
@@ -1577,6 +1582,7 @@ class ProductController extends Controller
 							$negotiationSellerData->seller_name = $seller_name;
 							$negotiationSellerData->buyer_id = $negotiation->buyer_id;
 							$negotiationSellerData->negotiation_by = $negotiation_by;
+							$negotiationSellerData->negotiation_type = $negotiation_type;
 							$negotiationSellerData->product_name = $product_name;
 							$negotiationSellerData->post_by = $post_by;
 							$negotiationSellerData->prev_price = $negotiation->prev_price;
@@ -1741,6 +1747,7 @@ class ProductController extends Controller
 								$negotiationBuyerData->seller_id = $negotiation->seller_id;
 								$negotiationBuyerData->seller_name = $seller_name;
 								$negotiationBuyerData->negotiation_by = $negotiation_by;
+								$negotiationBuyerData->negotiation_type = $negotiation_type;
 								$negotiationBuyerData->product_name = $product_name;
 								$negotiationBuyerData->best_dealer_name = $best_dealer_name;
 								$negotiationBuyerData->base_price = $base_price;
@@ -1806,6 +1813,7 @@ class ProductController extends Controller
 								$negotiationBuyerData->seller_name = $seller_name;
 								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
 								$negotiationBuyerData->negotiation_by = $negotiation_by;
+								$negotiationBuyerData->negotiation_type = $negotiation_type;
 								$negotiationBuyerData->product_name = $product_name;
 								$negotiationBuyerData->post_by = $post_by;
 								$negotiationBuyerData->prev_price = $negotiation->prev_price;
@@ -1870,6 +1878,7 @@ class ProductController extends Controller
 							$negotiationBuyerData->seller_name = $seller_name;
 							$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
 							$negotiationBuyerData->negotiation_by = $negotiation_by;
+							$negotiationBuyerData->negotiation_type = $negotiation_type;
 							$negotiationBuyerData->product_name = $product_name;
 							$negotiationBuyerData->post_by = $post_by;
 							$negotiationBuyerData->prev_price = $negotiation->prev_price;
@@ -1962,6 +1971,7 @@ class ProductController extends Controller
 								$negotiationSellerData->seller_id = $negotiation->seller_id;
 								$negotiationSellerData->seller_name = $seller_name;
 								$negotiationSellerData->negotiation_by = $negotiation_by;
+								$negotiationSellerData->negotiation_type = $negotiation_type;
 								$negotiationSellerData->product_name = $product_name;
 								$negotiationSellerData->best_dealer_name = $best_dealer_name;
 								$negotiationSellerData->base_price = $base_price;
@@ -2025,6 +2035,7 @@ class ProductController extends Controller
 								$negotiationSellerData->seller_id = $negotiation->seller_id;
 								$negotiationSellerData->seller_name = $seller_name;
 								$negotiationSellerData->negotiation_by = $negotiation_by;
+								$negotiationSellerData->negotiation_type = $negotiation_type;
 								$negotiationSellerData->product_name = $product_name;
 								$negotiationSellerData->post_by = $post_by;
 								$negotiationSellerData->prev_price = $negotiation->prev_price;
@@ -2088,6 +2099,7 @@ class ProductController extends Controller
 							$negotiationSellerData->seller_id = $negotiation->seller_id;
 							$negotiationSellerData->seller_name = $seller_name;
 							$negotiationSellerData->negotiation_by = $negotiation_by;
+							$negotiationSellerData->negotiation_type = $negotiation_type;
 							$negotiationSellerData->product_name = $product_name;
 							$negotiationSellerData->post_by = $post_by;
 							$negotiationSellerData->prev_price = $negotiation->prev_price;
@@ -2154,7 +2166,6 @@ class ProductController extends Controller
 
 		return response($response, 200);
 	}
-
     public function notification_to_seller_list(Request $request)
     {
     	$response = array();
