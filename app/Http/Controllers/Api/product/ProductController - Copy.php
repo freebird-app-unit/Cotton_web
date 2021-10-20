@@ -48,8 +48,6 @@ use App\Events\NotificationSeller;
 use App\Events\NotificationBuyer;
 use App\Events\NegotiationSeller;
 use App\Events\NegotiationBuyer;
-use App\Events\NegotiationMultipleSeller;
-use App\Events\NegotiationMultipleBuyer;
 class ProductController extends Controller
 {
     public function product_list(Request $request){
@@ -6507,154 +6505,54 @@ class ProductController extends Controller
 						$base_price = '';
 						$base_bales = '';
 						$post_by='';
-						$buyer_name = '';
-						$seller_name = '';
-						$sellers = [];
 						$multiple_buyers = Negotiation::where('post_notification_id',$post_notification_id)->get();
 						if(count($multiple_buyers)>1){
 							$best_price = [];
 							foreach ($multiple_buyers as $value) {
-								array_push($sellers,$value->seller_id);
 								$negotiation_log = NegotiationLog::select('negotiation_id','negotiation_by','price')->where(['negotiation_id'=>$value->id,'negotiation_by'=>'seller'])->orderBy('id','DESC')->first();
 								if(!empty($negotiation_log)){
 									array_push($best_price, $negotiation_log->price);
 								}
 							}
-							$unique_seller = array_unique($sellers);
-							if(count($unique_seller)>1){
-									if($negotiation->negotiation_type == "post"){
-									$post = Post::select('price','no_of_bales','product_id','id')->where('id',$post_notification_id)->first();
-									if(!empty($post)){
-										$base_price = $post->price;
-										$base_bales = $post->no_of_bales;
-										$product = Product::select('name','id')->where('id',$post->product_id)->first();
-										if(!empty($product)){
-											$product_name = $product->name;
-										}
+							if($negotiation->negotiation_type == "post"){
+								$post = Post::select('price','no_of_bales','product_id','id')->where('id',$post_notification_id)->first();
+								if(!empty($post)){
+									$base_price = $post->price;
+									$base_bales = $post->no_of_bales;
+									$product = Product::select('name','id')->where('id',$post->product_id)->first();
+									if(!empty($product)){
+										$product_name = $product->name;
 									}
 								}
-								$best_dealer_data = NegotiationLog::select('price','id','bales','negotiation_id')->where('price',max($best_price))->first();
-								if(!empty($best_dealer_data)){
-									$best_bales = $best_dealer_data->bales;
-									$best_price = $best_dealer_data->price;
-									$negotiation_id = Negotiation::select('id','seller_id')->where('id',$best_dealer_data->negotiation_id)->first();
-									if(!empty($negotiation_id)){
-										$seller_data = Sellers::select('id','name')->where('id',$negotiation_id->seller_id)->first();
-										if(!empty($seller_data)){
-											$best_dealer_name = $seller_data->name;
-										}
-									}
-								}
-								if(!empty($negotiation->buyer_id)){
-									$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-									if(!empty($buyer)){
-										$buyer_name = $buyer->name;
-									}
-								}
-								if(!empty($negotiation->seller_id)){
-									$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-									if(!empty($seller)){
-										$seller_name = $seller->name;
-									}
-								}
-								$negotiationBuyerData = new Negotiation();
-								$negotiationBuyerData->broker_name = $broker_details->name;
-								$negotiationBuyerData->post_notification_id = $post_notification_id;
-								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationBuyerData->seller_id = $negotiation->seller_id;
-								$negotiationBuyerData->seller_name = $seller_name;
-								$negotiationBuyerData->negotiation_by = $negotiation_by;
-								$negotiationBuyerData->negotiation_type = $negotiation_type;
-								$negotiationBuyerData->product_name = $product_name;
-								$negotiationBuyerData->best_dealer_name = $best_dealer_name;
-								$negotiationBuyerData->base_price = $base_price;
-								$negotiationBuyerData->base_bales = $base_bales;
-								$negotiationBuyerData->best_price = $best_price;
-								$negotiationBuyerData->best_bales = $best_bales;
-								$negotiationBuyerData->negotiation_count = count($multiple_buyers);
-								event(new NegotiationBuyer($negotiationBuyerData));
-
-
-								$negotiationMultipleBuyerData = new Negotiation();
-								$negotiationMultipleBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationMultipleBuyerData->buyer_name = $buyer_name;
-								$negotiationMultipleBuyerData->seller_id = $negotiation->seller_id;
-								$negotiationMultipleBuyerData->seller_name = $seller_name;
-								$negotiationMultipleBuyerData->post_notification_id = $post_notification_id;
-								$negotiationMultipleBuyerData->broker_name = $broker_details->name;
-								$negotiationMultipleBuyerData->negotiation_by = $negotiation_by;
-								$negotiationMultipleBuyerData->negotiation_type = $negotiation_type;
-								$negotiationMultipleBuyerData->prev_price = $negotiation->prev_price;
-								$negotiationMultipleBuyerData->prev_bales = $negotiation->prev_bales;
-								$negotiationMultipleBuyerData->current_price = $price;
-								$negotiationMultipleBuyerData->current_bales = $no_of_bales;
-								event(new NegotiationMultipleBuyer($negotiationMultipleBuyerData));
-							}else{
-								if($negotiation->negotiation_type == "post"){
-									$post = Post::select('id','product_id','seller_buyer_id','user_type')->where('id',$negotiation->post_notification_id)->first();
-									if(!empty($post)){
-										$product = Product::select('id','name')->where('id',$post->product_id)->first();
-										if(!empty($product)){
-											$product_name = $product->name;
-										}
-										if($post->user_type == "seller"){
-											$seller = Sellers::select('id','name')->where('id',$post->seller_buyer_id)->first();
-											if(!empty($seller)){
-												$post_by = $seller->name;
-											}
-										}else{
-											$buyer = Buyers::select('id','name')->where('id',$post->seller_buyer_id)->first();
-											if(!empty($buyer)){
-												$post_by = $buyer->name;
-											}
-										}
-									}
-								}
-								if(!empty($negotiation->buyer_id)){
-									$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-									if(!empty($buyer)){
-										$buyer_name = $buyer->name;
-									}
-								}
-								if(!empty($negotiation->seller_id)){
-									$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-									if(!empty($seller)){
-										$seller_name = $seller->name;
-									}
-								}
-
-								$negotiationBuyerData = new Negotiation();
-								$negotiationBuyerData->post_notification_id = $post_notification_id;
-								$negotiationBuyerData->negotiation_type = $negotiation->negotiation_type;
-								$negotiationBuyerData->broker_name = $broker_details->name;
-								$negotiationBuyerData->seller_id = $negotiation->seller_id;
-								$negotiationBuyerData->seller_name = $seller_name;
-								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationBuyerData->negotiation_by = $negotiation_by;
-								$negotiationBuyerData->negotiation_type = $negotiation_type;
-								$negotiationBuyerData->product_name = $product_name;
-								$negotiationBuyerData->post_by = $post_by;
-								$negotiationBuyerData->prev_price = $negotiation->prev_price;
-								$negotiationBuyerData->prev_bales = $negotiation->prev_bales;
-								$negotiationBuyerData->new_price = $negotiation->price;
-								$negotiationBuyerData->new_bales = $negotiation->bales;
-								event(new NegotiationBuyer($negotiationBuyerData));
-
-								$negotiationMultipleBuyerData = new Negotiation();
-								$negotiationMultipleBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationMultipleBuyerData->buyer_name = $buyer_name;
-								$negotiationMultipleBuyerData->seller_id = $negotiation->seller_id;
-								$negotiationMultipleBuyerData->seller_name = $seller_name;
-								$negotiationMultipleBuyerData->post_notification_id = $post_notification_id;
-								$negotiationMultipleBuyerData->broker_name = $broker_details->name;
-								$negotiationMultipleBuyerData->negotiation_by = $negotiation_by;
-								$negotiationMultipleBuyerData->negotiation_type = $negotiation_type;
-								$negotiationMultipleBuyerData->prev_price = $negotiation->prev_price;
-								$negotiationMultipleBuyerData->prev_bales = $negotiation->prev_bales;
-								$negotiationMultipleBuyerData->current_price = $price;
-								$negotiationMultipleBuyerData->current_bales = $no_of_bales;
-								event(new NegotiationMultipleBuyer($negotiationMultipleBuyerData));
 							}
+							$best_dealer_data = NegotiationLog::select('price','id','bales','negotiation_id')->where('price',max($best_price))->first();
+							if(!empty($best_dealer_data)){
+								$best_bales = $best_dealer_data->bales;
+								$best_price = $best_dealer_data->price;
+								$negotiation_id = Negotiation::select('id','seller_id')->where('id',$best_dealer_data->negotiation_id)->first();
+								if(!empty($negotiation_id)){
+									$seller_data = Sellers::select('id','name')->where('id',$negotiation_id->seller_id)->first();
+									if(!empty($seller_data)){
+										$best_dealer_name = $seller_data->name;
+									}
+								}
+							}
+							
+							
+							$negotiationBuyerData = new Negotiation();
+							$negotiationBuyerData->broker_name = $broker_details->name;
+							$negotiationBuyerData->post_notification_id = $post_notification_id;
+							$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
+							$negotiationBuyerData->seller_id = $negotiation->seller_id;
+							$negotiationBuyerData->negotiation_by = $negotiation_by;
+							$negotiationBuyerData->product_name = $product_name;
+							$negotiationBuyerData->best_dealer_name = $best_dealer_name;
+							$negotiationBuyerData->base_price = $base_price;
+							$negotiationBuyerData->base_bales = $base_bales;
+							$negotiationBuyerData->best_price = $best_price;
+							$negotiationBuyerData->best_bales = $best_bales;
+							$negotiationBuyerData->negotiation_count = count($multiple_buyers);
+							event(new NegotiationBuyer($negotiationBuyerData));
 						}else{
 							if($negotiation->negotiation_type == "post"){
 								$post = Post::select('id','product_id','seller_buyer_id','user_type')->where('id',$negotiation->post_notification_id)->first();
@@ -6676,28 +6574,13 @@ class ProductController extends Controller
 									}
 								}
 							}
-							if(!empty($negotiation->buyer_id)){
-								$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-								if(!empty($buyer)){
-									$buyer_name = $buyer->name;
-								}
-							}
-							if(!empty($negotiation->seller_id)){
-								$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-								if(!empty($seller)){
-									$seller_name = $seller->name;
-								}
-							}
-
 							$negotiationBuyerData = new Negotiation();
 							$negotiationBuyerData->post_notification_id = $post_notification_id;
 							$negotiationBuyerData->negotiation_type = $negotiation->negotiation_type;
 							$negotiationBuyerData->broker_name = $broker_details->name;
 							$negotiationBuyerData->seller_id = $negotiation->seller_id;
-							$negotiationBuyerData->seller_name = $seller_name;
 							$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
 							$negotiationBuyerData->negotiation_by = $negotiation_by;
-							$negotiationBuyerData->negotiation_type = $negotiation_type;
 							$negotiationBuyerData->product_name = $product_name;
 							$negotiationBuyerData->post_by = $post_by;
 							$negotiationBuyerData->prev_price = $negotiation->prev_price;
@@ -6705,21 +6588,6 @@ class ProductController extends Controller
 							$negotiationBuyerData->new_price = $negotiation->price;
 							$negotiationBuyerData->new_bales = $negotiation->bales;
 							event(new NegotiationBuyer($negotiationBuyerData));
-
-							$negotiationMultipleBuyerData = new Negotiation();
-							$negotiationMultipleBuyerData->buyer_id = $negotiation->buyer_id;
-							$negotiationMultipleBuyerData->buyer_name = $buyer_name;
-							$negotiationMultipleBuyerData->seller_id = $negotiation->seller_id;
-							$negotiationMultipleBuyerData->seller_name = $seller_name;
-							$negotiationMultipleBuyerData->post_notification_id = $post_notification_id;
-							$negotiationMultipleBuyerData->broker_name = $broker_details->name;
-							$negotiationMultipleBuyerData->negotiation_by = $negotiation_by;
-							$negotiationMultipleBuyerData->negotiation_type = $negotiation_type;
-							$negotiationMultipleBuyerData->prev_price = $negotiation->prev_price;
-							$negotiationMultipleBuyerData->prev_bales = $negotiation->prev_bales;
-							$negotiationMultipleBuyerData->current_price = $price;
-							$negotiationMultipleBuyerData->current_bales = $no_of_bales;
-							event(new NegotiationMultipleBuyer($negotiationMultipleBuyerData));
 						}
 					}else{
 						$product_name = '';
@@ -6729,153 +6597,53 @@ class ProductController extends Controller
 						$base_price = '';
 						$base_bales = '';
 						$post_by='';
-						$buyer_name = '';
-						$seller_name = '';
-						$buyers = [];
 						$multiple_sellers = Negotiation::where('post_notification_id',$post_notification_id)->get();
 						if(count($multiple_sellers)>1){
 							$best_price = [];
 							foreach ($multiple_sellers as $value) {
-								array_push($buyers, $value->buyer_id);
 								$negotiation_log = NegotiationLog::select('negotiation_id','negotiation_by','price')->where(['negotiation_id'=>$value->id,'negotiation_by'=>'buyer'])->orderBy('id','DESC')->first();
 								if(!empty($negotiation_log)){
 									array_push($best_price, $negotiation_log->price);
 								}
 							}
-							$unique_buyers = array_unique($buyers);
-							if(count($unique_buyers)>1){
-								if($negotiation->negotiation_type == "post"){
-									$post = Post::select('price','no_of_bales','product_id','id')->where('id',$post_notification_id)->first();
-									if(!empty($post)){
-										$base_price = $post->price;
-										$base_bales = $post->no_of_bales;
-										$product = Product::select('name','id')->where('id',$post->product_id)->first();
-										if(!empty($product)){
-											$product_name = $product->name;
-										}
-									}
-								}
-								$best_dealer_data = NegotiationLog::select('price','id','bales','negotiation_id')->where('price',max($best_price))->first();
-								if(!empty($best_dealer_data)){
-									$best_bales = $best_dealer_data->bales;
-									$best_price = $best_dealer_data->price;
-									$negotiation_id = Negotiation::select('id','buyer_id')->where('id',$best_dealer_data->negotiation_id)->first();
-									if(!empty($negotiation_id)){
-										$buyer_data = Buyers::select('id','name')->where('id',$negotiation_id->buyer_id)->first();
-										if(!empty($buyer_data)){
-											$best_dealer_name = $buyer_data->name;
-										}
-									}
-								}
-								if(!empty($negotiation->buyer_id)){
-									$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-									if(!empty($buyer)){
-										$buyer_name = $buyer->name;
-									}
-								}
-								if(!empty($negotiation->seller_id)){
-									$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-									if(!empty($seller)){
-										$seller_name = $seller->name;
-									}
-								}
-								$negotiationSellerData = new Negotiation();
-								$negotiationSellerData->broker_name = $broker_details->name;;
-								$negotiationSellerData->post_notification_id = $post_notification_id;
-								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
-								$negotiationSellerData->seller_id = $negotiation->seller_id;
-								$negotiationSellerData->seller_name = $seller_name;
-								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationSellerData->negotiation_by = $negotiation_by;
-								$negotiationSellerData->negotiation_type = $negotiation_type;
-								$negotiationSellerData->product_name = $product_name;
-								$negotiationSellerData->best_dealer_name = $best_dealer_name;
-								$negotiationSellerData->base_price = $base_price;
-								$negotiationSellerData->base_bales = $base_bales;
-								$negotiationSellerData->best_price = $best_price;
-								$negotiationSellerData->best_bales = $best_bales;
-								$negotiationSellerData->negotiation_count = count($multiple_sellers);
-								event(new NegotiationSeller($negotiationSellerData));
-
-
-								$negotiationMultipleSellerData = new Negotiation();
-								$negotiationMultipleSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationMultipleSellerData->buyer_name = $buyer_name;
-								$negotiationMultipleSellerData->seller_id = $negotiation->seller_id;
-								$negotiationMultipleSellerData->seller_name = $seller_name;
-								$negotiationMultipleSellerData->post_notification_id = $post_notification_id;
-								$negotiationMultipleSellerData->broker_name = $broker_details->name;
-								$negotiationMultipleSellerData->negotiation_by = $negotiation_by;
-								$negotiationMultipleSellerData->negotiation_type = $negotiation_type;
-								$negotiationMultipleSellerData->prev_price = $negotiation->prev_price;
-								$negotiationMultipleSellerData->prev_bales = $negotiation->prev_bales;
-								$negotiationMultipleSellerData->current_price = $price;
-								$negotiationMultipleSellerData->current_bales = $no_of_bales;
-								event(new NegotiationMultipleSeller($negotiationMultipleSellerData));
-							}else{
-								$post_notification = Post::where('id',$negotiation->post_notification_id)->first();
-								if(!empty($post_notification)){
-									$product = Product::where('id',$post_notification->product_id)->first();
+							if($negotiation->negotiation_type == "post"){
+								$post = Post::select('price','no_of_bales','product_id','id')->where('id',$post_notification_id)->first();
+								if(!empty($post)){
+									$base_price = $post->price;
+									$base_bales = $post->no_of_bales;
+									$product = Product::select('name','id')->where('id',$post->product_id)->first();
 									if(!empty($product)){
 										$product_name = $product->name;
 									}
-									if($post_notification->user_type == "seller"){
-										$seller = Sellers::where('id',$post_notification->seller_buyer_id)->first();
-										if(!empty($seller)){
-											$post_by = $seller->name;
-										}
-									}else{
-										$buyer = Buyers::where('id',$post_notification->seller_buyer_id)->first();
-										if(!empty($buyer)){
-											$post_by = $buyer->name;
-										}
-									}
 								}
-								if(!empty($negotiation->buyer_id)){
-									$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-									if(!empty($buyer)){
-										$buyer_name = $buyer->name;
-									}
-								}
-								if(!empty($negotiation->seller_id)){
-									$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-									if(!empty($seller)){
-										$seller_name = $seller->name;
-									}
-								}
-								
-								$negotiationSellerData = new Negotiation();
-								$negotiationSellerData->broker_name = $broker_details->name;
-								$negotiationSellerData->post_notification_id = $negotiation->post_notification_id;
-								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
-								$negotiationSellerData->seller_id = $negotiation->seller_id;
-								$negotiationSellerData->seller_name = $seller_name;
-								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationSellerData->negotiation_by = $negotiation_by;
-								$negotiationSellerData->negotiation_type = $negotiation_type;
-								$negotiationSellerData->product_name = $product_name;
-								$negotiationSellerData->post_by = $post_by;
-								$negotiationSellerData->prev_price = $negotiation->prev_price;
-								$negotiationSellerData->prev_bales = $negotiation->prev_bales;
-								$negotiationSellerData->new_price = $negotiation->price;
-								$negotiationSellerData->new_bales = $negotiation->bales;
-								event(new NegotiationSeller($negotiationSellerData));
-
-								$negotiationMultipleSellerData = new Negotiation();
-								$negotiationMultipleSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationMultipleSellerData->buyer_name = $buyer_name;
-								$negotiationMultipleSellerData->seller_id = $negotiation->seller_id;
-								$negotiationMultipleSellerData->seller_name = $seller_name;
-								$negotiationMultipleSellerData->post_notification_id = $post_notification_id;
-								$negotiationMultipleSellerData->broker_name = $broker_details->name;
-								$negotiationMultipleSellerData->negotiation_by = $negotiation_by;
-								$negotiationMultipleSellerData->negotiation_type = $negotiation_type;
-								$negotiationMultipleSellerData->prev_price = $negotiation->prev_price;
-								$negotiationMultipleSellerData->prev_bales = $negotiation->prev_bales;
-								$negotiationMultipleSellerData->current_price = $price;
-								$negotiationMultipleSellerData->current_bales = $no_of_bales;
-								event(new NegotiationMultipleSeller($negotiationMultipleSellerData));
 							}
+							$best_dealer_data = NegotiationLog::select('price','id','bales','negotiation_id')->where('price',max($best_price))->first();
+							if(!empty($best_dealer_data)){
+								$best_bales = $best_dealer_data->bales;
+								$best_price = $best_dealer_data->price;
+								$negotiation_id = Negotiation::select('id','buyer_id')->where('id',$best_dealer_data->negotiation_id)->first();
+								if(!empty($negotiation_id)){
+									$buyer_data = Buyers::select('id','name')->where('id',$negotiation_id->buyer_id)->first();
+									if(!empty($buyer_data)){
+										$best_dealer_name = $buyer_data->name;
+									}
+								}
+							}
+							$negotiationSellerData = new Negotiation();
+							$negotiationSellerData->broker_name = $broker_details->name;;
+							$negotiationSellerData->post_notification_id = $post_notification_id;
+							$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
+							$negotiationSellerData->seller_id = $negotiation->seller_id;
+							$negotiationSellerData->buyer_id = $negotiation->buyer_id;
+							$negotiationSellerData->negotiation_by = $negotiation_by;
+							$negotiationSellerData->product_name = $product_name;
+							$negotiationSellerData->best_dealer_name = $best_dealer_name;
+							$negotiationSellerData->base_price = $base_price;
+							$negotiationSellerData->base_bales = $base_bales;
+							$negotiationSellerData->best_price = $best_price;
+							$negotiationSellerData->best_bales = $best_bales;
+							$negotiationSellerData->negotiation_count = count($multiple_sellers);
+							event(new NegotiationSeller($negotiationSellerData));
 						}else{
 							$post_notification = Post::where('id',$negotiation->post_notification_id)->first();
 							if(!empty($post_notification)){
@@ -6895,28 +6663,13 @@ class ProductController extends Controller
 									}
 								}
 							}
-							if(!empty($negotiation->buyer_id)){
-								$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-								if(!empty($buyer)){
-									$buyer_name = $buyer->name;
-								}
-							}
-							if(!empty($negotiation->seller_id)){
-								$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-								if(!empty($seller)){
-									$seller_name = $seller->name;
-								}
-							}
-							
 							$negotiationSellerData = new Negotiation();
 							$negotiationSellerData->broker_name = $broker_details->name;
 							$negotiationSellerData->post_notification_id = $negotiation->post_notification_id;
 							$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
 							$negotiationSellerData->seller_id = $negotiation->seller_id;
-							$negotiationSellerData->seller_name = $seller_name;
 							$negotiationSellerData->buyer_id = $negotiation->buyer_id;
 							$negotiationSellerData->negotiation_by = $negotiation_by;
-							$negotiationSellerData->negotiation_type = $negotiation_type;
 							$negotiationSellerData->product_name = $product_name;
 							$negotiationSellerData->post_by = $post_by;
 							$negotiationSellerData->prev_price = $negotiation->prev_price;
@@ -6924,21 +6677,6 @@ class ProductController extends Controller
 							$negotiationSellerData->new_price = $negotiation->price;
 							$negotiationSellerData->new_bales = $negotiation->bales;
 							event(new NegotiationSeller($negotiationSellerData));
-
-							$negotiationMultipleSellerData = new Negotiation();
-							$negotiationMultipleSellerData->buyer_id = $negotiation->buyer_id;
-							$negotiationMultipleSellerData->buyer_name = $buyer_name;
-							$negotiationMultipleSellerData->seller_id = $negotiation->seller_id;
-							$negotiationMultipleSellerData->seller_name = $seller_name;
-							$negotiationMultipleSellerData->post_notification_id = $post_notification_id;
-							$negotiationMultipleSellerData->broker_name = $broker_details->name;
-							$negotiationMultipleSellerData->negotiation_by = $negotiation_by;
-							$negotiationMultipleSellerData->negotiation_type = $negotiation_type;
-							$negotiationMultipleSellerData->prev_price = $negotiation->prev_price;
-							$negotiationMultipleSellerData->prev_bales = $negotiation->prev_bales;
-							$negotiationMultipleSellerData->current_price = $price;
-							$negotiationMultipleSellerData->current_bales = $no_of_bales;
-							event(new NegotiationMultipleSeller($negotiationMultipleSellerData));
 						}
 					}
 					$response['status'] = 200;
@@ -7023,154 +6761,53 @@ class ProductController extends Controller
 						$base_price = '';
 						$base_bales = '';
 						$post_by='';
-						$buyer_name = '';
-						$seller_name = '';
-						$sellers = [];
 						$multiple_buyers = Negotiation::where('post_notification_id',$post_notification_id)->get();
 						if(count($multiple_buyers)>1){
 							$best_price = [];
 							foreach ($multiple_buyers as $value) {
-								array_push($sellers,$value->seller_id);
 								$negotiation_log = NegotiationLog::select('negotiation_id','negotiation_by','price')->where(['negotiation_id'=>$value->id,'negotiation_by'=>'seller'])->orderBy('id','DESC')->first();
 								if(!empty($negotiation_log)){
 									array_push($best_price, $negotiation_log->price);
 								}
 							}
-							$unique_seller = array_unique($sellers);
-							if(count($unique_seller)>1){
-								if($negotiation->negotiation_type == "notification"){
-									$notification = Notification::select('price','no_of_bales','product_id','id')->where('id',$post_notification_id)->first();
-									if(!empty($notification)){
-										$base_price = $notification->price;
-										$base_bales = $notification->no_of_bales;
-										$product = Product::select('name','id')->where('id',$notification->product_id)->first();
-										if(!empty($product)){
-											$product_name = $product->name;
-										}
+							if($negotiation->negotiation_type == "notification"){
+								$notification = Notification::select('price','no_of_bales','product_id','id')->where('id',$post_notification_id)->first();
+								if(!empty($notification)){
+									$base_price = $notification->price;
+									$base_bales = $notification->no_of_bales;
+									$product = Product::select('name','id')->where('id',$notification->product_id)->first();
+									if(!empty($product)){
+										$product_name = $product->name;
 									}
 								}
-								$best_dealer_data = NegotiationLog::select('price','id','bales','negotiation_id')->where('price',max($best_price))->first();
-								if(!empty($best_dealer_data)){
-									$best_bales = $best_dealer_data->bales;
-									$best_price = $best_dealer_data->price;
-									$negotiation_id = Negotiation::select('id','seller_id')->where('id',$best_dealer_data->negotiation_id)->first();
-									if(!empty($negotiation_id)){
-										$seller_data = Sellers::select('id','name')->where('id',$negotiation_id->seller_id)->first();
-										if(!empty($seller_data)){
-											$best_dealer_name = $seller_data->name;
-										}
-									}
-								}
-								if(!empty($negotiation->buyer_id)){
-									$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-									if(!empty($buyer)){
-										$buyer_name = $buyer->name;
-									}
-								}
-								if(!empty($negotiation->seller_id)){
-									$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-									if(!empty($seller)){
-										$seller_name = $seller->name;
-									}
-								}
-								$negotiationBuyerData = new Negotiation();
-								$negotiationBuyerData->post_notification_id = $post_notification_id;
-								$negotiationBuyerData->negotiation_type = $negotiation->negotiation_type;
-								$negotiationBuyerData->broker_name = $broker_details->name;
-								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationBuyerData->seller_id = $negotiation->seller_id;
-								$negotiationBuyerData->seller_name = $seller_name;
-								$negotiationBuyerData->negotiation_by = $negotiation_by;
-								$negotiationBuyerData->negotiation_type = $negotiation_type;
-								$negotiationBuyerData->product_name = $product_name;
-								$negotiationBuyerData->best_dealer_name = $best_dealer_name;
-								$negotiationBuyerData->base_price = $base_price;
-								$negotiationBuyerData->base_bales = $base_bales;
-								$negotiationBuyerData->best_price = $best_price;
-								$negotiationBuyerData->best_bales = $best_bales;
-								$negotiationBuyerData->negotiation_count = count($multiple_buyers);
-								event(new NegotiationBuyer($negotiationBuyerData));
-
-
-								$negotiationMultipleBuyerData = new Negotiation();
-								$negotiationMultipleBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationMultipleBuyerData->buyer_name = $buyer_name;
-								$negotiationMultipleBuyerData->seller_id = $negotiation->seller_id;
-								$negotiationMultipleBuyerData->seller_name = $seller_name;
-								$negotiationMultipleBuyerData->post_notification_id = $post_notification_id;
-								$negotiationMultipleBuyerData->broker_name = $broker_details->name;
-								$negotiationMultipleBuyerData->negotiation_by = $negotiation_by;
-								$negotiationMultipleBuyerData->negotiation_type = $negotiation_type;
-								$negotiationMultipleBuyerData->prev_price = $negotiation->prev_price;
-								$negotiationMultipleBuyerData->prev_bales = $negotiation->prev_bales;
-								$negotiationMultipleBuyerData->current_price = $price;
-								$negotiationMultipleBuyerData->current_bales = $no_of_bales;
-								event(new NegotiationMultipleBuyer($negotiationMultipleBuyerData));
-							}else{
-								if($negotiation->negotiation_type == "notification"){
-									$notification = Notification::select('id','product_id','seller_buyer_id','user_type')->where('id',$negotiation->post_notification_id)->first();
-									if(!empty($notification)){
-										$product = Product::select('id','name')->where('id',$notification->product_id)->first();
-										if(!empty($product)){
-											$product_name = $product->name;
-										}
-										if($notification->user_type == "seller"){
-											$seller = Sellers::select('id','name')->where('id',$notification->seller_buyer_id)->first();
-											if(!empty($seller)){
-												$post_by = $seller->name;
-											}
-										}else{
-											$buyer = Buyers::select('id','name')->where('id',$notification->seller_buyer_id)->first();
-											if(!empty($buyer)){
-												$post_by = $buyer->name;
-											}
-										}
-									}
-								}
-								if(!empty($negotiation->buyer_id)){
-									$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-									if(!empty($buyer)){
-										$buyer_name = $buyer->name;
-									}
-								}
-								if(!empty($negotiation->seller_id)){
-									$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-									if(!empty($seller)){
-										$seller_name = $seller->name;
-									}
-								}
-								$negotiationBuyerData = new Negotiation();
-								$negotiationBuyerData->post_notification_id = $post_notification_id;
-								$negotiationBuyerData->negotiation_type = $negotiation->negotiation_type;
-								$negotiationBuyerData->broker_name = $broker_details->name;;
-								$negotiationBuyerData->seller_id = $negotiation->seller_id;
-								$negotiationBuyerData->seller_name = $seller_name;
-								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationBuyerData->negotiation_by = $negotiation_by;
-								$negotiationBuyerData->negotiation_type = $negotiation_type;
-								$negotiationBuyerData->product_name = $product_name;
-								$negotiationBuyerData->post_by = $post_by;
-								$negotiationBuyerData->prev_price = $negotiation->prev_price;
-								$negotiationBuyerData->prev_bales = $negotiation->prev_bales;
-								$negotiationBuyerData->new_price = $negotiation->price;
-								$negotiationBuyerData->new_bales = $negotiation->bales;
-								event(new NegotiationBuyer($negotiationBuyerData));
-
-								$negotiationMultipleBuyerData = new Negotiation();
-								$negotiationMultipleBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationMultipleBuyerData->buyer_name = $buyer_name;
-								$negotiationMultipleBuyerData->seller_id = $negotiation->seller_id;
-								$negotiationMultipleBuyerData->seller_name = $seller_name;
-								$negotiationMultipleBuyerData->post_notification_id = $post_notification_id;
-								$negotiationMultipleBuyerData->broker_name = $broker_details->name;
-								$negotiationMultipleBuyerData->negotiation_by = $negotiation_by;
-								$negotiationMultipleBuyerData->negotiation_type = $negotiation_type;
-								$negotiationMultipleBuyerData->prev_price = $negotiation->prev_price;
-								$negotiationMultipleBuyerData->prev_bales = $negotiation->prev_bales;
-								$negotiationMultipleBuyerData->current_price = $price;
-								$negotiationMultipleBuyerData->current_bales = $no_of_bales;
-								event(new NegotiationMultipleBuyer($negotiationMultipleBuyerData));
 							}
+							$best_dealer_data = NegotiationLog::select('price','id','bales','negotiation_id')->where('price',max($best_price))->first();
+							if(!empty($best_dealer_data)){
+								$best_bales = $best_dealer_data->bales;
+								$best_price = $best_dealer_data->price;
+								$negotiation_id = Negotiation::select('id','seller_id')->where('id',$best_dealer_data->negotiation_id)->first();
+								if(!empty($negotiation_id)){
+									$seller_data = Sellers::select('id','name')->where('id',$negotiation_id->seller_id)->first();
+									if(!empty($seller_data)){
+										$best_dealer_name = $seller_data->name;
+									}
+								}
+							}
+							$negotiationBuyerData = new Negotiation();
+							$negotiationBuyerData->post_notification_id = $post_notification_id;
+							$negotiationBuyerData->negotiation_type = $negotiation->negotiation_type;
+							$negotiationBuyerData->broker_name = $broker_details->name;
+							$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
+							$negotiationBuyerData->seller_id = $negotiation->seller_id;
+							$negotiationBuyerData->negotiation_by = $negotiation_by;
+							$negotiationBuyerData->product_name = $product_name;
+							$negotiationBuyerData->best_dealer_name = $best_dealer_name;
+							$negotiationBuyerData->base_price = $base_price;
+							$negotiationBuyerData->base_bales = $base_bales;
+							$negotiationBuyerData->best_price = $best_price;
+							$negotiationBuyerData->best_bales = $best_bales;
+							$negotiationBuyerData->negotiation_count = count($multiple_buyers);
+							event(new NegotiationBuyer($negotiationBuyerData));
 						}else{
 							if($negotiation->negotiation_type == "notification"){
 								$notification = Notification::select('id','product_id','seller_buyer_id','user_type')->where('id',$negotiation->post_notification_id)->first();
@@ -7192,27 +6829,13 @@ class ProductController extends Controller
 									}
 								}
 							}
-							if(!empty($negotiation->buyer_id)){
-								$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-								if(!empty($buyer)){
-									$buyer_name = $buyer->name;
-								}
-							}
-							if(!empty($negotiation->seller_id)){
-								$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-								if(!empty($seller)){
-									$seller_name = $seller->name;
-								}
-							}
 							$negotiationBuyerData = new Negotiation();
 							$negotiationBuyerData->post_notification_id = $post_notification_id;
 							$negotiationBuyerData->negotiation_type = $negotiation->negotiation_type;
 							$negotiationBuyerData->broker_name = $broker_details->name;;
 							$negotiationBuyerData->seller_id = $negotiation->seller_id;
-							$negotiationBuyerData->seller_name = $seller_name;
 							$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
 							$negotiationBuyerData->negotiation_by = $negotiation_by;
-							$negotiationBuyerData->negotiation_type = $negotiation_type;
 							$negotiationBuyerData->product_name = $product_name;
 							$negotiationBuyerData->post_by = $post_by;
 							$negotiationBuyerData->prev_price = $negotiation->prev_price;
@@ -7220,21 +6843,6 @@ class ProductController extends Controller
 							$negotiationBuyerData->new_price = $negotiation->price;
 							$negotiationBuyerData->new_bales = $negotiation->bales;
 							event(new NegotiationBuyer($negotiationBuyerData));
-
-							$negotiationMultipleBuyerData = new Negotiation();
-							$negotiationMultipleBuyerData->buyer_id = $negotiation->buyer_id;
-							$negotiationMultipleBuyerData->buyer_name = $buyer_name;
-							$negotiationMultipleBuyerData->seller_id = $negotiation->seller_id;
-							$negotiationMultipleBuyerData->seller_name = $seller_name;
-							$negotiationMultipleBuyerData->post_notification_id = $post_notification_id;
-							$negotiationMultipleBuyerData->broker_name = $broker_details->name;
-							$negotiationMultipleBuyerData->negotiation_by = $negotiation_by;
-							$negotiationMultipleBuyerData->negotiation_type = $negotiation_type;
-							$negotiationMultipleBuyerData->prev_price = $negotiation->prev_price;
-							$negotiationMultipleBuyerData->prev_bales = $negotiation->prev_bales;
-							$negotiationMultipleBuyerData->current_price = $price;
-							$negotiationMultipleBuyerData->current_bales = $no_of_bales;
-							event(new NegotiationMultipleBuyer($negotiationMultipleBuyerData));
 						}
 					}else{
 						$product_name = '';
@@ -7244,155 +6852,53 @@ class ProductController extends Controller
 						$base_price = '';
 						$base_bales = '';
 						$post_by='';
-						$buyer_name = '';
-						$seller_name = '';
-						$buyers = [];
 						$multiple_sellers = Negotiation::where('post_notification_id',$post_notification_id)->get();
 						if(count($multiple_sellers)>1){
 							$best_price = [];
 							foreach ($multiple_sellers as $value) {
-								array_push($buyers, $value->buyer_id);
 								$negotiation_log = NegotiationLog::select('negotiation_id','negotiation_by','price')->where(['negotiation_id'=>$value->id,'negotiation_by'=>'buyer'])->orderBy('id','DESC')->first();
 								if(!empty($negotiation_log)){
 									array_push($best_price, $negotiation_log->price);
 								}
 							}
-
-							$unique_buyer = array_unique($buyers);
-							if(count($unique_buyer)>1){
-								if($negotiation->negotiation_type == "notification"){
-									$notification = Notification::select('price','no_of_bales','product_id','id')->where('id',$post_notification_id)->first();
-									if(!empty($notification)){
-										$base_price = $notification->price;
-										$base_bales = $notification->no_of_bales;
-										$product = Product::select('name','id')->where('id',$notification->product_id)->first();
-										if(!empty($product)){
-											$product_name = $product->name;
-										}
-									}
-								}
-								$best_dealer_data = NegotiationLog::select('price','id','bales','negotiation_id')->where('price',max($best_price))->first();
-								if(!empty($best_dealer_data)){
-									$best_bales = $best_dealer_data->bales;
-									$best_price = $best_dealer_data->price;
-									$negotiation_id = Negotiation::select('id','buyer_id')->where('id',$best_dealer_data->negotiation_id)->first();
-									if(!empty($negotiation_id)){
-										$buyer_data = Buyers::select('id','name')->where('id',$negotiation_id->buyer_id)->first();
-										if(!empty($buyer_data)){
-											$best_dealer_name = $buyer_data->name;
-										}
-									}
-								}
-
-								if(!empty($negotiation->buyer_id)){
-									$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-									if(!empty($buyer)){
-										$buyer_name = $buyer->name;
-									}
-								}
-								if(!empty($negotiation->seller_id)){
-									$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-									if(!empty($seller)){
-										$seller_name = $seller->name;
-									}
-								}
-								
-								$negotiationSellerData = new Negotiation();
-								$negotiationSellerData->post_notification_id = $post_notification_id;
-								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
-								$negotiationSellerData->broker_name = $broker_details->name;;
-								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationSellerData->seller_id = $negotiation->seller_id;
-								$negotiationSellerData->seller_name = $seller_name;
-								$negotiationSellerData->negotiation_by = $negotiation_by;
-								$negotiationSellerData->negotiation_type = $negotiation_type;
-								$negotiationSellerData->product_name = $product_name;
-								$negotiationSellerData->best_dealer_name = $best_dealer_name;
-								$negotiationSellerData->base_price = $base_price;
-								$negotiationSellerData->base_bales = $base_bales;
-								$negotiationSellerData->best_price = $best_price;
-								$negotiationSellerData->best_bales = $best_bales;
-								$negotiationSellerData->negotiation_count = count($multiple_sellers);
-								event(new NegotiationSeller($negotiationSellerData));
-
-								$negotiationMultipleSellerData = new Negotiation();
-								$negotiationMultipleSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationMultipleSellerData->buyer_name = $buyer_name;
-								$negotiationMultipleSellerData->seller_id = $negotiation->seller_id;
-								$negotiationMultipleSellerData->seller_name = $seller_name;
-								$negotiationMultipleSellerData->post_notification_id = $post_notification_id;
-								$negotiationMultipleSellerData->broker_name = $broker_details->name;
-								$negotiationMultipleSellerData->negotiation_by = $negotiation_by;
-								$negotiationMultipleSellerData->negotiation_type = $negotiation_type;
-								$negotiationMultipleSellerData->prev_price = $negotiation->prev_price;
-								$negotiationMultipleSellerData->prev_bales = $negotiation->prev_bales;
-								$negotiationMultipleSellerData->current_price = $price;
-								$negotiationMultipleSellerData->current_bales = $no_of_bales;
-								event(new NegotiationMultipleSeller($negotiationMultipleSellerData));
-							}else{
-								$post_notification = Notification::where('id',$negotiation->post_notification_id)->first();
-								if(!empty($post_notification)){
-									$product = Product::where('id',$post_notification->product_id)->first();
+							if($negotiation->negotiation_type == "notification"){
+								$notification = Notification::select('price','no_of_bales','product_id','id')->where('id',$post_notification_id)->first();
+								if(!empty($notification)){
+									$base_price = $notification->price;
+									$base_bales = $notification->no_of_bales;
+									$product = Product::select('name','id')->where('id',$notification->product_id)->first();
 									if(!empty($product)){
 										$product_name = $product->name;
 									}
-									if($post_notification->user_type == "seller"){
-										$seller = Sellers::where('id',$post_notification->seller_buyer_id)->first();
-										if(!empty($seller)){
-											$post_by = $seller->name;
-										}
-									}else{
-										$buyer = Buyers::where('id',$post_notification->seller_buyer_id)->first();
-										if(!empty($buyer)){
-											$post_by = $buyer->name;
-										}
-									}
 								}
-								if(!empty($negotiation->buyer_id)){
-									$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-									if(!empty($buyer)){
-										$buyer_name = $buyer->name;
-									}
-								}
-								if(!empty($negotiation->seller_id)){
-									$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-									if(!empty($seller)){
-										$seller_name = $seller->name;
-									}
-								}
-								
-								$negotiationSellerData = new Negotiation();
-								$negotiationSellerData->post_notification_id = $post_notification_id;
-								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
-								$negotiationSellerData->broker_name = $broker_details->name;;
-								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationSellerData->seller_id = $negotiation->seller_id;
-								$negotiationSellerData->seller_name = $seller_name;
-								$negotiationSellerData->negotiation_by = $negotiation_by;
-								$negotiationSellerData->negotiation_type = $negotiation_type;
-								$negotiationSellerData->product_name = $product_name;
-								$negotiationSellerData->post_by = $post_by;
-								$negotiationSellerData->prev_price = $negotiation->prev_price;
-								$negotiationSellerData->prev_bales = $negotiation->prev_bales;
-								$negotiationSellerData->new_price = $negotiation->price;
-								$negotiationSellerData->new_bales = $negotiation->bales;
-								event(new NegotiationSeller($negotiationSellerData));
-
-								$negotiationMultipleSellerData = new Negotiation();
-								$negotiationMultipleSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationMultipleSellerData->buyer_name = $buyer_name;
-								$negotiationMultipleSellerData->seller_id = $negotiation->seller_id;
-								$negotiationMultipleSellerData->seller_name = $seller_name;
-								$negotiationMultipleSellerData->post_notification_id = $post_notification_id;
-								$negotiationMultipleSellerData->broker_name = $broker_details->name;
-								$negotiationMultipleSellerData->negotiation_by = $negotiation_by;
-								$negotiationMultipleSellerData->negotiation_type = $negotiation_type;
-								$negotiationMultipleSellerData->prev_price = $negotiation->prev_price;
-								$negotiationMultipleSellerData->prev_bales = $negotiation->prev_bales;
-								$negotiationMultipleSellerData->current_price = $price;
-								$negotiationMultipleSellerData->current_bales = $no_of_bales;
-								event(new NegotiationMultipleSeller($negotiationMultipleSellerData));
 							}
+							$best_dealer_data = NegotiationLog::select('price','id','bales','negotiation_id')->where('price',max($best_price))->first();
+							if(!empty($best_dealer_data)){
+								$best_bales = $best_dealer_data->bales;
+								$best_price = $best_dealer_data->price;
+								$negotiation_id = Negotiation::select('id','buyer_id')->where('id',$best_dealer_data->negotiation_id)->first();
+								if(!empty($negotiation_id)){
+									$buyer_data = Buyers::select('id','name')->where('id',$negotiation_id->buyer_id)->first();
+									if(!empty($buyer_data)){
+										$best_dealer_name = $buyer_data->name;
+									}
+								}
+							}
+							$negotiationSellerData = new Negotiation();
+							$negotiationSellerData->post_notification_id = $post_notification_id;
+							$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
+							$negotiationSellerData->broker_name = $broker_details->name;;
+							$negotiationSellerData->buyer_id = $negotiation->buyer_id;
+							$negotiationSellerData->seller_id = $negotiation->seller_id;
+							$negotiationSellerData->negotiation_by = $negotiation_by;
+							$negotiationSellerData->product_name = $product_name;
+							$negotiationSellerData->best_dealer_name = $best_dealer_name;
+							$negotiationSellerData->base_price = $base_price;
+							$negotiationSellerData->base_bales = $base_bales;
+							$negotiationSellerData->best_price = $best_price;
+							$negotiationSellerData->best_bales = $best_bales;
+							$negotiationSellerData->negotiation_count = count($multiple_sellers);
+							event(new NegotiationSeller($negotiationSellerData));
 						}else{
 							$post_notification = Notification::where('id',$negotiation->post_notification_id)->first();
 							if(!empty($post_notification)){
@@ -7412,28 +6918,13 @@ class ProductController extends Controller
 									}
 								}
 							}
-							if(!empty($negotiation->buyer_id)){
-								$buyer =  Buyers::where('id',$negotiation->buyer_id)->first();
-								if(!empty($buyer)){
-									$buyer_name = $buyer->name;
-								}
-							}
-							if(!empty($negotiation->seller_id)){
-								$seller =  Sellers::where('id',$negotiation->seller_id)->first();
-								if(!empty($seller)){
-									$seller_name = $seller->name;
-								}
-							}
-							
 							$negotiationSellerData = new Negotiation();
 							$negotiationSellerData->post_notification_id = $post_notification_id;
 							$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
 							$negotiationSellerData->broker_name = $broker_details->name;;
 							$negotiationSellerData->buyer_id = $negotiation->buyer_id;
 							$negotiationSellerData->seller_id = $negotiation->seller_id;
-							$negotiationSellerData->seller_name = $seller_name;
 							$negotiationSellerData->negotiation_by = $negotiation_by;
-							$negotiationSellerData->negotiation_type = $negotiation_type;
 							$negotiationSellerData->product_name = $product_name;
 							$negotiationSellerData->post_by = $post_by;
 							$negotiationSellerData->prev_price = $negotiation->prev_price;
@@ -7441,21 +6932,6 @@ class ProductController extends Controller
 							$negotiationSellerData->new_price = $negotiation->price;
 							$negotiationSellerData->new_bales = $negotiation->bales;
 							event(new NegotiationSeller($negotiationSellerData));
-
-							$negotiationMultipleSellerData = new Negotiation();
-							$negotiationMultipleSellerData->buyer_id = $negotiation->buyer_id;
-							$negotiationMultipleSellerData->buyer_name = $buyer_name;
-							$negotiationMultipleSellerData->seller_id = $negotiation->seller_id;
-							$negotiationMultipleSellerData->seller_name = $seller_name;
-							$negotiationMultipleSellerData->post_notification_id = $post_notification_id;
-							$negotiationMultipleSellerData->broker_name = $broker_details->name;
-							$negotiationMultipleSellerData->negotiation_by = $negotiation_by;
-							$negotiationMultipleSellerData->negotiation_type = $negotiation_type;
-							$negotiationMultipleSellerData->prev_price = $negotiation->prev_price;
-							$negotiationMultipleSellerData->prev_bales = $negotiation->prev_bales;
-							$negotiationMultipleSellerData->current_price = $price;
-							$negotiationMultipleSellerData->current_bales = $no_of_bales;
-							event(new NegotiationMultipleSeller($negotiationMultipleSellerData));
 						}
 					}
 					$response['status'] = 200;
