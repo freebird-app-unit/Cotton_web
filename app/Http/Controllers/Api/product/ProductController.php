@@ -8663,8 +8663,9 @@ class ProductController extends Controller
                 //     'best_name' => "",
                 // ];
             }
-
+            $negotiation_post_arr_temp = [];
             $negotiation_post_arr = [];
+            $negotiation_notification_arr_temp = [];
 			$negotiation_notification_arr = [];
             $unique_post_ids = array_unique($post_ids);
 			$unique_notification_ids = array_unique($notification_ids);
@@ -8735,7 +8736,7 @@ class ProductController extends Controller
 						$max = max($best_price);
 						foreach ($post_array as $post_value) {
 							if($post_value['current_price'] == $max){
-								$negotiation_post_arr[] = [
+								$negotiation_post_arr_temp[] = [
 									'post_id' => $post_data->id,
 									'product_id' => $post_data->product_id,
 									'product_name' => $product_name,
@@ -8759,6 +8760,13 @@ class ProductController extends Controller
 								];
 							}
 						}
+					//when same price then multi-dimensional array unique based on post_id	
+					$newArr = array();
+					foreach ($negotiation_post_arr_temp as $val) {
+					    $newArr[$val['post_id']] = $val;    
+					}
+					$negotiation_post_arr = array_values($newArr);
+					//end
 					}else{
 						$negotiation_post_arr[] = [
 							'post_id' => $post_data->id,
@@ -8849,7 +8857,7 @@ class ProductController extends Controller
 						$max = max($best_price);
 						foreach ($notification_array as $notification_value) {
 							if($notification_value['current_price'] == $max){
-								$negotiation_notification_arr[] = [
+								$negotiation_notification_arr_temp[] = [
 									'notification_id' => $notification->id,
 									'status' => $notification->status,
 									'seller_buyer_id' => $notification->seller_buyer_id,
@@ -8873,8 +8881,15 @@ class ProductController extends Controller
 								];
 							}
 						}
+					//when same price then multi-dimensional array unique based on post_id	
+					$newArr = array();
+					foreach ($negotiation_notification_arr_temp as $val) {
+					    $newArr[$val['post_id']] = $val;    
+					}
+					$negotiation_notification_arr = array_values($newArr);
+					//end
 					}else{
-						$negotiation_post_arr[] = [
+						$negotiation_notification_arr[] = [
 							'notification_id' => $notification->id,
 							'status' => $notification->status,
 							'seller_buyer_id' => $notification->seller_buyer_id,
