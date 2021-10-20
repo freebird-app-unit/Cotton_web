@@ -42,7 +42,7 @@
 
                         </div>
                         <div class="col-sm-3">
-                            <p><b>Referal Code : </b>{{!empty($broker) ? $broker->referral_code : ''}}</p>
+                            <p><b>Referal Code : </b>{{!empty($broker) ? $broker->code : ''}}</p>
                             <p><b>Status : </b>
                                 @if(!empty($broker->is_active) && $broker->is_active == 1)
                                     <span class="status label label-success" data-id='{{$broker->id}}' id="active_{{$broker->id}}" style="cursor: pointer;">Active</span>

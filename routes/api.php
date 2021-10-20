@@ -13,9 +13,9 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:api')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
 
 
 Route::group(['namespace' => 'Api\seller'], function () {
@@ -38,6 +38,7 @@ Route::group(['namespace' => 'Api\seller'], function () {
 	Route::post('/seller_type', 'LoginController@seller_type');
 	Route::post('/sellertype_buyertype_businesstype_registrationas', 'LoginController@sellertype_buyertype_businesstype_registrationas');
 	Route::post('/edit_profile_seller', 'ProfileController@edit_profile_seller');
+	Route::get('/plan_list', 'LoginController@plan_list');
 });
 
 Route::group(['namespace' => 'Api\buyer'], function () {
@@ -51,6 +52,7 @@ Route::group(['namespace' => 'Api\buyer'], function () {
 	Route::post('/profile_buyer', 'LoginController@profile_buyer');
 	Route::post('/logout_buyer', 'LoginController@logout_buyer');
 	Route::post('/edit_profile_buyer', 'ProfileController@edit_profile_buyer');
+	Route::post('/send_broker_request', 'LoginController@send_broker_request');
 });
 
 Route::group(['namespace' => 'Api\broker'], function () {
@@ -71,6 +73,8 @@ Route::group(['namespace' => 'Api\broker'], function () {
 	Route::post('/add_broker_verify', 'SearchController@add_broker_verify');
 	Route::post('/add_broker_list', 'SearchController@add_broker_list');
 	Route::post('/delete_broker', 'SearchController@delete_broker');
+	Route::post('/broker_request_list', 'SearchController@broker_request_list');
+	Route::post('/accept_broker_request', 'SearchController@accept_broker_request');
 });
 
 
@@ -112,11 +116,32 @@ Route::group(['namespace' => 'Api\product'], function () {
 	Route::post('/search_to_sell_new', 'ProductController@search_to_sell_new');
 	Route::post('/search_to_buy_new', 'ProductController@search_to_buy_new');
 	Route::post('/update_transaction_tracking', 'ProductController@update_transaction_tracking');
+	Route::post('/update_transaction_sample', 'ProductController@update_transaction_sample');
+	Route::post('/my_contract_list_v1', 'ProductController@my_contract_list_v1');
+	Route::post('/contract_details', 'ProductController@contract_details');
 
 	Route::post('/negotiation_list_new', 'NegotiationController@negotiation_list_new');
 	Route::post('/negotiation_list_buyer_new', 'NegotiationController@negotiation_list_buyer_new');
-});
 
+    //new api
+    Route::post('/negotiation_new_v2', 'ProductController@negotiation_new_v2');
+    Route::post('/make_deal_new_v2', 'ProductController@make_deal_new_v2');
+    Route::post('/negotiation_list_new_v2', 'ProductController@negotiation_list_new_v2');
+    Route::post('/negotiation_list_buyer_new_v2', 'ProductController@negotiation_list_buyer_new_v2');
+    Route::post('/negotiation_detail_new_v2', 'ProductController@negotiation_detail_new_v2');
+    Route::post('/lab_report_status', 'ProductController@lab_report_status');
+    Route::post('/search_to_sell_new_v2', 'ProductController@search_to_sell_new_v2');
+    Route::post('/search_to_buy_new_v2', 'ProductController@search_to_buy_new_v2');
+    Route::post('/completed_deal_new_v2', 'ProductController@completed_deal_new_v2');
+    Route::post('/completed_deal_buyer_new_v2', 'ProductController@completed_deal_buyer_new_v2');
+    Route::post('/completed_deal_detail_new_v2', 'ProductController@completed_deal_detail_new_v2');
+    Route::post('/negotiation_detail_by_deal_new_v2', 'ProductController@negotiation_detail_by_deal_new_v2');
+    Route::post('/my_contract_list', 'ProductController@my_contract_list');
+    Route::post('/upload_debit_note', 'ProductController@upload_debit_note');
+    Route::post('/test_api', 'ProductController@test_api');
+
+});
 Route::post('/news', 'Api\seller\LoginController@news_list');
 Route::post('/news_details', 'Api\seller\LoginController@news_details');
 Route::post('/broker_list', 'Api\seller\LoginController@broker_list');
+Route::post('/broker_list_v1', 'Api\seller\LoginController@broker_list_v1');

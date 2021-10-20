@@ -160,7 +160,7 @@ Route::group(['middleware' => ['auth:web']], function() {
         Route::post('buyer_approval', ['as' => 'buyer_approval', 'uses' => 'BuyerController@buyer_approval']);
         Route::post('buyer_status', ['as' => 'buyer_status', 'uses' => 'BuyerController@buyer_status']);
     });
-	
+
 	 Route::group(['prefix' => 'broker'], function () {
         Route::get('/', ['as' => 'broker_index', 'uses' => 'BrokerController@index']);
         Route::post('list', ['as' => 'broker_list', 'uses' => 'BrokerController@index']);
@@ -171,16 +171,16 @@ Route::group(['middleware' => ['auth:web']], function() {
         Route::post('broker_approval', ['as' => 'broker_approval', 'uses' => 'BrokerController@broker_approval']);
         Route::post('broker_status', ['as' => 'broker_status', 'uses' => 'BrokerController@broker_status']);
     });
-	 
+
 	Route::group(['prefix' => 'news'], function () {
         Route::get('/', ['as' => 'news_index', 'uses' => 'NewsController@index']);
         Route::post('list', ['as' => 'news_list', 'uses' => 'NewsController@index']);
-        Route::get('add', ['as' => 'news_create', 'uses' => 'NewsController@add']); 
+        Route::get('add', ['as' => 'news_create', 'uses' => 'NewsController@add']);
         Route::post('store', ['as' => 'news_store', 'uses' => 'NewsController@store']);
         Route::get('{id}/edit', ['as' => 'news_edit', 'uses' => 'NewsController@edit']);
         Route::post('delete/{id}', ['as' => 'news_delete', 'uses' => 'NewsController@destroy']);
     });
-	
+
 	Route::group(['prefix' => 'subject_to'], function () {
         Route::get('/', ['as' => 'subject_to_index', 'uses' => 'SubjectToController@index']);
         Route::post('list', ['as' => 'subject_to_list', 'uses' => 'SubjectToController@index']);
@@ -189,7 +189,7 @@ Route::group(['middleware' => ['auth:web']], function() {
         Route::get('{id}/edit', ['as' => 'subject_to_edit', 'uses' => 'SubjectToController@edit']);
         Route::post('delete/{id}', ['as' => 'subject_to_delete', 'uses' => 'SubjectToController@destroy']);
     });
-	
+
 	Route::group(['prefix' => 'confirm_to'], function () {
         Route::get('/', ['as' => 'confirm_to_index', 'uses' => 'ConfirmToController@index']);
         Route::post('list', ['as' => 'confirm_to_list', 'uses' => 'ConfirmToController@index']);
@@ -198,4 +198,12 @@ Route::group(['middleware' => ['auth:web']], function() {
         Route::get('{id}/edit', ['as' => 'confirm_to_edit', 'uses' => 'ConfirmToController@edit']);
         Route::post('delete/{id}', ['as' => 'confirm_to_delete', 'uses' => 'ConfirmToController@destroy']);
     });
+
+    Route::resource('plan', 'PlanController');
+
+    Route::post('check_seller_code', ['as' => 'check_seller_code', 'uses' => 'SellerController@check_seller_code']);
+    Route::post('send_broker_otp', ['as' => 'send_broker_otp', 'uses' => 'SellerController@send_broker_otp']);
+    Route::post('verify_broker_otp', ['as' => 'verify_broker_otp', 'uses' => 'SellerController@verify_broker_otp']);
+    Route::post('check_buyer_code', ['as' => 'check_buyer_code', 'uses' => 'BuyerController@check_buyer_code']);
+    Route::post('verify_buyer_broker_otp', ['as' => 'verify_buyer_broker_otp', 'uses' => 'BuyerController@verify_buyer_broker_otp']);
 });
