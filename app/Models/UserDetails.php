@@ -39,4 +39,9 @@ class UserDetails extends Model
     {
         return $this->hasOne(Sellers::class,'id','user_id');
     }
+
+    public function broker()
+    {
+        return $this->hasOne(Brokers::class,'id','user_id');
+    }
 }

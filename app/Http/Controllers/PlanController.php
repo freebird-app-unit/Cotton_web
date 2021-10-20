@@ -2,75 +2,71 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TransmitCondition;
+use App\Models\Plan;
 use Illuminate\Http\Request;
 use Response;
 use Validator;
 use Yajra\DataTables\Facades\DataTables;
 
-class TransmitConditionController extends Controller
+class PlanController extends Controller
 {
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $transmit = TransmitCondition::where('is_delete',1)->get();
+            $plan = Plan::get();
 
-            return Datatables::of($transmit)
+            return Datatables::of($plan)
             ->setRowId(function ($value) {
                 return 'del_'.$value->id;
             })
             ->addIndexColumn()
             ->addColumn('action', function ($value) {
-                $edit = route('transmit_condition_edit',$value->id);
-                $delete = route('transmit_condition_delete',$value->id);
+                $edit = route('plan.edit',$value->id);
+                $delete = route('plan.destroy',$value->id);
                 return  '<a href="'.$edit.'"><i class="fa fa-edit"></i></a>
                 <i data-href="'.$delete.'" data-original-title="Delete" data-id="'.$value->id.'" class="fa fa-trash delete-record"></i>';
             })
             ->rawColumns(['action'])
             ->make(true);
         }
-
-    	return view('transmit_condition.list');
+        return view('plan.list');
     }
 
-    public function add() {
-        return view('transmit_condition.form');
+    public function create() {
+        return view('plan.form');
     }
 
     public function store(Request $request)
     {
-        // dd($request->all());
-
-        $valid = 'required';
-        if(empty($request->transmit_id)){
-            $valid = 'required|unique:tbl_transmit_condition,name';
-        }
-    	$validator = Validator::make($request->all(), [
-            'name' => $valid,
-        ]);
-
-
-        if ($validator->fails()) {
-            return Response::json([
-                "code" => 200,
-                "response_status" => "error",
-                "message"         => $validator->errors()->first(),
-                "data"            => []
+        if(empty($request->plan_id)){
+            $validator = Validator::make($request->all(), [
+                'name' =>  'required|unique:tbl_plans,name',
             ]);
+
+
+            if ($validator->fails()) {
+                return Response::json([
+                    "code" => 200,
+                    "response_status" => "error",
+                    "message"         => $validator->errors()->first(),
+                    "data"            => []
+                ]);
+            }
         }
 
-        $transmit_condition = TransmitCondition::updateOrCreate(
+        $plan = Plan::updateOrCreate(
             [
-                'id' => $request->transmit_id,
+                'id' => $request->plan_id,
             ],
             [
-                'name'    => $request->name,
-                'is_dispatch'    => $request->is_dispatch,
+                'name' => $request->name,
+                'validity' => $request->validity,
+                'price' => $request->price,
             ]
         );
-        $transmit_condition->save();
+        $plan->save();
 
-        if (!empty($request->transmit_id)) {
+        if (!empty($request->plan_id)) {
             $message = "Record Update successfully";
         } else {
             $message = "Record Save successfully";
@@ -86,16 +82,25 @@ class TransmitConditionController extends Controller
 
     public function edit($id) {
 
-        $transmit = [];
+        $plan = [];
         if ((int)$id > 0) {
-            $transmit  = TransmitCondition::find($id);
+            $plan  = Plan::find($id);
         }
-        return view('transmit_condition.form',compact(['transmit']));
+        return view('plan.form',compact(['plan']));
+    }
+
+    public function show($id) {
+
+        $plan = [];
+        if ((int)$id > 0) {
+            $plan  = Plan::find($id);
+        }
+        return view('plan.form',compact(['plan']));
     }
 
     public function destroy($id) {
 
-        $transmit_condition = TransmitCondition::updateOrCreate(
+        Plan::updateOrCreate(
             [
                 'id' => $id,
             ],

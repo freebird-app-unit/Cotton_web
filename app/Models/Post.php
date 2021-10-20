@@ -13,4 +13,20 @@ class Post extends Model
     {
         return $this->hasOne(UserDetails::class,'user_id','seller_buyer_id');
     }
+    public function product()
+    {
+        return $this->hasOne(Product::class,'id','product_id');
+    }
+    public function seller()
+    {
+        return $this->hasOne(Sellers::class,'id','seller_buyer_id');
+    }
+    public function buyer()
+    {
+        return $this->hasOne(Buyers::class,'id','seller_buyer_id');
+    }
+    public function post_details()
+    {
+        return $this->hasMany(PostDetails::class,'post_id','id');
+    }
 }

@@ -26,7 +26,7 @@ class ProfileController extends Controller
 		$response['message'] = '';
 		$response['data'] = (object)array();
 
-		$data = $request->input('data');	
+		$data = $request->input('data');
 		$content = json_decode($data);
 
 		$id = isset($content->id) ? $content->id : '';
@@ -52,7 +52,8 @@ class ProfileController extends Controller
 
 		$params = [
 			'mobile_number' => $mobile_number,
-			'email' => $email
+			'email' => $email,
+			'id' => $id,
 		];
 
 		$validator = Validator::make($params, [
@@ -65,6 +66,7 @@ class ProfileController extends Controller
             'email' => [
 		        Rule::unique('tbl_brokers')->ignore($id),
 		    ],
+            'id' => 'required|exists:tbl_brokers,id',
         ]);
 
         if ($validator->fails()) {
@@ -72,7 +74,7 @@ class ProfileController extends Controller
 				$response['message'] =$validator->errors()->first();
 				return response($response, 200);
 	    }
-		
+
 		$header_image_name = '';
 		if ($request->hasFile('header_image')) {
 			$image = $request->file('header_image');
@@ -81,7 +83,7 @@ class ProfileController extends Controller
 			$img->stream(); // <-- Key point
 			Storage::disk('public')->put('broker/header_image/' . $header_image_name, $img, 'public');
 		}
-		
+
 		$stamp_image_name = '';
 		if ($request->hasFile('stamp_image')) {
 			$image = $request->file('stamp_image');
@@ -121,12 +123,12 @@ class ProfileController extends Controller
 				$user_details->save();
 			}
 
-			$response['status'] = 200; 
+			$response['status'] = 200;
 			$response['message'] = 'Profile has been successfully updated.';
     	}else{
-    		$response['status'] = 404; 
+    		$response['status'] = 404;
     	}
-	
+
         return response($response, 200);
     }
 }

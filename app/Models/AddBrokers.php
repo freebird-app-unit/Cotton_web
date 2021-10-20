@@ -9,4 +9,9 @@ class AddBrokers extends Model
 {
     use HasFactory;
     protected $table = 'tbl_add_brokers';
+
+	public function broker()
+    {
+        return $this->hasOne(Brokers::class,'id','broker_id');
+    }
 }

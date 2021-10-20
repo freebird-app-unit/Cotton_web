@@ -12,7 +12,21 @@ class Sellers extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'name','address','mobile_number','email','password','referral_code','is_approve','is_active','otp','otp_time','is_otp_verify','is_delete','created_at' ,'updated_at'
+        'name','address','mobile_number','email','password','referral_code','is_approve','is_active','otp','otp_time','is_otp_verify','is_delete','created_at' ,'updated_at', 'wallet_amount'
     ];
+
+    public function bank_details()
+    {
+        return $this->hasOne(BankDetails::class,'user_id','id');
+    }
+
+    public function user_details()
+    {
+        return $this->hasOne(UserDetails::class,'user_id','id')->where('user_type','seller');
+    }
+
+    public function user_plan() {
+        return $this->hasOne(UserPlan::class,'user_id','id')->where('user_type','seller')->orderBy('id', 'DESC');
+    }
 
 }
