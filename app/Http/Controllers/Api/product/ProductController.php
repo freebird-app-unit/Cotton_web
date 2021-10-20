@@ -412,7 +412,7 @@ class ProductController extends Controller
 			$send_by = '';
 			$seller = Sellers::where('id',$seller_buyer_id)->first();
 			if(!empty($seller)){
-				$send_by = $seller->name; 
+				$send_by = $seller->name;
 			}
             $fcm_token = [];
 			if(!empty($buyers)){
@@ -428,7 +428,7 @@ class ProductController extends Controller
 					$select->save();
 
 					//event
-					
+
 					$product_name = '';
 					$product = Product::where('id',$notification->product_id)->first();
 					if(!empty($product)){
@@ -507,7 +507,7 @@ class ProductController extends Controller
 				];
 				NotificationHelper::notification($json_array,'buyer');
 			}
-			
+
 			$response['status'] = 200;
 			$response['message'] = 'Notification Send Sucessfully!!';
 		}else{
@@ -851,7 +851,7 @@ class ProductController extends Controller
             'sellers' => 'required',
             'attribute_array' => 'required',
         ]);
-		
+
 		// dd($seller_buyer_id);
 
         if ($validator->fails()) {
@@ -924,13 +924,13 @@ class ProductController extends Controller
 					$attribute->save();
 				}
 			}
-			
+
 			$send_by = '';
 			$buyer_id = $seller_buyer_id;
 			$buyer = Buyers::where('id',$seller_buyer_id)->first();
 			if(!empty($buyer)){
 				$send_by = $buyer->name;
-			} 
+			}
 
             $fcm_token = [];
 			if(!empty($sellers)){
@@ -982,7 +982,7 @@ class ProductController extends Controller
 							'attribute_value' => $val->attribute_value,
 						];
 					}
-					
+
 					$notificationSellerData = new Notification();
 					$notificationSellerData->seller_id = $value;
 					$notificationSellerData->notification_id = $notification->id;
@@ -1027,7 +1027,7 @@ class ProductController extends Controller
 				];
 				NotificationHelper::notification($json_array,'seller');
 			}
-			
+
 			$response['status'] = 200;
 			$response['message'] = 'Notification Send Sucessfully!!';
 		}else{
@@ -6421,7 +6421,7 @@ class ProductController extends Controller
 		    // $response['message'] = $check_data['message'];
             // return response($response, 200);
         // }
-		
+
 		$broker_details = Brokers::where('id',$broker_id)->first();
 
 	    if($negotiation_type == "post"){
@@ -6843,7 +6843,7 @@ class ProductController extends Controller
 										$seller_name = $seller->name;
 									}
 								}
-								
+
 								$negotiationSellerData = new Negotiation();
 								$negotiationSellerData->broker_name = $broker_details->name;
 								$negotiationSellerData->post_notification_id = $negotiation->post_notification_id;
@@ -6907,7 +6907,7 @@ class ProductController extends Controller
 									$seller_name = $seller->name;
 								}
 							}
-							
+
 							$negotiationSellerData = new Negotiation();
 							$negotiationSellerData->broker_name = $broker_details->name;
 							$negotiationSellerData->post_notification_id = $negotiation->post_notification_id;
@@ -7296,7 +7296,7 @@ class ProductController extends Controller
 										$seller_name = $seller->name;
 									}
 								}
-								
+
 								$negotiationSellerData = new Negotiation();
 								$negotiationSellerData->post_notification_id = $post_notification_id;
 								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
@@ -7360,7 +7360,7 @@ class ProductController extends Controller
 										$seller_name = $seller->name;
 									}
 								}
-								
+
 								$negotiationSellerData = new Negotiation();
 								$negotiationSellerData->post_notification_id = $post_notification_id;
 								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
@@ -7424,7 +7424,7 @@ class ProductController extends Controller
 									$seller_name = $seller->name;
 								}
 							}
-							
+
 							$negotiationSellerData = new Negotiation();
 							$negotiationSellerData->post_notification_id = $post_notification_id;
 							$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
