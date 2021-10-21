@@ -50,6 +50,7 @@ use App\Events\NegotiationSeller;
 use App\Events\NegotiationBuyer;
 use App\Events\NegotiationMultipleSeller;
 use App\Events\NegotiationMultipleBuyer;
+
 class ProductController extends Controller
 {
     public function product_list(Request $request){
