@@ -6332,7 +6332,7 @@ class ProductController extends Controller
 		return response($response, 200);
 	}
 
-    public function negotiation_new_v2(Request $request)
+   public function negotiation_new_v2(Request $request)
 	{
 		$response = array();
 		$response['status'] = 200;
@@ -6422,7 +6422,7 @@ class ProductController extends Controller
 		    // $response['message'] = $check_data['message'];
             // return response($response, 200);
         // }
-
+		
 		$broker_details = Brokers::where('id',$broker_id)->first();
 
 	    if($negotiation_type == "post"){
@@ -6558,18 +6558,21 @@ class ProductController extends Controller
 										$seller_name = $seller->name;
 									}
 								}
+								
 								$negotiationBuyerData = new Negotiation();
-								$negotiationBuyerData->broker_name = $broker_details->name;
-								$negotiationBuyerData->post_notification_id = $post_notification_id;
 								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
+								$negotiationBuyerData->buyer_name = $buyer_name;
 								$negotiationBuyerData->seller_id = $negotiation->seller_id;
 								$negotiationBuyerData->seller_name = $seller_name;
+								$negotiationBuyerData->post_notification_id = $post_notification_id;
+								$negotiationBuyerData->broker_name = $broker_details->name;
 								$negotiationBuyerData->negotiation_by = $negotiation_by;
 								$negotiationBuyerData->negotiation_type = $negotiation_type;
-								$negotiationBuyerData->product_name = $product_name;
+								$negotiationBuyerData->prev_price = $negotiation->prev_price;
+								$negotiationBuyerData->prev_bales = $negotiation->prev_bales;
+								$negotiationBuyerData->current_price = $price;
+								$negotiationBuyerData->current_bales = $no_of_bales;
 								$negotiationBuyerData->best_dealer_name = $best_dealer_name;
-								$negotiationBuyerData->base_price = $base_price;
-								$negotiationBuyerData->base_bales = $base_bales;
 								$negotiationBuyerData->best_price = $best_price;
 								$negotiationBuyerData->best_bales = $best_bales;
 								$negotiationBuyerData->negotiation_count = count($multiple_buyers);
@@ -6781,18 +6784,19 @@ class ProductController extends Controller
 									}
 								}
 								$negotiationSellerData = new Negotiation();
-								$negotiationSellerData->broker_name = $broker_details->name;;
-								$negotiationSellerData->post_notification_id = $post_notification_id;
-								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
+								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
+								$negotiationSellerData->buyer_name = $buyer_name;
 								$negotiationSellerData->seller_id = $negotiation->seller_id;
 								$negotiationSellerData->seller_name = $seller_name;
-								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
+								$negotiationSellerData->post_notification_id = $post_notification_id;
+								$negotiationSellerData->broker_name = $broker_details->name;
 								$negotiationSellerData->negotiation_by = $negotiation_by;
 								$negotiationSellerData->negotiation_type = $negotiation_type;
-								$negotiationSellerData->product_name = $product_name;
+								$negotiationSellerData->prev_price = $negotiation->prev_price;
+								$negotiationSellerData->prev_bales = $negotiation->prev_bales;
+								$negotiationSellerData->current_price = $price;
+								$negotiationSellerData->current_bales = $no_of_bales;
 								$negotiationSellerData->best_dealer_name = $best_dealer_name;
-								$negotiationSellerData->base_price = $base_price;
-								$negotiationSellerData->base_bales = $base_bales;
 								$negotiationSellerData->best_price = $best_price;
 								$negotiationSellerData->best_bales = $best_bales;
 								$negotiationSellerData->negotiation_count = count($multiple_sellers);
@@ -6844,7 +6848,7 @@ class ProductController extends Controller
 										$seller_name = $seller->name;
 									}
 								}
-
+								
 								$negotiationSellerData = new Negotiation();
 								$negotiationSellerData->broker_name = $broker_details->name;
 								$negotiationSellerData->post_notification_id = $negotiation->post_notification_id;
@@ -6908,7 +6912,7 @@ class ProductController extends Controller
 									$seller_name = $seller->name;
 								}
 							}
-
+							
 							$negotiationSellerData = new Negotiation();
 							$negotiationSellerData->broker_name = $broker_details->name;
 							$negotiationSellerData->post_notification_id = $negotiation->post_notification_id;
@@ -7075,18 +7079,19 @@ class ProductController extends Controller
 									}
 								}
 								$negotiationBuyerData = new Negotiation();
-								$negotiationBuyerData->post_notification_id = $post_notification_id;
-								$negotiationBuyerData->negotiation_type = $negotiation->negotiation_type;
-								$negotiationBuyerData->broker_name = $broker_details->name;
 								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
+								$negotiationBuyerData->buyer_name = $buyer_name;
 								$negotiationBuyerData->seller_id = $negotiation->seller_id;
 								$negotiationBuyerData->seller_name = $seller_name;
+								$negotiationBuyerData->post_notification_id = $post_notification_id;
+								$negotiationBuyerData->broker_name = $broker_details->name;
 								$negotiationBuyerData->negotiation_by = $negotiation_by;
 								$negotiationBuyerData->negotiation_type = $negotiation_type;
-								$negotiationBuyerData->product_name = $product_name;
+								$negotiationBuyerData->prev_price = $negotiation->prev_price;
+								$negotiationBuyerData->prev_bales = $negotiation->prev_bales;
+								$negotiationBuyerData->current_price = $price;
+								$negotiationBuyerData->current_bales = $no_of_bales;
 								$negotiationBuyerData->best_dealer_name = $best_dealer_name;
-								$negotiationBuyerData->base_price = $base_price;
-								$negotiationBuyerData->base_bales = $base_bales;
 								$negotiationBuyerData->best_price = $best_price;
 								$negotiationBuyerData->best_bales = $best_bales;
 								$negotiationBuyerData->negotiation_count = count($multiple_buyers);
@@ -7297,20 +7302,21 @@ class ProductController extends Controller
 										$seller_name = $seller->name;
 									}
 								}
-
+								
 								$negotiationSellerData = new Negotiation();
-								$negotiationSellerData->post_notification_id = $post_notification_id;
-								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
-								$negotiationSellerData->broker_name = $broker_details->name;;
 								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
+								$negotiationSellerData->buyer_name = $buyer_name;
 								$negotiationSellerData->seller_id = $negotiation->seller_id;
 								$negotiationSellerData->seller_name = $seller_name;
+								$negotiationSellerData->post_notification_id = $post_notification_id;
+								$negotiationSellerData->broker_name = $broker_details->name;
 								$negotiationSellerData->negotiation_by = $negotiation_by;
 								$negotiationSellerData->negotiation_type = $negotiation_type;
-								$negotiationSellerData->product_name = $product_name;
+								$negotiationSellerData->prev_price = $negotiation->prev_price;
+								$negotiationSellerData->prev_bales = $negotiation->prev_bales;
+								$negotiationSellerData->current_price = $price;
+								$negotiationSellerData->current_bales = $no_of_bales;
 								$negotiationSellerData->best_dealer_name = $best_dealer_name;
-								$negotiationSellerData->base_price = $base_price;
-								$negotiationSellerData->base_bales = $base_bales;
 								$negotiationSellerData->best_price = $best_price;
 								$negotiationSellerData->best_bales = $best_bales;
 								$negotiationSellerData->negotiation_count = count($multiple_sellers);
@@ -7361,7 +7367,7 @@ class ProductController extends Controller
 										$seller_name = $seller->name;
 									}
 								}
-
+								
 								$negotiationSellerData = new Negotiation();
 								$negotiationSellerData->post_notification_id = $post_notification_id;
 								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
@@ -7425,7 +7431,7 @@ class ProductController extends Controller
 									$seller_name = $seller->name;
 								}
 							}
-
+							
 							$negotiationSellerData = new Negotiation();
 							$negotiationSellerData->post_notification_id = $post_notification_id;
 							$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
