@@ -8585,7 +8585,7 @@ class ProductController extends Controller
 
 		return response($response, 200);
 	}
-    public function negotiation_list_new_v2(Request $request)
+   public function negotiation_list_new_v2(Request $request)
 	{
 		$response = array();
 		$response['status'] = 200;
@@ -8665,8 +8665,10 @@ class ProductController extends Controller
                 // ];
             }
 
+            $negotiation_post_arr_temp = [];
             $negotiation_post_arr = [];
 			$negotiation_notification_arr = [];
+			$negotiation_notification_arr_temp = [];
             $unique_post_ids = array_unique($post_ids);
 			$unique_notification_ids = array_unique($notification_ids);
 			$unique_post_negotiation_buyer_ids = array_unique($post_negotiation_buyer_ids);
@@ -8736,7 +8738,7 @@ class ProductController extends Controller
 						$max = max($best_price);
 						foreach ($post_array as $post_value) {
 							if($post_value['current_price'] == $max){
-								$negotiation_post_arr[] = [
+								$negotiation_post_arr_temp[] = [
 									'post_id' => $post_data->id,
 									'product_id' => $post_data->product_id,
 									'product_name' => $product_name,
@@ -8761,7 +8763,7 @@ class ProductController extends Controller
 							}
 						}
 					}else{
-						$negotiation_post_arr[] = [
+						$negotiation_post_arr_temp[] = [
 							'post_id' => $post_data->id,
 							'status' => $post_data->status,
 							'seller_buyer_id' => $post_data->seller_buyer_id,
@@ -8850,7 +8852,7 @@ class ProductController extends Controller
 						$max = max($best_price);
 						foreach ($notification_array as $notification_value) {
 							if($notification_value['current_price'] == $max){
-								$negotiation_notification_arr[] = [
+								$negotiation_notification_arr_temp[] = [
 									'notification_id' => $notification->id,
 									'status' => $notification->status,
 									'seller_buyer_id' => $notification->seller_buyer_id,
@@ -8875,7 +8877,7 @@ class ProductController extends Controller
 							}
 						}
 					}else{
-						$negotiation_post_arr[] = [
+						$negotiation_notification_arr_temp[] = [
 							'notification_id' => $notification->id,
 							'status' => $notification->status,
 							'seller_buyer_id' => $notification->seller_buyer_id,
@@ -8900,7 +8902,13 @@ class ProductController extends Controller
 					}
 				}
 			}
+			//when same price then multi-dimensional array unique based on post_id	
+			$final_post = array_unique(array_column($negotiation_post_arr_temp, 'post_id'));
+			$negotiation_post_arr = array_intersect_key($negotiation_post_arr_temp, $final_post);
 
+			$final_notification = array_unique(array_column($negotiation_notification_arr_temp, 'post_id'));
+			$negotiation_notification_arr = array_intersect_key($negotiation_notification_arr_temp, $final_notification);
+			//end
             $negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
 
 			$response['status'] = 200;
