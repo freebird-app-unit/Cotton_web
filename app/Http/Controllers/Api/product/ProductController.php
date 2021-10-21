@@ -8901,17 +8901,11 @@ class ProductController extends Controller
 				}
 			}
 			//when same price then multi-dimensional array unique based on post_id	
-			$newArrPost = array();
-			foreach ($negotiation_post_arr_temp as $val) {
-					  $newArrPost[$val['post_id']] = $val;    
-			}
-			$negotiation_post_arr = array_values($newArrPost);	
-			
-			$newArrNotification = array();
-			foreach ($negotiation_notification_arr_temp as $val) {
-					  $newArrNotification[$val['post_id']] = $val;    
-			}
-			$negotiation_notification_arr = array_values($newArrNotification);
+			$final_post = array_unique(array_column($negotiation_post_arr_temp, 'post_id'));
+			$negotiation_post_arr = array_intersect_key($negotiation_post_arr_temp, $final_post);
+
+			$final_notification = array_unique(array_column($negotiation_notification_arr_temp, 'post_id'));
+			$negotiation_notification_arr = array_intersect_key($negotiation_notification_arr_temp, $final_notification);
 			//end
             $negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
 
@@ -9236,17 +9230,11 @@ class ProductController extends Controller
 				}
 			}
 			//when same price then multi-dimensional array unique based on post_id	
-			$newArrPost = array();
-			foreach ($negotiation_post_arr_temp as $val) {
-					  $newArrPost[$val['post_id']] = $val;    
-			}
-			$negotiation_post_arr = array_values($newArrPost);	
-			
-			$newArrNotification = array();
-			foreach ($negotiation_notification_arr_temp as $val) {
-					  $newArrNotification[$val['post_id']] = $val;    
-			}
-			$negotiation_notification_arr = array_values($newArrNotification);
+			$final_post = array_unique(array_column($negotiation_post_arr_temp, 'post_id'));
+			$negotiation_post_arr = array_intersect_key($negotiation_post_arr_temp, $final_post);
+
+			$final_notification = array_unique(array_column($negotiation_notification_arr_temp, 'post_id'));
+			$negotiation_notification_arr = array_intersect_key($negotiation_notification_arr_temp, $final_notification);
 			//end
 			$negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
 
