@@ -8760,15 +8760,8 @@ class ProductController extends Controller
 								];
 							}
 						}
-					//when same price then multi-dimensional array unique based on post_id	
-					$newArr = array();
-					foreach ($negotiation_post_arr_temp as $val) {
-					    $newArr[$val['post_id']] = $val;    
-					}
-					$negotiation_post_arr = array_values($newArr);
-					//end
 					}else{
-						$negotiation_post_arr[] = [
+						$negotiation_post_arr_temp[] = [
 							'post_id' => $post_data->id,
 							'status' => $post_data->status,
 							'seller_buyer_id' => $post_data->seller_buyer_id,
@@ -8881,15 +8874,8 @@ class ProductController extends Controller
 								];
 							}
 						}
-					//when same price then multi-dimensional array unique based on post_id	
-					$newArr = array();
-					foreach ($negotiation_notification_arr_temp as $val) {
-					    $newArr[$val['post_id']] = $val;    
-					}
-					$negotiation_notification_arr = array_values($newArr);
-					//end
 					}else{
-						$negotiation_notification_arr[] = [
+						$negotiation_notification_arr_temp[] = [
 							'notification_id' => $notification->id,
 							'status' => $notification->status,
 							'seller_buyer_id' => $notification->seller_buyer_id,
@@ -8914,7 +8900,19 @@ class ProductController extends Controller
 					}
 				}
 			}
-
+			//when same price then multi-dimensional array unique based on post_id	
+			$newArrPost = array();
+			foreach ($negotiation_post_arr_temp as $val) {
+					  $newArrPost[$val['post_id']] = $val;    
+			}
+			$negotiation_post_arr = array_values($newArrPost);	
+			
+			$newArrNotification = array();
+			foreach ($negotiation_notification_arr_temp as $val) {
+					  $newArrNotification[$val['post_id']] = $val;    
+			}
+			$negotiation_notification_arr = array_values($newArrNotification);
+			//end
             $negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
 
 			$response['status'] = 200;
@@ -9098,15 +9096,8 @@ class ProductController extends Controller
 								];
 							}
 						}
-					//when same price then multi-dimensional array unique based on post_id	
-					$newArr = array();
-					foreach ($negotiation_post_arr_temp as $val) {
-					    $newArr[$val['post_id']] = $val;    
-					}
-					$negotiation_post_arr = array_values($newArr);
-					//end
 					}else{
-						$negotiation_post_arr[] = [
+						$negotiation_post_arr_temp[] = [
 							'post_id' => $post_data->id,
 							'status' => $post_data->status,
 							'seller_buyer_id' => $post_data->seller_buyer_id,
@@ -9218,15 +9209,8 @@ class ProductController extends Controller
 								];
 							}
 						}
-					//when same price then multi-dimensional array unique based on post_id	
-					$newArr = array();
-					foreach ($negotiation_notification_arr_temp as $val) {
-					    $newArr[$val['post_id']] = $val;    
-					}
-					$negotiation_notification_arr = array_values($newArr);
-					//end
 					}else{
-						$negotiation_notification_arr[] = [
+						$negotiation_notification_arr_temp[] = [
 							'notification_id' => $notification->id,
 							'status' => $notification->status,
 							'seller_buyer_id' => $notification->seller_buyer_id,
@@ -9251,6 +9235,19 @@ class ProductController extends Controller
 					}
 				}
 			}
+			//when same price then multi-dimensional array unique based on post_id	
+			$newArrPost = array();
+			foreach ($negotiation_post_arr_temp as $val) {
+					  $newArrPost[$val['post_id']] = $val;    
+			}
+			$negotiation_post_arr = array_values($newArrPost);	
+			
+			$newArrNotification = array();
+			foreach ($negotiation_notification_arr_temp as $val) {
+					  $newArrNotification[$val['post_id']] = $val;    
+			}
+			$negotiation_notification_arr = array_values($newArrNotification);
+			//end
 			$negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
 
 			$response['status'] = 200;
