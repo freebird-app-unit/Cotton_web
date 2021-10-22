@@ -7815,16 +7815,12 @@ class ProductController extends Controller
                 if ($broker_changed == 1) {
 
                     if($type == "post"){
-                        if ($done_by == 'seller') {
-                            $post = Post::with('seller', 'seller.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
-                        } else {
-                            $post = Post::with('buyer', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
-                        }
+                        $post = Post::with('seller', 'buyer', 'seller.broker', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
 
                         if(!empty($post)){
 
                             $transactions = new Transactions();
-                            if ($done_by == 'seller') {
+                            if ($post->user_type == 'seller') {
 								$transactions->user_id = $post->seller->broker->broker_id;
 							} else {
 								$transactions->user_id = $post->buyer->broker->broker_id;
@@ -7838,16 +7834,12 @@ class ProductController extends Controller
                     }
                     if($type == "notification"){
 
-                        if ($done_by == 'seller') {
-                            $notification = Notification::with('seller', 'seller.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
-                        } else {
-                            $notification = Notification::with('buyer', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
-                        }
+                        $notification = Notification::with('seller', 'buyer', 'seller.broker', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
 
                         if(!empty($notification)){
 
                             $transactions = new Transactions();
-                            if ($done_by == 'seller') {
+                            if ($notification->user_type == 'seller') {
 								$transactions->user_id = $notification->seller->broker->broker_id;
 							} else {
 								$transactions->user_id = $notification->buyer->broker->broker_id;
@@ -8272,15 +8264,11 @@ class ProductController extends Controller
                     }
 
 					if ($broker_changed == 1) {
-						if ($done_by == 'seller') {
-							$notification = Notification::with('seller', 'seller.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
-						} else {
-							$notification = Notification::with('buyer', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
-						}
+						$notification = Notification::with('seller', 'buyer', 'seller.broker', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
 
 						if(!empty($notification)){
 							$transactions = new Transactions();
-							if ($done_by == 'seller') {
+							if ($notification->user_type == 'seller') {
 								$transactions->user_id = $notification->seller->broker->broker_id;
 							} else {
 								$transactions->user_id = $notification->buyer->broker->broker_id;
@@ -8679,15 +8667,11 @@ class ProductController extends Controller
 
 					if ($broker_changed == 1) {
 
-						if ($done_by == 'seller') {
-							$post = Post::with('seller', 'seller.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
-						} else {
-							$post = Post::with('buyer', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
-						}
+                        $post = Post::with('seller', 'buyer', 'seller.broker', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
 
 						if (!empty($post)) {
 							$transactions = new Transactions();
-							if ($done_by == 'seller') {
+							if ($post->user_type == 'seller') {
 								$transactions->user_id = $post->seller->broker->broker_id;
 							} else {
 								$transactions->user_id = $post->buyer->broker->broker_id;

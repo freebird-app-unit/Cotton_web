@@ -95,7 +95,7 @@ class ProfileController extends Controller
 
 				$user_details = UserDetails::where(['user_id'=>$id,'user_type'=>'buyer'])->first();
 				if(!empty($user_details)){
-					$user_details->user_type = (empty($user_type))?$user_details->user_type:$user_type;
+					$user_details->user_type = (empty($user_type))?$user_details->user_type:'';
 					$user_details->seller_buyer_type = (empty($seller_buyer_type))?$user_details->seller_buyer_type:$seller_buyer_type;
 					$user_details->name_of_contact_person=(empty($name_of_contact_person))?$user_details->name_of_contact_person:$name_of_contact_person;
 					$user_details->business_type=(empty($business_type))?$user_details->business_type:$business_type;
