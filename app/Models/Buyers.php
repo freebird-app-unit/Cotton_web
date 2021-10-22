@@ -28,4 +28,8 @@ class Buyers extends Model
     public function user_plan() {
         return $this->hasOne(UserPlan::class,'user_id','id')->where('user_type','buyer')->orderBy('id', 'DESC');
     }
+
+    public function broker() {
+        return $this->hasOne(AddBrokers::class,'buyer_id','id')->where(['user_type' => 'buyer', 'broker_type' => 'default'])->orderBy('id', 'DESC');
+    }
 }

@@ -29,4 +29,8 @@ class Sellers extends Model
         return $this->hasOne(UserPlan::class,'user_id','id')->where('user_type','seller')->orderBy('id', 'DESC');
     }
 
+    public function broker() {
+        return $this->hasOne(AddBrokers::class,'buyer_id','id')->where(['user_type' => 'seller', 'broker_type' => 'default'])->orderBy('id', 'DESC');
+    }
+
 }
