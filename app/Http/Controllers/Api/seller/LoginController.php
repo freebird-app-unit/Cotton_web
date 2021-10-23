@@ -336,6 +336,13 @@ class LoginController extends Controller
                                         $device_details->fcm_token=$fcm_token;
                                         $device_details->save();
 
+                                        $users = UserPlan::where('user_id',$login->id)->where('user_type','seller')->first();
+                                        if(!empty($users)){
+                                            $sellers = Sellers::where('id',$login->id)->first();
+                                            $sellers->is_user_plan = 1;
+                                            $sellers->save();
+                                        }
+
 										$response['data']->id=$login->id;
 										$response['data']->api_token=$device_details->api_token;
 										$response['status'] = 200;

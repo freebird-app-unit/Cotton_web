@@ -17,6 +17,7 @@ use Storage;
 use Image;
 use File;
 use App\Helper\NotificationHelper;
+use App\Models\UserPlan;
 
 class LoginController extends Controller
 {
@@ -301,6 +302,12 @@ class LoginController extends Controller
                                         $device_details->fcm_token=$fcm_token;
                                         $device_details->save();
 
+                                        $users = UserPlan::where('user_id',$login->id)->where('user_type','buyer')->first();
+                                        if(!empty($users)){
+                                            $buyers = Buyers::where('id',$login->id)->first();
+                                            $buyers->is_user_plan = 1;
+                                            $buyers->save();
+                                        }
 
 										$response['data']->id=$login->id;
 										$response['data']->api_token=$device_details->api_token;

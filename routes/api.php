@@ -143,6 +143,8 @@ Route::group(['namespace' => 'Api\product'], function () {
     Route::post('/upload_debit_note', 'ProductController@upload_debit_note');
     Route::post('/test_api', 'ProductController@test_api');
 
+    Route::post('/make_deal_otp_verify', 'ProductController@make_deal_otp_verify');
+
 });
 Route::post('/news', 'Api\seller\LoginController@news_list');
 Route::post('/news_details', 'Api\seller\LoginController@news_details');

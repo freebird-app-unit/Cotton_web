@@ -51,6 +51,7 @@ use App\Events\NegotiationSeller;
 use App\Events\NegotiationBuyer;
 use App\Events\NegotiationMultipleSeller;
 use App\Events\NegotiationMultipleBuyer;
+use Mail;
 
 class ProductController extends Controller
 {
@@ -7530,6 +7531,11 @@ class ProductController extends Controller
         $settings = Settings::first();
 		$negotiation_comp = Negotiation::with('seller', 'buyer')->where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type])->first();
 
+        $seller_otp = mt_rand(100000,999999);
+        $buyer_otp = mt_rand(100000,999999);
+        $broker_otp = mt_rand(100000,999999);
+
+        // dd($seller_otp.' '.$buyer_otp.' '.$broker_otp);
         if (!empty($negotiation_comp)) {
 
             $user_data = [];
@@ -7708,17 +7714,58 @@ class ProductController extends Controller
                 $make_deal->lab = $negotiation_comp->lab;
                 $make_deal->notes = $negotiation_comp->notes;
                 $make_deal->header = $negotiation_comp->header;
+                $make_deal->seller_otp = $seller_otp;
+                $make_deal->buyer_otp = $buyer_otp;
+                $make_deal->broker_otp = $broker_otp;
+                $make_deal->otp_time = date("Y-m-d H:i:s");
                 $make_deal->deal_type = 'negotiation';
+                $make_deal->status = 'pending';
 
                 $status = "";
                 if(!empty($complete)){
-                    $make_deal->status = $complete->status;
+                    // $make_deal->status = $complete->status;
                     $status =  $complete->status;
                 }else{
-                    $make_deal->status = $negotiation_comp->status;
+                    // $make_deal->status = $negotiation_comp->status;
                     $status =  $negotiation_comp->status;
                 }
                 $make_deal->save();
+
+                $sellers = Sellers::select('mobile_number','email','name')->where('id',$seller_id)->first();
+                $s_message = "OTP to verify make deal is ". $seller_otp ." - E - Cotton";
+                NotificationHelper::send_otp($sellers->mobile_number,$s_message);
+
+                $s_data = array('otp'=>$seller_otp,'name' => $sellers->name);
+
+                // Mail::send(['text'=>'mail'], $s_data, function($message , $sellers) {
+                // $message->to($sellers->email, 'E - Cotton')->subject
+                //     ('Make deal done');
+                // $message->from('abc@gmail.com');
+                // });
+
+                $buyers = Buyers::select('mobile_number','email')->where('id',$buyer_id)->first();
+                $by_message = "OTP to verify make deal is ". $buyer_otp ." - E - Cotton";
+                NotificationHelper::send_otp($buyers->mobile_number,$by_message);
+
+                $by_data = array('otp'=>$buyer_otp,'name' => $buyers->name);
+
+                // Mail::send(['text'=>'mail'], $by_data, function($message , $buyers) {
+                // $message->to($buyers->email, 'E - Cotton')->subject
+                //     ('Make deal done');
+                // $message->from('abc@gmail.com');
+                // });
+
+                $brokers = Brokers::select('mobile_number','email')->where('id',$negotiation_comp->broker_id)->first();
+                $br_message = "OTP to verify make deal is ". $broker_otp ." - E - Cotton";
+                NotificationHelper::send_otp($brokers->mobile_number,$br_message);
+
+                $br_data = array('otp'=>$broker_otp,'name' => $brokers->name);
+
+                // Mail::send(['text'=>'mail'], $br_data, function($message , $brokers) {
+                // $message->to($brokers->email, 'E - Cotton')->subject
+                //     ('Make deal done');
+                // $message->from('abc@gmail.com');
+                // });
 
                 $history = new NegotiationHistory();
                 $history->negotiation_complete_id = $make_deal->id;
@@ -8074,8 +8121,8 @@ class ProductController extends Controller
                 //pdf
 			}
 		} else {
-
 			if($type == "notification"){
+
 				$notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
 
                 if(!empty($notification)){
@@ -8179,8 +8226,48 @@ class ProductController extends Controller
 					$make_deal->transmit_condition = $notification->transmit_condition;
 					$make_deal->lab = $notification->lab;
 					$make_deal->is_deal = '1';
-					$make_deal->status = 'complete';
+					$make_deal->status = 'pending';
+                    $make_deal->seller_otp = $seller_otp;
+                    $make_deal->buyer_otp = $buyer_otp;
+                    $make_deal->broker_otp = $broker_otp;
+                    $make_deal->otp_time = date("Y-m-d H:i:s");
 					$make_deal->save();
+
+                    $sellers = Sellers::select('mobile_number','email','name')->where('id',$seller_id)->first();
+                    $s_message = "OTP to verify make deal is ". $seller_otp ." - E - Cotton";
+                    NotificationHelper::send_otp($sellers->mobile_number,$s_message);
+
+                    $s_data = array('otp'=>$seller_otp,'name' => $sellers->name);
+
+                    // Mail::send(['text'=>'mail'], $s_data, function($message , $sellers) {
+                    // $message->to($sellers->email, 'E - Cotton')->subject
+                    //     ('Make deal done');
+                    // $message->from('abc@gmail.com');
+                    // });
+
+                    $buyers = Buyers::select('mobile_number','email')->where('id',$buyer_id)->first();
+                    $by_message = "OTP to verify make deal is ". $buyer_otp ." - E - Cotton";
+                    NotificationHelper::send_otp($buyers->mobile_number,$by_message);
+
+                    $by_data = array('otp'=>$buyer_otp,'name' => $buyers->name);
+
+                    // Mail::send(['text'=>'mail'], $by_data, function($message , $buyers) {
+                    // $message->to($buyers->email, 'E - Cotton')->subject
+                    //     ('Make deal done');
+                    // $message->from('abc@gmail.com');
+                    // });
+
+                    $brokers = Brokers::select('mobile_number','email')->where('id',$default_broker->broker_id)->first();
+                    $br_message = "OTP to verify make deal is ". $broker_otp ." - E - Cotton";
+                    NotificationHelper::send_otp($brokers->mobile_number,$br_message);
+
+                    $br_data = array('otp'=>$broker_otp,'name' => $brokers->name);
+
+                    // Mail::send(['text'=>'mail'], $br_data, function($message , $brokers) {
+                    // $message->to($brokers->email, 'E - Cotton')->subject
+                    //     ('Make deal done');
+                    // $message->from('abc@gmail.com');
+                    // });
 
 					$transactions = new Transactions();
 					$transactions->user_id = $user_id;
@@ -8482,7 +8569,7 @@ class ProductController extends Controller
                     $response['message'] = 'Make Deal done';
 				}
 			}elseif ($type == "post") {
-				$post = Post::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
+                $post = Post::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
 				if(!empty($post)){
 
                     $total_amt = $post->no_of_bales * $settings->company_commission;
@@ -8497,7 +8584,7 @@ class ProductController extends Controller
                             return response($response, 200);
                         }
 
-                        $user_id = $buyer_id;
+                        // $user_id = $buyer_id;
                         $buyer_data = Buyers::where('id',$buyer_id)->first();
 
                         if(!empty($buyer_data) && $buyer_data->wallet_amount < $total_amt){
@@ -8520,7 +8607,7 @@ class ProductController extends Controller
                             return response($response, 200);
                         }
 
-                        $user_id = $seller_id;
+                        // $user_id = $seller_id;
                         $seller_data = Sellers::where('id',$seller_id)->first();
 
                         if(!empty($seller_data) && $seller_data->wallet_amount < $total_amt){
@@ -8581,8 +8668,48 @@ class ProductController extends Controller
 					$make_deal->transmit_condition = $post->transmit_condition;
 					$make_deal->lab = $post->lab;
 					$make_deal->is_deal = '1';
-					$make_deal->status = 'complete';
+					$make_deal->status = 'pending';
+                    $make_deal->seller_otp = $seller_otp;
+                    $make_deal->buyer_otp = $buyer_otp;
+                    $make_deal->broker_otp = $broker_otp;
+                    $make_deal->otp_time = date("Y-m-d H:i:s");
 					$make_deal->save();
+
+                    $sellers = Sellers::select('mobile_number','email','name')->where('id',$seller_id)->first();
+                    $s_message = "OTP to verify make deal is ". $seller_otp ." - E - Cotton";
+                    NotificationHelper::send_otp($sellers->mobile_number,$s_message);
+
+                    $s_data = array('otp'=>$seller_otp,'name' => $sellers->name);
+
+                    // Mail::send(['text'=>'mail'], $s_data, function($message , $sellers) {
+                    // $message->to($sellers->email, 'E - Cotton')->subject
+                    //     ('Make deal done');
+                    // $message->from('abc@gmail.com');
+                    // });
+
+                    $buyers = Buyers::select('mobile_number','email')->where('id',$buyer_id)->first();
+                    $by_message = "OTP to verify make deal is ". $buyer_otp ." - E - Cotton";
+                    NotificationHelper::send_otp($buyers->mobile_number,$by_message);
+
+                    $by_data = array('otp'=>$buyer_otp,'name' => $buyers->name);
+
+                    // Mail::send(['text'=>'mail'], $by_data, function($message , $buyers) {
+                    // $message->to($buyers->email, 'E - Cotton')->subject
+                    //     ('Make deal done');
+                    // $message->from('abc@gmail.com');
+                    // });
+
+                    $brokers = Brokers::select('mobile_number','email')->where('id',$default_broker->broker_id)->first();
+                    $br_message = "OTP to verify make deal is ". $broker_otp ." - E - Cotton";
+                    NotificationHelper::send_otp($brokers->mobile_number,$br_message);
+
+                    $br_data = array('otp'=>$broker_otp,'name' => $brokers->name);
+
+                    // Mail::send(['text'=>'mail'], $br_data, function($message , $brokers) {
+                    // $message->to($brokers->email, 'E - Cotton')->subject
+                    //     ('Make deal done');
+                    // $message->from('abc@gmail.com');
+                    // });
 
 					$transactions = new Transactions();
 					$transactions->user_id = $user_id;
@@ -11305,4 +11432,90 @@ class ProductController extends Controller
 		$response['data'] = (object)[];
 		return response($response, 200);
 	}
+
+    public function make_deal_otp_verify(Request $request)
+    {
+    	$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$deal_id = isset($content->deal_id) ? $content->deal_id : '';
+		$user_type = isset($content->user_type) ? $content->user_type : '';
+		$otp = isset($content->otp) ? $content->otp : '';
+
+		$params = [
+			'deal_id' => $deal_id,
+			'otp' => $otp,
+			'user_type' => $otp
+		];
+
+		$validator = Validator::make($params, [
+            'deal_id' => 'required|exists:tbl_negotiation_complete,id',
+            'otp' => 'required',
+            'user_type' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+				$response['message'] =$validator->errors()->first();
+				return response($response, 200);
+	    }
+
+        $complete_deal = NegotiationComplete::where('id',$deal_id)->first();
+
+        $verify_otp = "";
+        if ($user_type == 'seller') {
+            $verify_otp = $complete_deal->seller_otp;
+        } else if ($user_type == 'buyer') {
+            $verify_otp = $complete_deal->buyer_otp;
+        } else if ($user_type == 'broker') {
+            $verify_otp = $complete_deal->broker_otp;
+        }
+
+		if(!empty($verify_otp)){
+			if($otp == $verify_otp){
+				$current = date("Y-m-d H:i:s");
+				$otp_time = $complete_deal->otp_time;
+				$diff = strtotime($current) - strtotime($otp_time);
+				$days    = floor($diff / 86400);
+				$hours   = floor(($diff - ($days * 86400)) / 3600);
+				$minutes = floor(($diff - ($days * 86400) - ($hours * 3600)) / 60);
+				if (($diff > 0) && ($minutes <= 180)) {
+					$response['status'] = 200;
+					$response['message'] = 'Your OTP has been verified successfully';
+
+                    if($user_type == 'seller'){
+                        $complete_deal->is_seller_otp_verify = 1;
+                        $complete_deal->save();
+                    }else if($user_type == 'buyer'){
+                        $complete_deal->is_buyer_otp_verify = 1;
+                        $complete_deal->save();
+                    }else if($user_type == 'broker'){
+                        $complete_deal->is_broker_otp_verify = 1;
+                        $complete_deal->save();
+                    }
+
+                    if($complete_deal->is_seller_otp_verify == 1 && $complete_deal->is_buyer_otp_verify == 1 && $complete_deal->is_broker_otp_verify == 1){
+                        $complete_deal->status = 'complete';
+                        $complete_deal->save();
+                    }
+
+				}else{
+						$response['status'] = 404;
+						$response['message'] = 'OTP expired';
+					}
+			}else{
+					$response['status'] = 404;
+					$response['message'] = 'OTP is not valid';
+			}
+		}else{
+			$response['status'] = 404;
+			$response['message'] = 'Mobile number not found';
+		}
+		return response($response, 200);
+    }
 }
