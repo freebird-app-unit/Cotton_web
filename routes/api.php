@@ -39,6 +39,9 @@ Route::group(['namespace' => 'Api\seller'], function () {
 	Route::post('/sellertype_buyertype_businesstype_registrationas', 'LoginController@sellertype_buyertype_businesstype_registrationas');
 	Route::post('/edit_profile_seller', 'ProfileController@edit_profile_seller');
 	Route::get('/plan_list', 'LoginController@plan_list');
+
+	Route::post('/add_user_plan', 'LoginController@addUserPlan');
+	Route::post('/transaction_history', 'LoginController@transaction_history');
 });
 
 Route::group(['namespace' => 'Api\buyer'], function () {

@@ -27,6 +27,8 @@ use Image;
 use File;
 use App\Models\AddBrokers;
 use App\Helper\NotificationHelper;
+use App\Models\Buyers;
+use App\Models\Transactions;
 use Carbon\Carbon;
 
 class LoginController extends Controller
@@ -1266,7 +1268,7 @@ class LoginController extends Controller
 
         $user_id = isset($content->user_id) ? $content->user_id : '';
         $user_type = isset($content->user_type) ? $content->user_type : '';
-        $plan_id = isset($content->type) ? $content->plan_id : '';
+        $plan_id = isset($content->plan_id) ? $content->plan_id : '';
 
         $params = [
             'plan_id' => $plan_id,
@@ -1306,9 +1308,80 @@ class LoginController extends Controller
             'expiry_date' => $date
         ]);
 
+        $plans = Plan::where('id',$plan_id)->first();
+        if ($user_type == 'seller') {
+            $sellers = Sellers::where('id',$user_id)->first();
+            $sellers->wallet_amount = $sellers->wallet_amount + $plans->price;
+            $sellers->save();
+        }else{
+            $buyers = Buyers::where('id',$user_id)->first();
+            $buyers->wallet_amount = $buyers->wallet_amount + $plans->price;
+            $buyers->save();
+        }
+
         $response['message'] = 'Plan added successfully!';
         $response['status'] = 200;
         $response['data'] = (object)[];
+        return response($response, 200);
+    }
+
+    public function transaction_history(Request $request) {
+
+        $data = $request->input('data');
+        $content = json_decode($data);
+
+        $user_id = isset($content->user_id) ? $content->user_id : '';
+        $user_type = isset($content->user_type) ? $content->user_type : '';
+
+        $params = [
+            'user_id' => $user_id,
+            'user_type' => $user_type
+        ];
+
+        if ($user_type == 'seller') {
+
+            $validator = Validator::make($params, [
+                'user_id' => 'required|exists:tbl_sellers,id',
+                'user_type' => 'required',
+            ]);
+
+            $users = Sellers::select('wallet_amount')->where('id',$user_id)->first();
+        } else {
+            $validator = Validator::make($params, [
+                'user_id' => 'required|exists:tbl_buyers,id',
+                'user_type' => 'required',
+            ]);
+            $users = Buyers::select('wallet_amount')->where('id',$user_id)->first();
+        }
+
+        if ($validator->fails()) {
+            $response['status'] = 404;
+            $response['message'] = $validator->errors()->first();
+            return response($response, 200);
+        }
+
+        $transaction = Transactions::where('user_id',$user_id)->where('user_type',$user_type)->get();
+
+        $trans_data = [];
+        if(!empty($transaction) && count($transaction) > 0)
+        {
+            foreach($transaction as $value){
+                $trans_data[] = [
+                    'type' => $value->type,
+                    'amount' => $value->amount,
+                    'message' => $value->message,
+                ];
+            }
+        }
+
+        $data = [
+            'wallet_amount' => $users->wallet_amount,
+            'transaction_history' => $trans_data,
+        ];
+
+        $response['message'] = 'Transaction history';
+        $response['status'] = 200;
+        $response['data'] = $data;
         return response($response, 200);
     }
 }
