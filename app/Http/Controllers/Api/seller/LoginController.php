@@ -75,18 +75,17 @@ class LoginController extends Controller
 		$company_name = isset($content->company_name) ? $content->company_name : '';
 		$fcm_token = isset($content->fcm_token) ? $content->fcm_token : '';
 		$device_type = isset($content->device_type) ? $content->device_type : '';
-		$plan_id = isset($content->plan_id) ? $content->plan_id : '';
 
 		$params = [
 			'mobile_number' => $mobile_number,
 			'email' => $email,
-			'plan_id' => $plan_id,
+			//'plan_id' => $plan_id,
 		];
 
 		$validator = Validator::make($params, [
             'mobile_number' => 'required|digits:10|unique:tbl_sellers,mobile_number',
             'email' => 'required|email|unique:tbl_sellers,email|max:255',
-            'plan_id' => 'required|exists:tbl_plans,id',
+            //'plan_id' => 'required|exists:tbl_plans,id',
         ]);
 
         if ($validator->fails()) {
@@ -110,9 +109,7 @@ class LoginController extends Controller
                     Storage::disk('public')->put('seller/profile/' . $image_name, $img, 'public');
                 }
 
-                $plan_detail = Plan::where('id', $plan_id)->first();
-
-		    	$seller = new Sellers();
+                $seller = new Sellers();
 				$seller->name = $name;
 				$seller->password = Hash::make($password);
 				$seller->address = $address;
@@ -123,24 +120,12 @@ class LoginController extends Controller
 				$seller->otp_time = date('Y-m-d H:i:s');
 				$seller->image = $image_name;
 				$seller->referral_code=$referral_code;
-				$seller->wallet_amount=$plan_detail->price;
+				$seller->wallet_amount=0;
 
 				if($seller->save()){
 					$id = $seller->id;
 
-                    $date = Carbon::now();
-                    $date->addDays($plan_detail->validity);
-
-                    UserPlan::create([
-                        'user_id' => $id,
-                        'user_type' => 'seller',
-                        'plan_id' => $plan_id,
-                        'status' => 1,
-                        'purchase_date' => date('Y-m-d'),
-                        'expiry_date' => $date
-                    ]);
-
-					$user_details = new UserDetails();
+                    $user_details = new UserDetails();
 					$user_details->user_id = $id;
 					$user_details->user_type = $user_type;
 					$user_details->seller_buyer_type = $seller_buyer_type;
@@ -1271,6 +1256,59 @@ class LoginController extends Controller
         $response['message'] = 'Plan List';
         $response['status'] = 200;
         $response['data'] = $plan_detail;
+        return response($response, 200);
+    }
+
+    public function addUserPlan(Request $request) {
+
+        $data = $request->input('data');
+        $content = json_decode($data);
+
+        $user_id = isset($content->user_id) ? $content->user_id : '';
+        $user_type = isset($content->user_type) ? $content->user_type : '';
+        $plan_id = isset($content->type) ? $content->plan_id : '';
+
+        $params = [
+            'plan_id' => $plan_id,
+            'user_id' => $user_id,
+            'user_type' => $user_type
+        ];
+
+        if ($user_type == 'seller') {
+
+            $validator = Validator::make($params, [
+                'user_id' => 'required|exists:tbl_sellers,id',
+                'plan_id' => 'required|exists:tbl_plans,id',
+                'user_type' => 'required',
+            ]);
+        } else {
+            $validator = Validator::make($params, [
+                'user_id' => 'required|exists:tbl_buyers,id',
+                'plan_id' => 'required|exists:tbl_plans,id',
+                'user_type' => 'required',
+            ]);
+        }
+
+        if ($validator->fails()) {
+            $response['status'] = 404;
+            $response['message'] = $validator->errors()->first();
+            return response($response, 200);
+        }
+
+        $date = Carbon::now();
+
+        UserPlan::create([
+            'user_id' => $user_id,
+            'user_type' => $user_type,
+            'plan_id' => $plan_id,
+            'status' => 1,
+            'purchase_date' => date('Y-m-d'),
+            'expiry_date' => $date
+        ]);
+
+        $response['message'] = 'Plan added successfully!';
+        $response['status'] = 200;
+        $response['data'] = (object)[];
         return response($response, 200);
     }
 }
