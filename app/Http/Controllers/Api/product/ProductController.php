@@ -4416,6 +4416,9 @@ class ProductController extends Controller
 							'debit_note_array' =>  $negotiation_debit_file,
 							'is_dispatch' =>  $is_dispatch,
 							'is_sample' =>  $value->is_sample,
+							'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
+							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
+							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -4546,6 +4549,9 @@ class ProductController extends Controller
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_dispatch' =>  $is_dispatch,
                             'is_sample' =>  $value->is_sample,
+                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
+							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
+							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 				}
@@ -4711,6 +4717,9 @@ class ProductController extends Controller
 							'lab_report_status' => $value->lab_report_status,
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_sample' =>  $value->is_sample,
+                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
+							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
+							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -4841,6 +4850,9 @@ class ProductController extends Controller
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_dispatch' =>  $is_dispatch,
                             'is_sample' =>  $value->is_sample,
+                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
+							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
+							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 				}
@@ -5003,6 +5015,9 @@ class ProductController extends Controller
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_dispatch' => $is_dispatch,
                             'is_sample' =>  $value->is_sample,
+                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
+							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
+							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -5133,6 +5148,9 @@ class ProductController extends Controller
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_dispatch' => $is_dispatch,
                             'is_sample' =>  $value->is_sample,
+                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
+							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
+							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 				}
