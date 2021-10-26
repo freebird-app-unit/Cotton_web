@@ -42,6 +42,7 @@ Route::group(['namespace' => 'Api\seller'], function () {
 
 	Route::post('/add_user_plan', 'LoginController@addUserPlan');
 	Route::post('/transaction_history', 'LoginController@transaction_history');
+	Route::post('/user_broker_list', 'LoginController@user_broker_list');
 });
 
 Route::group(['namespace' => 'Api\buyer'], function () {
@@ -78,6 +79,7 @@ Route::group(['namespace' => 'Api\broker'], function () {
 	Route::post('/delete_broker', 'SearchController@delete_broker');
 	Route::post('/broker_request_list', 'SearchController@broker_request_list');
 	Route::post('/accept_broker_request', 'SearchController@accept_broker_request');
+	Route::post('/seller_buyer_list', 'LoginController@seller_buyer_list');
 });
 
 

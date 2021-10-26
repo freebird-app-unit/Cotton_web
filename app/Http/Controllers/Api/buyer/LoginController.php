@@ -712,7 +712,7 @@ class LoginController extends Controller
 
             $image = '';
             $buyer_stamp_img = storage_path('app/public/buyer/profile/' . $profile->image);
-            if (File::exists($buyer_stamp_img)) {
+            if (!empty($profile->image) && File::exists($buyer_stamp_img)) {
                 $image = asset('storage/app/public/buyer/profile/' . $profile->image);
             }
 

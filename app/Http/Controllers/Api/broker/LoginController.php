@@ -18,6 +18,7 @@ use Storage;
 use Image;
 use File;
 use App\Helper\NotificationHelper;
+use App\Models\AddBrokers;
 
 class LoginController extends Controller
 {
@@ -662,6 +663,7 @@ class LoginController extends Controller
 
 		return response($response, 200);
     }
+
     public function seller_buyer_list_base_on_code(Request $request)
     {
     	$response = array();
@@ -742,6 +744,71 @@ class LoginController extends Controller
 	    	$response['status'] = 404;
 	        $response['message'] = 'User Not found';
 	    }
+	    return response($response, 200);
+    }
+
+    public function seller_buyer_list(Request $request)
+    {
+    	$response = array();
+		$response['status'] = 200;
+		$response['message'] = '';
+		$response['data'] = (object)array();
+
+		$data = $request->input('data');
+		$content = json_decode($data);
+
+		$broker_id = isset($content->broker_id) ? $content->broker_id : '';
+
+		$params = [
+			'broker_id' => $broker_id,
+		];
+
+		$validator = Validator::make($params, [
+            'broker_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+				$response['message'] =$validator->errors()->first();
+				return response($response, 200);
+	    }
+	    $seller_array = [];
+	    $buyer_array = [];
+	    $final_array = [];
+	    $broker = AddBrokers::with('seller')->where('broker_id',$broker_id)->where('user_type', 'seller')->get();
+        if(!empty($broker)){
+            foreach($broker as $val) {
+                foreach ($val->seller as $value1) {
+                    $seller_array[] = [
+                        'id' => $value1->id,
+                        'name' => $value1->name,
+                        'user_type' => 'seller'
+                    ];
+                }
+            }
+        }
+        $broker_seller = AddBrokers::with('buyer')->where('broker_id',$broker_id)->where('user_type', 'buyer')->get();
+
+        if(!empty($broker_seller)){
+            foreach($broker_seller as $val) {
+                foreach ($val->buyer as $value) {
+                    $buyer_array[] = [
+                        'id' => $value->id,
+                        'name' => $value->name,
+                        'user_type' => 'buyer'
+                    ];
+                }
+            }
+        }
+        $final_array = array_merge($seller_array,$buyer_array);
+        /*$final_array[] = [
+            'seller' => $seller_array,
+            'buyer' => $buyer_array,
+        ];*/
+        $response['status'] = 200;
+        $response['message'] = 'Seller Buyer List';
+        $response['data'] = $final_array;
+
 	    return response($response, 200);
     }
 }

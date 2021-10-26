@@ -355,12 +355,18 @@ class SearchController extends Controller
 
         if ($type == 'accept') {
             $broker_request = BrokerRequest::where(['id'=> $request_id])->first();
+            $brokers = AddBrokers::where(['buyer_id'=> $broker_request->buyer_id,'user_type' => 'buyer'])->first();
 
+            $broker_type = 'not_default';
+            if(empty($brokers)){
+                $broker_type = 'default';
+
+            }
             $add_broker = new AddBrokers();
             $add_broker->buyer_id = $broker_request->buyer_id;
             $add_broker->user_type = 'buyer';
             $add_broker->broker_id = $broker_request->broker_id;
-            $add_broker->broker_type = 'not_default';
+            $add_broker->broker_type = $broker_type;
             $add_broker->created_at =date('Y-m-d H:i:s');
             $add_broker->updated_at =date('Y-m-d H:i:s');
             $add_broker->save();

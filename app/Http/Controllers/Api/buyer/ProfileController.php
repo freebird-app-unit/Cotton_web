@@ -59,6 +59,7 @@ class ProfileController extends Controller
 		$params = [
 			'mobile_number' => $mobile_number,
 			'email' => $email,
+			'id' => $id,
 		];
 
 		$validator = Validator::make($params, [
@@ -68,6 +69,7 @@ class ProfileController extends Controller
             'email' => [
 		        Rule::unique('tbl_buyers')->ignore($id),
 		    ],
+            'id' => 'required|exists:tbl_buyers,id',
         ]);
 
         if ($validator->fails()) {

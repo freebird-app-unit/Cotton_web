@@ -6,6 +6,7 @@ use App\Models\BankDetails;
 use App\Models\Sellers;
 use App\Models\UserDetails;
 use App\Models\Brokers;
+use App\Models\AddBrokers;
 use Illuminate\Http\Request;
 use Response;
 use Validator;
@@ -201,6 +202,13 @@ class SellerController extends Controller
 
     	$otp_verify = Brokers::where('id',$request->broker_id)->first();
 
+        $check_broker = AddBrokers::where(['buyer_id' => $request->seller_id, 'broker_id' => $otp_verify->id, 'user_type' => 'seller'])->first();
+        if (!empty($check_broker)) {
+            $response['status'] = 404;
+            $response['message'] = 'Broker already added in your list!';
+            return response($response, 200);
+        }
+
         $otp = $request->otp;
         if($otp == $otp_verify->otp){
             $current = date("Y-m-d H:i:s");
@@ -210,6 +218,20 @@ class SellerController extends Controller
             $hours   = floor(($diff - ($days * 86400)) / 3600);
             $minutes = floor(($diff - ($days * 86400) - ($hours * 3600)) / 60);
             if (($diff > 0) && ($minutes <= 180)) {
+
+                $check_broker = AddBrokers::where(['buyer_id' => $request->seller_id, 'user_type' => 'seller'])->first();
+
+                $type = 'default';
+                if (!empty($check_broker)) {
+                    $type = 'not_default';
+                }
+
+                $broker =  new AddBrokers();
+                $broker->buyer_id = $request->buyer_id;
+                $broker->user_type = 'buyer';
+                $broker->broker_id = $otp_verify->id;
+                $broker->broker_type = $type;
+                $broker->save();
 
                 $save = Sellers::updateOrCreate(
                     [
