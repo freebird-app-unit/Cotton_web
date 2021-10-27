@@ -27,7 +27,7 @@ use Image;
 use Illuminate\Validation\Rule;
 class ProfileController extends Controller
 {
-    public function edit_profile(Request $request)
+    public function edit_profile_seller(Request $request)
     {
     	$response = array();
 		$response['status'] = 200;
@@ -86,8 +86,8 @@ class ProfileController extends Controller
 				$response['message'] =$validator->errors()->first();
 				return response($response, 200);
 	    }
-	    	$buyer = Sellers::where('id',$id)->first();
-	    	if(!empty($buyer)){
+        $buyer = Sellers::where('id',$id)->first();
+        if(!empty($buyer)){
 
 	    		$image_name = '';
 				if ($request->hasFile('profile_image')) {
@@ -130,7 +130,7 @@ class ProfileController extends Controller
 				}
 
 				$bank_details = BankDetails::where(['user_id'=>$id,'user_type'=>'seller'])->first();
-                
+
 				if(!empty($bank_details)){
 					$bank_details->user_type = 'seller';
 					$bank_details->bank_name =(empty($bank_name))?$bank_details->bank_name:$bank_name;
@@ -142,6 +142,7 @@ class ProfileController extends Controller
 				$response['status'] = 200;
 				$response['message'] = 'Profile has been successfully updated.';
 			}else{
+				$response['message'] = 'Profile has been successfully updated.';
 				$response['status'] = 404;
 			}
         	return response($response, 200);

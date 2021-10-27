@@ -14,4 +14,13 @@ class AddBrokers extends Model
     {
         return $this->hasOne(Brokers::class,'id','broker_id');
     }
+
+	public function seller()
+    {
+        return $this->hasMany(Sellers::class,'id','buyer_id');
+    }
+	public function buyer()
+    {
+        return $this->hasMany(Buyers::class,'id','buyer_id');
+    }
 }

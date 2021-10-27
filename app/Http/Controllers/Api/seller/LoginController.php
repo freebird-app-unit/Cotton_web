@@ -81,13 +81,11 @@ class LoginController extends Controller
 		$params = [
 			'mobile_number' => $mobile_number,
 			'email' => $email,
-			//'plan_id' => $plan_id,
 		];
 
 		$validator = Validator::make($params, [
             'mobile_number' => 'required|digits:10|unique:tbl_sellers,mobile_number',
             'email' => 'required|email|unique:tbl_sellers,email|max:255',
-            //'plan_id' => 'required|exists:tbl_plans,id',
         ]);
 
         if ($validator->fails()) {
@@ -202,8 +200,6 @@ class LoginController extends Controller
 				Storage::disk('public')->put('seller/profile/' . $image_name, $img, 'public');
 			}
 
-            $plan_detail = Plan::where('id', $plan_id)->first();
-
             $seller = new Sellers();
             $seller->name = $name;
             $seller->password = Hash::make($password);
@@ -215,22 +211,10 @@ class LoginController extends Controller
             $seller->otp_time = date('Y-m-d H:i:s');
             $seller->image = $image_name;
             $seller->referral_code=$referral_code;
-            $seller->wallet_amount=$plan_detail->price;
+            // $seller->wallet_amount=$plan_detail->price;
 
             if($seller->save()){
                 $id = $seller->id;
-
-                $date = Carbon::now();
-                $date->addDays($plan_detail->validity);
-
-                UserPlan::create([
-                    'user_id' => $id,
-                    'user_type' => 'seller',
-                    'plan_id' => $plan_id,
-                    'status' => 1,
-                    'purchase_date' => date('Y-m-d'),
-                    'expiry_date' => $date
-                ]);
 
                 $user_details = new UserDetails();
                 $user_details->user_id = $id;
@@ -1389,6 +1373,69 @@ class LoginController extends Controller
         $response['message'] = 'Transaction history';
         $response['status'] = 200;
         $response['data'] = $data;
+        return response($response, 200);
+    }
+
+	public function user_broker_list(Request $request)
+    {
+		$data = $request->input('data');
+        $content = json_decode($data);
+
+        $user_id = isset($content->user_id) ? $content->user_id : '';
+        $type = isset($content->type) ? $content->type : '';
+
+        $params = [
+            'user_id' => $user_id,
+            'type' => $type
+        ];
+        if($type == "seller"){
+
+            $validator = Validator::make($params, [
+                'user_id' => 'required|exists:tbl_sellers,id',
+                'type' => 'required',
+            ]);
+        }else{
+
+            $validator = Validator::make($params, [
+                'user_id' => 'required|exists:tbl_buyers,id',
+                'type' => 'required',
+            ]);
+
+        }
+
+        if ($validator->fails()) {
+            $response['status'] = 404;
+            $response['message'] = $validator->errors()->first();
+            return response($response, 200);
+        }
+
+        $final_merged = [];
+        $seller_broker = [];
+        $buyer_broker = [];
+        if ($type == 'seller') {
+            $seller_broker = AddBrokers::with('broker')->where(['user_type' => 'seller', 'buyer_id' => $user_id, 'broker_type' => 'default'])->get();
+        } else {
+            $buyer_broker = AddBrokers::with('broker')->where(['user_type' => 'buyer', 'buyer_id' => $user_id, 'broker_type' => 'default'])->get();
+        }
+
+        $buyer_brokers = AddBrokers::with('broker')->where(['user_type' => 'buyer', 'buyer_id' => $user_id, 'broker_type' => 'not_default'])->get();
+       	$buyer_brokers->merge($seller_broker);
+        $buyer_brokers->merge($buyer_broker);
+
+        $broker_list = [];
+        if (!empty($buyer_brokers)) {
+            foreach($buyer_brokers as $broker) {
+                $broker_list[] = [
+                    'id' => $broker->broker->id,
+                    'name' => $broker->broker->name,
+                    'type' => $broker->broker_type,
+                ];
+            }
+        }
+
+		$response['message'] = 'Broker List';
+        $response['status'] = 200;
+        $response['data'] = $broker_list;
         return response($response, 200);
     }
 }
