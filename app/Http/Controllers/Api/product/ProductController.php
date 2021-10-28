@@ -4235,7 +4235,11 @@ class ProductController extends Controller
 		$station_id = isset($content->station_id) ? $content->station_id : '';
 
 		$buyer_array =[];
-		$buyer = UserDetails::where(['user_type'=>'buyer','country_id'=>$country_id,'state_id'=>$state_id,'city_id'=>$city_id])->get();
+		$buyer = UserDetails::where(['user_type'=>'buyer','country_id'=>$country_id,'state_id'=>$state_id,'city_id'=>$city_id]);
+		if(!empty($station_id) && $station_id != 0){
+			$buyer->where('station_id',$station_id);
+		}
+		$buyer = $buyer->get();
 		if(count($buyer)>0){
 			foreach ($buyer as $value) {
 				$country = Country::where(['id'=>$value->country_id,'is_delete'=>1])->first();
