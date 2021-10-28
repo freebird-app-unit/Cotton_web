@@ -34,6 +34,7 @@ use App\Models\SubjectTo;
 use App\Models\DeviceDetails;
 use App\Models\DealQueue;
 use App\Models\NegotiationDebitNote;
+use App\Models\User;
 use App\Helper\CommonHelper;
 use Validator;
 use Carbon\Carbon;
@@ -44,17 +45,12 @@ use Image;
 use App\Helper\NotificationHelper;
 use App\Models\AddBrokers;
 use App\Models\Transactions;
-use App\Models\User;
 use App\Events\NotificationSeller;
 use App\Events\NotificationBuyer;
 use App\Events\NegotiationSeller;
 use App\Events\NegotiationBuyer;
 use App\Events\NegotiationMultipleSeller;
 use App\Events\NegotiationMultipleBuyer;
-use App\Events\MakedealBuyer;
-use App\Events\MakedealSeller;
-use Mail;
-
 class ProductController extends Controller
 {
     public function product_list(Request $request){
@@ -343,12 +339,13 @@ class ProductController extends Controller
         ]);
 
         if ($validator->fails()) {
-            $response['status'] = 404;
-            $response['message'] =$validator->errors()->first();
-            return response($response, 200);
+	        	$response['status'] = 404;
+				$response['message'] =$validator->errors()->first();
+				return response($response, 200);
 	    }
 
-	    if($d_e == "Domestic"){
+
+	     if($d_e == "Domestic"){
 	    	$params = [
 				'buy_for' => $buy_for,
 			];
@@ -493,25 +490,23 @@ class ProductController extends Controller
 
                     $buyer_data = DeviceDetails::select('fcm_token')->where('user_type','buyer')->where('user_id',$value)->first();
 					if (!empty($buyer_data->fcm_token)) {
-						// array_push($fcm_token,$buyer_data->fcm_token);
-
-                        $json_array = [
-                            "registration_ids" => [$buyer_data->fcm_token],
-                            "data" => [
-                                'navigateto' => 'NotificationList',
-                                'sellerId' => $seller_buyer_id,
-                                'post_id' => $notification->id,
-                                'type' => 'notification',
-                            ],
-                            "notification" => [
-                                "body" => "Notification send by ".$seller->name,
-                                "title" => "Sell Notification",
-                                "icon" => "ic_launcher"
-                            ]
-                        ];
-                        NotificationHelper::notification($json_array,'buyer');
+						array_push($fcm_token,$buyer_data->fcm_token);
 					}
 				}
+			}
+
+			if (!empty($fcm_token)) {
+				$seller = Sellers::where('id',$seller_buyer_id)->first();
+
+				$json_array = [
+					"registration_ids" => $fcm_token,
+					"notification" => [
+						"body" => "Notification send by ".$seller->name,
+						"title" => "Sell Notification",
+						"icon" => "ic_launcher"
+					]
+				];
+				NotificationHelper::notification($json_array,'buyer');
 			}
 
 			$response['status'] = 200;
@@ -1015,44 +1010,24 @@ class ProductController extends Controller
 
                     $seller_data = DeviceDetails::select('fcm_token')->where('user_type','seller')->where('user_id',$value)->first();
                     if (!empty($seller_data->fcm_token)) {
-						// array_push($fcm_token,$seller_data->fcm_token);
-                        $json_array = [
-                            "registration_ids" => [$seller_data->fcm_token],
-                            "data" => [
-                                'user_type' => 'buyer',
-                                'navigateto' => 'NotificationList',
-                                'sellerId' => $seller_buyer_id,
-                                'post_id' => $notification->id,
-                                'type' => 'notification',
-                            ],
-                            "notification" => [
-                                "body" => "Notification send by ".$buyer->name,
-                                "title" => "Buy Notification",
-                                "icon" => "ic_launcher"
-                            ]
-                        ];
-
-                        NotificationHelper::notification($json_array,'buyer');
+						array_push($fcm_token,$seller_data->fcm_token);
 					}
 				}
 			}
 
-            // if (!empty($fcm_token)) {
-			// 	$buyer = Buyers::where('id',$buyer_id)->first();
+            if (!empty($fcm_token)) {
+				$buyer = Buyers::where('id',$buyer_id)->first();
 
-			// 	$json_array = [
-			// 		"registration_ids" => $fcm_token,
-            //         "data" => [
-            //             'user_type' => 'buyer',
-            //         ],
-			// 		"notification" => [
-			// 			"body" => "Notification send by ".$buyer->name,
-			// 			"title" => "Buy Notification",
-			// 			"icon" => "ic_launcher"
-			// 		]
-			// 	];
-			// 	NotificationHelper::notification($json_array,'seller');
-			// }
+				$json_array = [
+					"registration_ids" => $fcm_token,
+					"notification" => [
+						"body" => "Notification send by ".$buyer->name,
+						"title" => "Buy Notification",
+						"icon" => "ic_launcher"
+					]
+				];
+				NotificationHelper::notification($json_array,'seller');
+			}
 
 			$response['status'] = 200;
 			$response['message'] = 'Notification Send Sucessfully!!';
@@ -2068,15 +2043,8 @@ class ProductController extends Controller
 
         $fcm_token = "";
         $user = [];
-        $data = [];
         if ($negotiation_by == "seller") {
             $user_type = "buyer";
-            $data = [
-                'navigateto' => 'DealDetails',
-                'buyerId' => $buyer_id,
-                'post_id' => $post_notification_id,
-                'type' => $negotiation_type,
-            ];
             $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$buyer_id)->first();
 
             if (!empty($seller_data->fcm_token)) {
@@ -2085,12 +2053,6 @@ class ProductController extends Controller
             $user = Sellers::select('name')->where('id',$seller_id)->first();
         }else if($negotiation_by == 'buyer'){
             $user_type = "seller";
-            $data = [
-                'navigateto' => 'DealDetails',
-                'sellerId' => $seller_id,
-                'post_id' => $post_notification_id,
-                'type' => $negotiation_type,
-            ];
             $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$seller_id)->first();
 
             if (!empty($seller_data->fcm_token)) {
@@ -2102,7 +2064,6 @@ class ProductController extends Controller
         if (!empty($fcm_token)) {
             $json_array = [
                 "registration_ids" => [$fcm_token],
-                "data" => $data,
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
                     "title" => "Buy Notification",
@@ -3581,9 +3542,6 @@ class ProductController extends Controller
         if (!empty($fcm_token)) {
             $json_array = [
                 "registration_ids" => [$fcm_token],
-                "data" => [
-                    'user_type' => $done_by,
-                ],
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
                     "title" => "Buy Notification",
@@ -4294,10 +4252,6 @@ class ProductController extends Controller
         $offset = isset($content->offset) ? $content->offset : 0;
 		$limit = isset($content->limit) ? $content->limit : 10;
 
-        $negotiation_ids = [];
-        $negotiation = Negotiation::select('negotiation_complete_id')->get()->toArray();
-        $negotiation_ids = array_column($negotiation,'negotiation_complete_id');
-
 		$final_arr = [];
 		$dates = [];
 		if($user_type == "seller"){
@@ -4310,7 +4264,7 @@ class ProductController extends Controller
 			$unique_date = array_unique($dates);
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->whereNotIn('id',$negotiation_ids)->orderBy('id','DESC')->get();
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 
 				// $negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->where(function($query) {
                     // $query->where('lab_report_status','pass')
@@ -4371,11 +4325,6 @@ class ProductController extends Controller
 							$buyer = Buyers::where('id',$value->buyer_id)->first();
 							if(!empty($buyer)){
 								$buyer_name = $buyer->name;
-							}
-							$broker_name = '';
-							$broker = Brokers::where('id',$value->broker_id)->first();
-							if(!empty($broker)){
-								$broker_name = $broker->name;
 							}
 							$transmit_condition_name = '';
 							$is_dispatch = 0;
@@ -4441,8 +4390,6 @@ class ProductController extends Controller
 							'buyer_name' =>$buyer_name,
 							'seller_id' => $value->seller_id,
 							'seller_name' => $seller_name,
-							'broker_id' => $value->broker_id,
-							'broker_name' => $broker_name,
 							'negotiation_by' => $value->negotiation_by,
 							'negotiation_type' => $value->negotiation_type,
 							'post_price' => $post_price,
@@ -4467,9 +4414,6 @@ class ProductController extends Controller
 							'debit_note_array' =>  $negotiation_debit_file,
 							'is_dispatch' =>  $is_dispatch,
 							'is_sample' =>  $value->is_sample,
-							'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
-							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
-							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -4511,11 +4455,6 @@ class ProductController extends Controller
 							$buyer = Buyers::where('id',$value->buyer_id)->first();
 							if(!empty($buyer)){
 								$buyer_name = $buyer->name;
-							}
-                            $broker_name = '';
-							$broker = Brokers::where('id',$value->broker_id)->first();
-							if(!empty($broker)){
-								$broker_name = $broker->name;
 							}
 							$transmit_condition_name = '';
                             $is_dispatch = 0;
@@ -4581,8 +4520,6 @@ class ProductController extends Controller
 							'buyer_name' =>$buyer_name,
 							'seller_id' => $value->seller_id,
 							'seller_name' => $seller_name,
-                            'broker_id' => $value->broker_id,
-							'broker_name' => $broker_name,
 							'negotiation_by' => $value->negotiation_by,
 							'negotiation_type' => $value->negotiation_type,
 							'post_price' => $post_price,
@@ -4607,9 +4544,6 @@ class ProductController extends Controller
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_dispatch' =>  $is_dispatch,
                             'is_sample' =>  $value->is_sample,
-                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
-							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
-							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 				}
@@ -4627,7 +4561,7 @@ class ProductController extends Controller
 
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->whereNotIn('id',$negotiation_ids)->orderBy('id','DESC')->get();
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 
 				foreach ($negotiation_data as $value) {
 
@@ -4686,11 +4620,6 @@ class ProductController extends Controller
 							$buyer = Buyers::where('id',$value->buyer_id)->first();
 							if(!empty($buyer)){
 								$buyer_name = $buyer->name;
-							}
-                            $broker_name = '';
-							$broker = Brokers::where('id',$value->broker_id)->first();
-							if(!empty($broker)){
-								$broker_name = $broker->name;
 							}
 							$transmit_condition_name = '';
                             $is_dispatch = 0;
@@ -4757,8 +4686,6 @@ class ProductController extends Controller
 							'buyer_name' =>$buyer_name,
 							'seller_id' => $value->seller_id,
 							'seller_name' => $seller_name,
-                            'broker_id' => $value->broker_id,
-							'broker_name' => $broker_name,
 							'negotiation_by' => $value->negotiation_by,
 							'negotiation_type' => $value->negotiation_type,
 							'post_price' => $post_price,
@@ -4782,9 +4709,6 @@ class ProductController extends Controller
 							'lab_report_status' => $value->lab_report_status,
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_sample' =>  $value->is_sample,
-                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
-							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
-							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -4827,11 +4751,6 @@ class ProductController extends Controller
 							if(!empty($buyer)){
 								$buyer_name = $buyer->name;
 							}
-                            $broker_name = '';
-							$broker = Brokers::where('id',$value->broker_id)->first();
-							if(!empty($broker)){
-								$broker_name = $broker->name;
-							}
 							$transmit_condition_name = '';
                             $is_dispatch = 0;
 							$transmit_condition = TransmitCondition::where('id',$value->transmit_condition)->first();
@@ -4896,8 +4815,6 @@ class ProductController extends Controller
 							'buyer_name' =>$buyer_name,
 							'seller_id' => $value->seller_id,
 							'seller_name' => $seller_name,
-                            'broker_id' => $value->broker_id,
-							'broker_name' => $broker_name,
 							'negotiation_by' => $value->negotiation_by,
 							'negotiation_type' => $value->negotiation_type,
 							'post_price' => $post_price,
@@ -4922,9 +4839,6 @@ class ProductController extends Controller
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_dispatch' =>  $is_dispatch,
                             'is_sample' =>  $value->is_sample,
-                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
-							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
-							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 				}
@@ -4941,7 +4855,7 @@ class ProductController extends Controller
 			$unique_date = array_unique($dates);
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('broker_id',$seller_buyer_id)->whereNotIn('id',$negotiation_ids)->orderBy('id','DESC')->get();
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('broker_id',$seller_buyer_id)->orderBy('id','DESC')->get();
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
 
@@ -4998,11 +4912,6 @@ class ProductController extends Controller
 							$buyer = Buyers::where('id',$value->buyer_id)->first();
 							if(!empty($buyer)){
 								$buyer_name = $buyer->name;
-							}
-                            $broker_name = '';
-							$broker = Brokers::where('id',$value->broker_id)->first();
-							if(!empty($broker)){
-								$broker_name = $broker->name;
 							}
 							$transmit_condition_name = '';
                             $is_dispatch = 0;
@@ -5068,8 +4977,6 @@ class ProductController extends Controller
 							'buyer_name' =>$buyer_name,
 							'seller_id' => $value->seller_id,
 							'seller_name' => $seller_name,
-                            'broker_id' => $value->broker_id,
-							'broker_name' => $broker_name,
 							'negotiation_by' => $value->negotiation_by,
 							'negotiation_type' => $value->negotiation_type,
 							'post_price' => $post_price,
@@ -5094,9 +5001,6 @@ class ProductController extends Controller
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_dispatch' => $is_dispatch,
                             'is_sample' =>  $value->is_sample,
-                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
-							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
-							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 					if($value->negotiation_type=="notification"){
@@ -5138,11 +5042,6 @@ class ProductController extends Controller
 							$buyer = Buyers::where('id',$value->buyer_id)->first();
 							if(!empty($buyer)){
 								$buyer_name = $buyer->name;
-							}
-                            $broker_name = '';
-							$broker = Brokers::where('id',$value->broker_id)->first();
-							if(!empty($broker)){
-								$broker_name = $broker->name;
 							}
 							$transmit_condition_name = '';
                             $is_dispatch = 0;
@@ -5208,8 +5107,6 @@ class ProductController extends Controller
 							'buyer_name' =>$buyer_name,
 							'seller_id' => $value->seller_id,
 							'seller_name' => $seller_name,
-                            'broker_id' => $value->broker_id,
-							'broker_name' => $broker_name,
 							'negotiation_by' => $value->negotiation_by,
 							'negotiation_type' => $value->negotiation_type,
 							'post_price' => $post_price,
@@ -5234,9 +5131,6 @@ class ProductController extends Controller
                             'debit_note_array' =>  $negotiation_debit_file,
                             'is_dispatch' => $is_dispatch,
                             'is_sample' =>  $value->is_sample,
-                            'is_seller_otp_verify' =>  $value->is_seller_otp_verify,
-							'is_buyer_otp_verify' =>  $value->is_buyer_otp_verify,
-							'is_broker_otp_verify' =>  $value->is_broker_otp_verify,
 						];
 					}
 				}
@@ -5911,6 +5805,8 @@ class ProductController extends Controller
 		$required = isset($content->required) ? $content->required : '';
 		// $non_required = isset($content->non_required) ? $content->non_required : '';
 
+		// dd($required);
+
 		$search_array = [];
 		$post_arr = [];
         $country_arr = [];
@@ -6432,50 +6328,13 @@ class ProductController extends Controller
             $negotiation_comp->save();
 		}
 
-        $deal_data = NegotiationComplete::where('id',$deal_id)->first();
-        $fcm_token = "";
-        $user = [];
-        if ($upload_by == "seller") {
-            $user_type = "buyer";
-            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$deal_data->buyer_id)->first();
-
-            if (!empty($seller_data->fcm_token)) {
-                $fcm_token = $seller_data->fcm_token;
-            }
-            $user = Sellers::select('name')->where('id',$deal_data->seller_id)->first();
-        }else if($upload_by == 'buyer'){
-            $user_type = "seller";
-            $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$deal_data->seller_id)->first();
-
-            if (!empty($seller_data->fcm_token)) {
-                $fcm_token = $seller_data->fcm_token;
-            }
-            $user = Buyers::select('name')->where('id',$deal_data->buyer_id)->first();
-        }
-
-        if (!empty($fcm_token)) {
-            $json_array = [
-                "registration_ids" => [$fcm_token],
-                "data" => [
-                    'deal_id' => $deal_id,
-                    'user_type' => $upload_by,
-                ],
-                "notification" => [
-                    "body" => "Notification send by ".$user->name,
-                    "title" => "Negotiation Notification",
-                    "icon" => "ic_launcher"
-                ]
-            ];
-            NotificationHelper::notification($json_array,$user_type);
-        }
-
 		$response['status'] = 200;
 		$response['message'] = 'Updated Successfully';
 		$response['data'] = (object)[];
 		return response($response, 200);
 	}
 
-   public function negotiation_new_v2(Request $request)
+    public function negotiation_new_v2(Request $request)
 	{
 		$response = array();
 		$response['status'] = 200;
@@ -6565,7 +6424,6 @@ class ProductController extends Controller
 		    // $response['message'] = $check_data['message'];
             // return response($response, 200);
         // }
-        $product_name = '';
 
 		$broker_details = Brokers::where('id',$broker_id)->first();
 
@@ -6606,6 +6464,33 @@ class ProductController extends Controller
                 $negotiation->payment_condition = $payment_condition;
                 $negotiation->transmit_condition = $transmit_condition;
                 $negotiation->lab = $lab;
+				// if(count($negotia)==0){
+				// 	$post = Post::where(['id'=>$post_notification_id,'is_active'=>0])->first();
+				// 	if(!empty($post)){
+				// 		$negotiation->prev_price = $post->price;
+				// 		$negotiation->prev_bales = $post->no_of_bales;
+				// 	}else{
+				// 		$notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0])->first();
+				// 		if(!empty($notification)){
+				// 			$negotiation->prev_price = $notification->price;
+				// 			$negotiation->prev_bales = $notification->no_of_bales;
+				// 		}
+				// 	}
+				// }else{
+				// 	foreach ($negotia as $value) {
+				// 		$negotiation->prev_price = $value->price;
+				// 		$negotiation->prev_bales = $value->bales;
+				// 	}
+				// }
+
+				// $negotiation->current_price = $price;
+				// $negotiation->current_no_of_bales = $no_of_bales;
+				// $negotiation->payment_condition = $payment_condition;
+				// $negotiation->transmit_condition = $transmit_condition;
+				// $negotiation->lab = $lab;
+				// $negotiation->broker_id = $broker_id;
+				// $negotiation->notes = $notes;
+				// $negotiation->header = $header;
 
 				if($negotiation->save()){
 					$negotiation_log = new NegotiationLog();
@@ -6615,10 +6500,10 @@ class ProductController extends Controller
 	                $negotiation_log->bales = $no_of_bales;
 	                $negotiation_log->payment_condition_id = $payment_condition;
 	                $negotiation_log->transmit_condition_id = $transmit_condition;
-	                $negotiation_log->lab_id = $lab;
-                    $negotiation_log->seller_id = $seller_id;
+					$negotiation_log->seller_id = $seller_id;
 					$negotiation_log->buyer_id = $buyer_id;
 					$negotiation_log->broker_id = $broker_id;
+	                $negotiation_log->lab_id = $lab;
 	                $negotiation_log->save();
 					if($negotiation->negotiation_by == "seller"){
 						$product_name = '';
@@ -6643,7 +6528,7 @@ class ProductController extends Controller
 							}
 							$unique_seller = array_unique($sellers);
 							if(count($unique_seller)>1){
-                                if($negotiation->negotiation_type == "post"){
+									if($negotiation->negotiation_type == "post"){
 									$post = Post::select('price','no_of_bales','product_id','id')->where('id',$post_notification_id)->first();
 									if(!empty($post)){
 										$base_price = $post->price;
@@ -6678,21 +6563,18 @@ class ProductController extends Controller
 										$seller_name = $seller->name;
 									}
 								}
-
 								$negotiationBuyerData = new Negotiation();
+								$negotiationBuyerData->broker_name = $broker_details->name;
+								$negotiationBuyerData->post_notification_id = $post_notification_id;
 								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationBuyerData->buyer_name = $buyer_name;
 								$negotiationBuyerData->seller_id = $negotiation->seller_id;
 								$negotiationBuyerData->seller_name = $seller_name;
-								$negotiationBuyerData->post_notification_id = $post_notification_id;
-								$negotiationBuyerData->broker_name = $broker_details->name;
 								$negotiationBuyerData->negotiation_by = $negotiation_by;
 								$negotiationBuyerData->negotiation_type = $negotiation_type;
-								$negotiationBuyerData->prev_price = $negotiation->prev_price;
-								$negotiationBuyerData->prev_bales = $negotiation->prev_bales;
-								$negotiationBuyerData->current_price = $price;
-								$negotiationBuyerData->current_bales = $no_of_bales;
+								$negotiationBuyerData->product_name = $product_name;
 								$negotiationBuyerData->best_dealer_name = $best_dealer_name;
+								$negotiationBuyerData->base_price = $base_price;
+								$negotiationBuyerData->base_bales = $base_bales;
 								$negotiationBuyerData->best_price = $best_price;
 								$negotiationBuyerData->best_bales = $best_bales;
 								$negotiationBuyerData->negotiation_count = count($multiple_buyers);
@@ -6904,19 +6786,18 @@ class ProductController extends Controller
 									}
 								}
 								$negotiationSellerData = new Negotiation();
-								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationSellerData->buyer_name = $buyer_name;
+								$negotiationSellerData->broker_name = $broker_details->name;;
+								$negotiationSellerData->post_notification_id = $post_notification_id;
+								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
 								$negotiationSellerData->seller_id = $negotiation->seller_id;
 								$negotiationSellerData->seller_name = $seller_name;
-								$negotiationSellerData->post_notification_id = $post_notification_id;
-								$negotiationSellerData->broker_name = $broker_details->name;
+								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
 								$negotiationSellerData->negotiation_by = $negotiation_by;
 								$negotiationSellerData->negotiation_type = $negotiation_type;
-								$negotiationSellerData->prev_price = $negotiation->prev_price;
-								$negotiationSellerData->prev_bales = $negotiation->prev_bales;
-								$negotiationSellerData->current_price = $price;
-								$negotiationSellerData->current_bales = $no_of_bales;
+								$negotiationSellerData->product_name = $product_name;
 								$negotiationSellerData->best_dealer_name = $best_dealer_name;
+								$negotiationSellerData->base_price = $base_price;
+								$negotiationSellerData->base_bales = $base_bales;
 								$negotiationSellerData->best_price = $best_price;
 								$negotiationSellerData->best_bales = $best_bales;
 								$negotiationSellerData->negotiation_count = count($multiple_sellers);
@@ -7199,19 +7080,18 @@ class ProductController extends Controller
 									}
 								}
 								$negotiationBuyerData = new Negotiation();
+								$negotiationBuyerData->post_notification_id = $post_notification_id;
+								$negotiationBuyerData->negotiation_type = $negotiation->negotiation_type;
+								$negotiationBuyerData->broker_name = $broker_details->name;
 								$negotiationBuyerData->buyer_id = $negotiation->buyer_id;
-								$negotiationBuyerData->buyer_name = $buyer_name;
 								$negotiationBuyerData->seller_id = $negotiation->seller_id;
 								$negotiationBuyerData->seller_name = $seller_name;
-								$negotiationBuyerData->post_notification_id = $post_notification_id;
-								$negotiationBuyerData->broker_name = $broker_details->name;
 								$negotiationBuyerData->negotiation_by = $negotiation_by;
 								$negotiationBuyerData->negotiation_type = $negotiation_type;
-								$negotiationBuyerData->prev_price = $negotiation->prev_price;
-								$negotiationBuyerData->prev_bales = $negotiation->prev_bales;
-								$negotiationBuyerData->current_price = $price;
-								$negotiationBuyerData->current_bales = $no_of_bales;
+								$negotiationBuyerData->product_name = $product_name;
 								$negotiationBuyerData->best_dealer_name = $best_dealer_name;
+								$negotiationBuyerData->base_price = $base_price;
+								$negotiationBuyerData->base_bales = $base_bales;
 								$negotiationBuyerData->best_price = $best_price;
 								$negotiationBuyerData->best_bales = $best_bales;
 								$negotiationBuyerData->negotiation_count = count($multiple_buyers);
@@ -7424,19 +7304,18 @@ class ProductController extends Controller
 								}
 
 								$negotiationSellerData = new Negotiation();
+								$negotiationSellerData->post_notification_id = $post_notification_id;
+								$negotiationSellerData->negotiation_type = $negotiation->negotiation_type;
+								$negotiationSellerData->broker_name = $broker_details->name;;
 								$negotiationSellerData->buyer_id = $negotiation->buyer_id;
-								$negotiationSellerData->buyer_name = $buyer_name;
 								$negotiationSellerData->seller_id = $negotiation->seller_id;
 								$negotiationSellerData->seller_name = $seller_name;
-								$negotiationSellerData->post_notification_id = $post_notification_id;
-								$negotiationSellerData->broker_name = $broker_details->name;
 								$negotiationSellerData->negotiation_by = $negotiation_by;
 								$negotiationSellerData->negotiation_type = $negotiation_type;
-								$negotiationSellerData->prev_price = $negotiation->prev_price;
-								$negotiationSellerData->prev_bales = $negotiation->prev_bales;
-								$negotiationSellerData->current_price = $price;
-								$negotiationSellerData->current_bales = $no_of_bales;
+								$negotiationSellerData->product_name = $product_name;
 								$negotiationSellerData->best_dealer_name = $best_dealer_name;
+								$negotiationSellerData->base_price = $base_price;
+								$negotiationSellerData->base_bales = $base_bales;
 								$negotiationSellerData->best_price = $best_price;
 								$negotiationSellerData->best_bales = $best_bales;
 								$negotiationSellerData->negotiation_count = count($multiple_sellers);
@@ -7595,16 +7474,8 @@ class ProductController extends Controller
 
         $fcm_token = "";
         $user = [];
-        $data = [];
         if ($negotiation_by == "seller") {
             $user_type = "buyer";
-            $data = [
-                'navigateto' => 'DealDetails',
-                'sellerId' => $seller_id,
-                'post_id' => $post_notification_id,
-                'type' => $negotiation_type,
-                'product_name' => $product_name,
-            ];
             $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$buyer_id)->first();
 
             if (!empty($seller_data->fcm_token)) {
@@ -7613,13 +7484,6 @@ class ProductController extends Controller
             $user = Sellers::select('name')->where('id',$seller_id)->first();
         }else if($negotiation_by == 'buyer'){
             $user_type = "seller";
-            $data = [
-                'navigateto' => 'DealDetails',
-                'buyerId' => $buyer_id,
-                'post_id' => $post_notification_id,
-                'type' => $negotiation_type,
-                'product_name' => $product_name,
-            ];
             $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$seller_id)->first();
 
             if (!empty($seller_data->fcm_token)) {
@@ -7631,7 +7495,6 @@ class ProductController extends Controller
         if (!empty($fcm_token)) {
             $json_array = [
                 "registration_ids" => [$fcm_token],
-                "data" => $data,
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
                     "title" => "Negotiation Notification",
@@ -7646,7 +7509,6 @@ class ProductController extends Controller
 
     public function make_deal_new_v2(Request $request)
 	{
-		// dd("sdzf");
 		$response = array();
 		$response['status'] = 200;
 		$response['message'] = 'make deal done';
@@ -7690,25 +7552,6 @@ class ProductController extends Controller
         $settings = Settings::first();
 		$negotiation_comp = Negotiation::with('seller', 'buyer')->where(['seller_id'=>$seller_id,'buyer_id'=>$buyer_id,'post_notification_id'=>$post_notification_id,'negotiation_type'=>$type])->first();
 
-        // $seller_otp = mt_rand(100000,999999);
-        // $buyer_otp = mt_rand(100000,999999);
-        // $broker_otp = mt_rand(100000,999999);
-
-        $seller_otp = '123456';
-        $buyer_otp = '123456';
-        $broker_otp = '123456';
-
-        // $seller_email_otp = mt_rand(100000,999999);
-        // $buyer_email_otp = mt_rand(100000,999999);
-        // $broker_email_otp = mt_rand(100000,999999);
-
-        $seller_email_otp = '012345';
-        $buyer_email_otp = '012345';
-        $broker_email_otp = '012345';
-
-		$deal_id = 0;
-
-        // dd($seller_otp.' '.$buyer_otp.' '.$broker_otp);
         if (!empty($negotiation_comp)) {
 
             $user_data = [];
@@ -7718,23 +7561,12 @@ class ProductController extends Controller
             $total_amt = $no_of_bales * $settings->company_commission;
             $broker_commission_amt = $no_of_bales * $settings->broker_commission;
             if ($done_by == 'seller') {
-            	//event
-            	$makeDealSellerData = new NegotiationLog();
-            	$makeDealSellerData->seller_id = $seller_id;
-				event(new MakedealSeller($makeDealSellerData));
-				//event
                 $user_id = $seller_id;
                 $user_data = Sellers::with('broker', 'broker.broker')->where('id',$seller_id)->first();
 
 				if(!empty($user_data) && $user_data->wallet_amount < $total_amt){
                     $response['status'] = 404;
 					$response['message'] = 'Wallet amount not enough';
-					return response($response, 200);
-				}
-
-				if (empty($user_data->broker->broker_id)) {
-					$response['status'] = 404;
-					$response['message'] = 'Please select default broker!';
 					return response($response, 200);
 				}
 
@@ -7754,23 +7586,12 @@ class ProductController extends Controller
                     $broker_changed = 1;
                 }
             } else {
-            	//event
-            	$makeDealBuyerData = new NegotiationLog();
-            	$makeDealBuyerData->buyer_id = $buyer_id;
-				event(new MakedealBuyer($makeDealBuyerData));
-				//event
                 $user_id = $buyer_id;
-                $user_data = Buyers::with('broker', 'broker.broker')->where('id',$user_id)->first();
+                $user_data = Buyers::where('id',$user_id)->first();
 
 				if(!empty($user_data) && $user_data->wallet_amount < $total_amt){
 					$response['status'] = 404;
 					$response['message'] = 'Wallet amount not enough';
-					return response($response, 200);
-				}
-
-				if (empty($user_data->broker->broker_id)) {
-					$response['status'] = 404;
-					$response['message'] = 'Please select default broker!';
 					return response($response, 200);
 				}
 
@@ -7817,13 +7638,13 @@ class ProductController extends Controller
                         $complete->status = 'complete';
                         $complete->updated_at = date('Y-m-d H:i:s');
                         $complete->save();
+                        $make_deal = new NegotiationComplete();
 
                         $response['status'] = 200;
                         $response['message'] = 'Make Deal done';
                     }
                 }
             }
-            $make_deal = new NegotiationComplete();
 
             $check = $this->check_queue($buyer_id, $seller_id, $post_notification_id, $type);
 
@@ -7847,7 +7668,7 @@ class ProductController extends Controller
                         $complete->status = 'complete';
                         $complete->updated_at = date('Y-m-d H:i:s');
                         $complete->save();
-                        // $make_deal = new NegotiationComplete();
+                        $make_deal = new NegotiationComplete();
 
                         $response['status'] = 200;
                         $response['message'] = 'Make Deal done';
@@ -7863,7 +7684,7 @@ class ProductController extends Controller
 
                         $post->sold_bales = $post->sold_bales + $no_of_bales;
                         $post->remain_bales = $post->no_of_bales - $post->sold_bales;
-                        // $make_deal->no_of_bales = $no_of_bales;
+                        $make_deal->no_of_bales = $no_of_bales;
                         if($post->remain_bales <= 0){
 
                             $post->status = 'complete';
@@ -7878,7 +7699,7 @@ class ProductController extends Controller
 
                         $notification->sold_bales = $notification->sold_bales +  $no_of_bales;
                         $notification->remain_bales = $notification->no_of_bales - $notification->sold_bales;
-                        // $make_deal->no_of_bales = $no_of_bales;
+                        $make_deal->no_of_bales = $no_of_bales;
                         if($notification->remain_bales <= 0){
 
                             $notification->status = 'complete';
@@ -7896,7 +7717,6 @@ class ProductController extends Controller
                     $make_deal = NegotiationComplete::where('id',$negotiation_comp->negotiation_complete_id)->first();
                 }
 
-                $make_deal->no_of_bales = $no_of_bales;
                 $make_deal->buyer_id = $negotiation_comp->buyer_id;
                 $make_deal->seller_id = $negotiation_comp->seller_id;
                 $make_deal->broker_id = $negotiation_comp->broker_id;
@@ -7910,57 +7730,17 @@ class ProductController extends Controller
                 $make_deal->lab = $negotiation_comp->lab;
                 $make_deal->notes = $negotiation_comp->notes;
                 $make_deal->header = $negotiation_comp->header;
-                $make_deal->seller_otp = $seller_otp;
-                $make_deal->buyer_otp = $buyer_otp;
-                $make_deal->broker_otp = $broker_otp;
-                $make_deal->seller_email_otp = $seller_email_otp;
-                $make_deal->buyer_email_otp = $buyer_email_otp;
-                $make_deal->broker_email_otp = $broker_email_otp;
-                $make_deal->otp_time = date("Y-m-d H:i:s");
                 $make_deal->deal_type = 'negotiation';
-                $make_deal->status = 'pending';
 
                 $status = "";
                 if(!empty($complete)){
-                    // $make_deal->status = $complete->status;
+                    $make_deal->status = $complete->status;
                     $status =  $complete->status;
                 }else{
-                    // $make_deal->status = $negotiation_comp->status;
+                    $make_deal->status = $negotiation_comp->status;
                     $status =  $negotiation_comp->status;
                 }
                 $make_deal->save();
-
-                $sellers = Sellers::select('mobile_number','email','name')->where('id',$seller_id)->first();
-                $s_message = "OTP to verify make deal is ". $seller_otp ." - E - Cotton";
-                NotificationHelper::send_otp($sellers->mobile_number,$s_message);
-
-                $s_data = array('otp'=>$seller_email_otp,'name' => $sellers->name);
-
-                Mail::send(['html'=>'mail'], $s_data, function($message) use($sellers) {
-                    $message->to($sellers->email, 'E - Cotton')->subject('Make Deal OTP');
-                });
-
-                $buyers = Buyers::select('mobile_number','email','name')->where('id',$buyer_id)->first();
-                $by_message = "OTP to verify make deal is ". $buyer_otp ." - E - Cotton";
-                NotificationHelper::send_otp($buyers->mobile_number,$by_message);
-
-                $by_data = array('otp'=>$buyer_email_otp,'name' => $buyers->name);
-
-                Mail::send(['html'=>'mail'], $by_data, function($message) use($buyers) {
-                    $message->to($buyers->email, 'E - Cotton')->subject('Make Deal OTP');
-                });
-
-                $brokers = Brokers::select('mobile_number','email','name')->where('id',$negotiation_comp->broker_id)->first();
-                $br_message = "OTP to verify make deal is ". $broker_otp ." - E - Cotton";
-                NotificationHelper::send_otp($brokers->mobile_number,$br_message);
-
-                $br_data = array('otp'=>$broker_email_otp,'name' => $brokers->name);
-
-                Mail::send(['html'=>'mail'], $br_data, function($message) use($brokers) {
-                    $message->to($brokers->email, 'E - Cotton')->subject('Make deal OTP');
-                });
-
-				$deal_id = $make_deal->id;
 
                 $history = new NegotiationHistory();
                 $history->negotiation_complete_id = $make_deal->id;
@@ -7986,7 +7766,7 @@ class ProductController extends Controller
 					$user_data->save();
 
 					$transactions = new Transactions();
-					$transactions->user_id = $seller_id;
+					$transactions->user_id = $user_id;
 					$transactions->user_type = $done_by;
 					$transactions->type = 'withdraw';
 					$transactions->amount = $total_amt;
@@ -8020,7 +7800,7 @@ class ProductController extends Controller
 					$user_data->save();
 
 					$transactions = new Transactions();
-					$transactions->user_id = $buyer_id;
+					$transactions->user_id = $user_id;
 					$transactions->user_type = $done_by;
 					$transactions->type = 'withdraw';
 					$transactions->amount = $total_amt;
@@ -8057,12 +7837,16 @@ class ProductController extends Controller
                 if ($broker_changed == 1) {
 
                     if($type == "post"){
-                        $post = Post::with('seller', 'buyer', 'seller.broker', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                        if ($done_by == 'seller') {
+                            $post = Post::with('seller', 'seller.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                        } else {
+                            $post = Post::with('buyer', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                        }
 
                         if(!empty($post)){
 
                             $transactions = new Transactions();
-                            if ($post->user_type == 'seller') {
+                            if ($done_by == 'seller') {
 								$transactions->user_id = $post->seller->broker->broker_id;
 							} else {
 								$transactions->user_id = $post->buyer->broker->broker_id;
@@ -8076,12 +7860,16 @@ class ProductController extends Controller
                     }
                     if($type == "notification"){
 
-                        $notification = Notification::with('seller', 'buyer', 'seller.broker', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                        if ($done_by == 'seller') {
+                            $notification = Notification::with('seller', 'seller.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                        } else {
+                            $notification = Notification::with('buyer', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+                        }
 
                         if(!empty($notification)){
 
                             $transactions = new Transactions();
-                            if ($notification->user_type == 'seller') {
+                            if ($done_by == 'seller') {
 								$transactions->user_id = $notification->seller->broker->broker_id;
 							} else {
 								$transactions->user_id = $notification->buyer->broker->broker_id;
@@ -8316,8 +8104,8 @@ class ProductController extends Controller
                 //pdf
 			}
 		} else {
-			if($type == "notification"){
 
+			if($type == "notification"){
 				$notification = Notification::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
 
                 if(!empty($notification)){
@@ -8365,6 +8153,10 @@ class ProductController extends Controller
                             $response['message'] = 'Seller\'s Wallet amount not enough';
                             return response($response, 200);
                         }
+
+                        if (!empty($user_data) && $broker_id != $user_data->broker->broker_id) {
+                            $broker_changed = 1;
+                        }
                     }
 
 
@@ -8379,12 +8171,6 @@ class ProductController extends Controller
                     }
 
                     $default_broker = AddBrokers::where('buyer_id',$user_id)->where('user_type',$done_by)->where('broker_type','default')->first();
-
-					if (empty($default_broker)) {
-						$response['status'] = 404;
-                        $response['message'] = 'Please select default broker!';
-                        return response($response, 200);
-					}
 
                     $notification->sold_bales = $notification->no_of_bales;
                     $notification->remain_bales = 0;
@@ -8423,47 +8209,8 @@ class ProductController extends Controller
 					$make_deal->transmit_condition = $notification->transmit_condition;
 					$make_deal->lab = $notification->lab;
 					$make_deal->is_deal = '1';
-					$make_deal->status = 'pending';
-                    $make_deal->seller_otp = $seller_otp;
-                    $make_deal->buyer_otp = $buyer_otp;
-                    $make_deal->broker_otp = $broker_otp;
-                    $make_deal->seller_email_otp = $seller_email_otp;
-                    $make_deal->buyer_email_otp = $buyer_email_otp;
-                    $make_deal->broker_email_otp = $broker_email_otp;
-                    $make_deal->otp_time = date("Y-m-d H:i:s");
+					$make_deal->status = 'complete';
 					$make_deal->save();
-
-					$deal_id = $make_deal->id;
-
-                    $sellers = Sellers::select('mobile_number','email','name')->where('id',$seller_id)->first();
-                    $s_message = "OTP to verify make deal is ". $seller_otp ." - E - Cotton";
-                    NotificationHelper::send_otp($sellers->mobile_number,$s_message);
-
-                    $s_data = array('otp'=>$seller_email_otp,'name' => $sellers->name);
-
-                    Mail::send(['html'=>'mail'], $s_data, function($message) use($sellers) {
-                        $message->to($sellers->email, 'E - Cotton')->subject('Make deal OTP');
-                    });
-
-                    $buyers = Buyers::select('mobile_number','email','name')->where('id',$buyer_id)->first();
-                    $by_message = "OTP to verify make deal is ". $buyer_otp ." - E - Cotton";
-                    NotificationHelper::send_otp($buyers->mobile_number,$by_message);
-
-                    $by_data = array('otp'=>$buyer_email_otp,'name' => $buyers->name);
-
-                    Mail::send(['html'=>'mail'], $by_data, function($message) use($buyers) {
-                        $message->to($buyers->email, 'E - Cotton')->subject('Make deal OTP');
-                    });
-
-                    $brokers = Brokers::select('mobile_number','email','name')->where('id',$default_broker->broker_id)->first();
-                    $br_message = "OTP to verify make deal is ". $broker_otp ." - E - Cotton";
-                    NotificationHelper::send_otp($brokers->mobile_number,$br_message);
-
-                    $br_data = array('otp'=>$broker_email_otp,'name' => $brokers->name);
-
-                    Mail::send(['html'=>'mail'], $br_data, function($message) use($brokers) {
-                        $message->to($brokers->email, 'E - Cotton')->subject('Make deal OTP');
-                    });
 
 					$transactions = new Transactions();
 					$transactions->user_id = $user_id;
@@ -8478,7 +8225,7 @@ class ProductController extends Controller
                         $user_data->save();
 
                         $transactions = new Transactions();
-                        $transactions->user_id = $seller_id;
+                        $transactions->user_id = $user_id;
                         $transactions->user_type = $done_by;
                         $transactions->type = 'withdraw';
                         $transactions->amount = $total_amt;
@@ -8512,7 +8259,7 @@ class ProductController extends Controller
                         $user_data->save();
 
                         $transactions = new Transactions();
-                        $transactions->user_id = $buyer_id;
+                        $transactions->user_id = $user_id;
                         $transactions->user_type = $done_by;
                         $transactions->type = 'withdraw';
                         $transactions->amount = $total_amt;
@@ -8546,7 +8293,27 @@ class ProductController extends Controller
                         $transactions->save();
                     }
 
+					if ($broker_changed == 1) {
+						if ($done_by == 'seller') {
+							$notification = Notification::with('seller', 'seller.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+						} else {
+							$notification = Notification::with('buyer', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+						}
 
+						if(!empty($notification)){
+							$transactions = new Transactions();
+							if ($done_by == 'seller') {
+								$transactions->user_id = $notification->seller->broker->broker_id;
+							} else {
+								$transactions->user_id = $notification->buyer->broker->broker_id;
+							}
+							$transactions->user_type = 'broker';
+							$transactions->type = 'deposite';
+							$transactions->amount = $broker_commission_amt;
+							$transactions->message = 'amount deposite';
+							$transactions->save();
+						}
+					}
 
                     //pdf
                     $broker_name = '';
@@ -8749,7 +8516,7 @@ class ProductController extends Controller
                     $response['message'] = 'Make Deal done';
 				}
 			}elseif ($type == "post") {
-                $post = Post::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
+				$post = Post::where(['id'=>$post_notification_id,'is_active'=>0,'status'=>'active'])->first();
 				if(!empty($post)){
 
                     $total_amt = $post->no_of_bales * $settings->company_commission;
@@ -8764,7 +8531,7 @@ class ProductController extends Controller
                             return response($response, 200);
                         }
 
-                        // $user_id = $buyer_id;
+                        $user_id = $buyer_id;
                         $buyer_data = Buyers::where('id',$buyer_id)->first();
 
                         if(!empty($buyer_data) && $buyer_data->wallet_amount < $total_amt){
@@ -8787,13 +8554,17 @@ class ProductController extends Controller
                             return response($response, 200);
                         }
 
-                        // $user_id = $seller_id;
+                        $user_id = $seller_id;
                         $seller_data = Sellers::where('id',$seller_id)->first();
 
                         if(!empty($seller_data) && $seller_data->wallet_amount < $total_amt){
                             $response['status'] = 404;
                             $response['message'] = 'Seller\'s Wallet amount not enough';
                             return response($response, 200);
+                        }
+
+                        if (!empty($user_data) && $broker_id != $user_data->broker->broker_id) {
+                            $broker_changed = 1;
                         }
                     }
 
@@ -8808,13 +8579,6 @@ class ProductController extends Controller
                     }
 
                     $default_broker = AddBrokers::where('buyer_id',$user_id)->where('user_type',$done_by)->where('broker_type','default')->first();
-
-					if (empty($default_broker)) {
-						$response['status'] = 404;
-                        $response['message'] = 'Please select default broker!';
-                        return response($response, 200);
-					}
-
 
                     $post->sold_bales = $post->no_of_bales;
                     $post->remain_bales = 0;
@@ -8851,47 +8615,8 @@ class ProductController extends Controller
 					$make_deal->transmit_condition = $post->transmit_condition;
 					$make_deal->lab = $post->lab;
 					$make_deal->is_deal = '1';
-					$make_deal->status = 'pending';
-                    $make_deal->seller_otp = $seller_otp;
-                    $make_deal->buyer_otp = $buyer_otp;
-                    $make_deal->broker_otp = $broker_otp;
-                    $make_deal->seller_email_otp = $seller_email_otp;
-                    $make_deal->buyer_email_otp = $buyer_email_otp;
-                    $make_deal->broker_email_otp = $broker_email_otp;
-                    $make_deal->otp_time = date("Y-m-d H:i:s");
+					$make_deal->status = 'complete';
 					$make_deal->save();
-
-					$deal_id = $make_deal->id;
-
-                    $sellers = Sellers::select('mobile_number','email','name')->where('id',$seller_id)->first();
-                    $s_message = "OTP to verify make deal is ". $seller_otp ." - E - Cotton";
-                    NotificationHelper::send_otp($sellers->mobile_number,$s_message);
-
-                    $s_data = array('otp'=>$seller_email_otp,'name' => $sellers->name);
-
-                    Mail::send(['html'=>'mail'], $s_data, function($message) use($sellers) {
-                        $message->to($sellers->email, 'E - Cotton')->subject('Make deal OTP');
-                    });
-
-                    $buyers = Buyers::select('mobile_number','email','name')->where('id',$buyer_id)->first();
-                    $by_message = "OTP to verify make deal is ". $buyer_otp ." - E - Cotton";
-                    NotificationHelper::send_otp($buyers->mobile_number,$by_message);
-
-                    $by_data = array('otp'=>$buyer_email_otp,'name' => $buyers->name);
-
-                    Mail::send(['html'=>'mail'], $by_data, function($message) use($buyers) {
-                        $message->to($buyers->email, 'E - Cotton')->subject('Make deal OTP');
-                    });
-
-                    $brokers = Brokers::select('mobile_number','email','name')->where('id',$default_broker->broker_id)->first();
-                    $br_message = "OTP to verify make deal is ". $broker_otp ." - E - Cotton";
-                    NotificationHelper::send_otp($brokers->mobile_number,$br_message);
-
-                    $br_data = array('otp'=>$broker_email_otp,'name' => $brokers->name);
-
-                    Mail::send(['html'=>'mail'], $br_data, function($message) use($brokers) {
-                        $message->to($brokers->email, 'E - Cotton')->subject('Make deal OTP');
-                    });
 
 					$transactions = new Transactions();
 					$transactions->user_id = $user_id;
@@ -8906,7 +8631,7 @@ class ProductController extends Controller
                         $user_data->save();
 
                         $transactions = new Transactions();
-                        $transactions->user_id = $seller_id;
+                        $transactions->user_id = $user_id;
                         $transactions->user_type = $done_by;
                         $transactions->type = 'withdraw';
                         $transactions->amount = $total_amt;
@@ -8940,7 +8665,7 @@ class ProductController extends Controller
                         $user_data->save();
 
                         $transactions = new Transactions();
-                        $transactions->user_id = $buyer_id;
+                        $transactions->user_id = $user_id;
                         $transactions->user_type = $done_by;
                         $transactions->type = 'withdraw';
                         $transactions->amount = $total_amt;
@@ -8973,6 +8698,29 @@ class ProductController extends Controller
                         $transactions->message = 'amount deposite';
                         $transactions->save();
                     }
+
+					if ($broker_changed == 1) {
+
+						if ($done_by == 'seller') {
+							$post = Post::with('seller', 'seller.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+						} else {
+							$post = Post::with('buyer', 'buyer.broker')->where(['id'=>$post_notification_id,'is_active'=>0])->first();
+						}
+
+						if (!empty($post)) {
+							$transactions = new Transactions();
+							if ($done_by == 'seller') {
+								$transactions->user_id = $post->seller->broker->broker_id;
+							} else {
+								$transactions->user_id = $post->buyer->broker->broker_id;
+							}
+							$transactions->user_type = 'broker';
+							$transactions->type = 'deposite';
+							$transactions->amount = $broker_commission_amt;
+							$transactions->message = 'amount deposite';
+							$transactions->save();
+						}
+					}
 
                     //pdf
                     $broker_name = '';
@@ -9209,9 +8957,6 @@ class ProductController extends Controller
         if (!empty($fcm_token)) {
             $json_array = [
                 "registration_ids" => [$fcm_token],
-                "data" => [
-                    'user_type' => $done_by,
-                ],
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
                     "title" => "Deal Done Notification",
@@ -9224,11 +8969,9 @@ class ProductController extends Controller
         // Remove deal queue
         DealQueue::where(['buyer_id' => $buyer_id, 'seller_id' => $seller_id, 'post_notification_id' => $post_notification_id, 'post_type'=> $type])->delete();
 
-		$response['data'] = ['deal_id' => $deal_id];
-
 		return response($response, 200);
 	}
-   public function negotiation_list_new_v2(Request $request)
+    public function negotiation_list_new_v2(Request $request)
 	{
 		$response = array();
 		$response['status'] = 200;
@@ -9265,7 +9008,6 @@ class ProductController extends Controller
         $notification_negotiation_buyer_ids = [];
 
         if(count($negotiation)>0){
-
             foreach($negotiation as $value){
                 if($value->negotiation_type == 'post'){
                     // $post = Post::with('product')->where('id',$value->post_notification_id)->first();
@@ -9317,8 +9059,7 @@ class ProductController extends Controller
 			$unique_notification_ids = array_unique($notification_ids);
 			$unique_post_negotiation_buyer_ids = array_unique($post_negotiation_buyer_ids);
 			$unique_notification_negotiation_buyer_ids = array_unique($notification_negotiation_buyer_ids);
-
-			foreach ($unique_post_ids as $i1) {
+            foreach ($unique_post_ids as $i1) {
                 $best_price = [];
 
 				$post_data = Post::with('product','seller','buyer')->where(['id'=>$i1,'is_active'=>0])->first();
@@ -9433,7 +9174,8 @@ class ProductController extends Controller
 					}
 				}
 			}
-			foreach ($unique_notification_ids as $i2) {
+			foreach ($unique_notification_negotiation_buyer_ids as $i22) {
+				foreach ($unique_notification_ids as $i2) {
                     $best_price = [];
 					$notification = Notification::with('product','seller','buyer')->where(['id'=>$i2,'is_active'=>0])->first();
 					if(!empty($notification)){
@@ -9455,7 +9197,7 @@ class ProductController extends Controller
                                 $broker_name = $broker_data->name;
                             }
 				        }
-				        foreach ($unique_notification_negotiation_buyer_ids as $i22) {
+
 						$negotiation_notification = Negotiation::with('seller','buyer','broker','transmit_conditions','payment_conditions','labs')->where(['buyer_id'=>$i22,'post_notification_id'=>$i2,'seller_id'=>$seller_id,'negotiation_type'=>'notification'])->orderBy('id','DESC')->first();
 
 						if(!empty($negotiation_notification)){
@@ -9489,10 +9231,10 @@ class ProductController extends Controller
                             ];
 
                             array_push($best_price, $negotiation_notification->price);
-						}
 					}
+				}
 
-					if(count($best_price)>1){
+				if(count($best_price)>1){
 						$max = max($best_price);
 						foreach ($notification_array as $notification_value) {
 							if($notification_value['current_price'] == $max){
@@ -9546,14 +9288,18 @@ class ProductController extends Controller
 					}
 				}
 			}
-
 			//when same price then multi-dimensional array unique based on post_id
-			$final_post = array_unique(array_column($negotiation_post_arr_temp, 'post_id'));
-			$negotiation_post_arr = array_intersect_key($negotiation_post_arr_temp, $final_post);
+			$newArrPost = array();
+			foreach ($negotiation_post_arr_temp as $val) {
+				$newArrPost[$val['post_id']] = $val;
+			}
+			$negotiation_post_arr = array_values($newArrPost);
 
-			$final_notification = array_unique(array_column($negotiation_notification_arr_temp, 'notification_id'));
-			$negotiation_notification_arr = array_intersect_key($negotiation_notification_arr_temp, $final_notification);
-
+			$newArrNotification = array();
+			foreach ($negotiation_notification_arr_temp as $val) {
+					  $newArrNotification[$val['post_id']] = $val;
+			}
+			$negotiation_notification_arr = array_values($newArrNotification);
 			//end
             $negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
 
@@ -9567,7 +9313,7 @@ class ProductController extends Controller
 		return response($response, 200);
 	}
 
-     public function negotiation_list_buyer_new_v2(Request $request)
+    public function negotiation_list_buyer_new_v2(Request $request)
 	{
 		$response = array();
 		$response['status'] = 200;
@@ -9878,11 +9624,17 @@ class ProductController extends Controller
 				}
 			}
 			//when same price then multi-dimensional array unique based on post_id
-			$final_post = array_unique(array_column($negotiation_post_arr_temp, 'post_id'));
-			$negotiation_post_arr = array_intersect_key($negotiation_post_arr_temp, $final_post);
+			$newArrPost = array();
+			foreach ($negotiation_post_arr_temp as $val) {
+					  $newArrPost[$val['post_id']] = $val;
+			}
+			$negotiation_post_arr = array_values($newArrPost);
 
-			$final_notification = array_unique(array_column($negotiation_notification_arr_temp, 'post_id'));
-			$negotiation_notification_arr = array_intersect_key($negotiation_notification_arr_temp, $final_notification);
+			$newArrNotification = array();
+			foreach ($negotiation_notification_arr_temp as $val) {
+					  $newArrNotification[$val['post_id']] = $val;
+			}
+			$negotiation_notification_arr = array_values($newArrNotification);
 			//end
 			$negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
 
@@ -10191,17 +9943,13 @@ class ProductController extends Controller
 	        	$post_add = Post::where('id',$negotiation_comp->post_notification_id)->first();
 	        	if(!empty($post_add)){
 	        		$post_add->remain_bales = $post_add->remain_bales + $negotiation_comp->no_of_bales;
-	        		$post_add->sold_bales = $post_add->sold_bales - $negotiation_comp->no_of_bales;
-	        		$post_add->status = 'active';
 	        		$post_add->save();
 	        	}
 	        }
 	        if($negotiation_comp->negotiation_type == "notification"){
-                $notification_add = Notification::where('id',$negotiation_comp->post_notification_id)->first();
+	        	$notification_add = Notification::where('id',$negotiation_comp->post_notification_id)->first();
 	        	if(!empty($notification_add)){
-                    $notification_add->remain_bales = $notification_add->remain_bales + $negotiation_comp->no_of_bales;
-	        		$notification_add->sold_bales = $notification_add->sold_bales - $negotiation_comp->no_of_bales;
-                    $notification_add->status = 'active';
+	        		$notification_add->remain_bales = $notification_add->remain_bales + $negotiation_comp->no_of_bales;
 	        		$notification_add->save();
 	        	}
 	        }
@@ -11576,200 +11324,35 @@ class ProductController extends Controller
 
     public function test_api(Request $request)
 	{
-		$by_data = array('otp'=>456987,'name' => "Test Name");
+		$data = $request->input('data');
+		$content = json_decode($data);
 
-		Mail::send(['html'=>'mail'], $by_data, function($message) {
-			$message->to('nileshbavliya@gmail.com', 'E - Cotton')->subject('Make deal done');
-		});
+		$seller_id = isset($content->seller_id) ? $content->seller_id : '';
+
+        $params = [
+			'seller_id' => $seller_id,
+		];
+
+		$validator = Validator::make($params, [
+            'seller_id' => 'required|exists:tbl_sellers,id',
+        ]);
+
+        if ($validator->fails()) {
+	        $response['status'] = 404;
+			$response['message'] =$validator->errors()->first();
+			return response($response, 200);
+	    }
+
+        $check_data = CommonHelper::check_user_amount($seller_id,'seller');
+
+        $response['status'] = 200;
+		$response['message'] = 'Success';
+        if (!$check_data['success']) {
+            $response['status'] = 404;
+		    $response['message'] = $check_data['message'];
+        }
 
 		$response['data'] = (object)[];
 		return response($response, 200);
 	}
-
-    public function make_deal_otp_verify(Request $request)
-    {
-    	$response = array();
-		$response['status'] = 200;
-		$response['message'] = '';
-		$response['data'] = (object)array();
-
-		$data = $request->input('data');
-		$content = json_decode($data);
-
-		$deal_id = isset($content->deal_id) ? $content->deal_id : '';
-		$user_type = isset($content->user_type) ? $content->user_type : '';
-        $email_otp = isset($content->email_otp) ? $content->email_otp : '';
-        $mobile_otp = isset($content->mobile_otp) ? $content->mobile_otp : '';
-
-        // dd($mobile_otp);
-        $otp = "";
-        if(empty($email_otp) && empty($mobile_otp)){
-            $response['status'] = 404;
-            $response['message'] = "Email or Sms otp required";
-            return response($response, 200);
-
-        }
-
-        $params = [
-            'deal_id' => $deal_id,
-            'user_type' => $user_type
-        ];
-
-        $validator = Validator::make($params, [
-            'deal_id' => 'required|exists:tbl_negotiation_complete,id',
-            'user_type' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-	        $response['status'] = 404;
-				$response['message'] =$validator->errors()->first();
-				return response($response, 200);
-	    }
-
-        $complete_deal = NegotiationComplete::where('id',$deal_id)->first();
-
-        $verify_otp = "";
-
-        if(!empty($mobile_otp)){
-            $otp = $mobile_otp;
-            if ($user_type == 'seller') {
-                $verify_otp = $complete_deal->seller_otp;
-            } else if ($user_type == 'buyer') {
-                $verify_otp = $complete_deal->buyer_otp;
-            } else if ($user_type == 'broker') {
-                $verify_otp = $complete_deal->broker_otp;
-            }
-        }else{
-            $otp = $email_otp;
-            if ($user_type == 'seller') {
-                $verify_otp = $complete_deal->seller_email_otp;
-            } else if ($user_type == 'buyer') {
-                $verify_otp = $complete_deal->buyer_email_otp;
-            } else if ($user_type == 'broker') {
-                $verify_otp = $complete_deal->broker_email_otp;
-            }
-        }
-
-		if(!empty($verify_otp)){
-			if($otp == $verify_otp){
-				$current = date("Y-m-d H:i:s");
-				$otp_time = $complete_deal->otp_time;
-				$diff = strtotime($current) - strtotime($otp_time);
-				$days    = floor($diff / 86400);
-				$hours   = floor(($diff - ($days * 86400)) / 3600);
-				$minutes = floor(($diff - ($days * 86400) - ($hours * 3600)) / 60);
-				if (($diff > 0) && ($minutes <= 180)) {
-
-                    if($user_type == 'seller'){
-                        if (!empty($mobile_otp)) {
-                            $complete_deal->is_seller_otp_verify = 1;
-                        } else {
-                            $complete_deal->is_seller_email_otp_verify = 1;
-                        }
-                        $complete_deal->save();
-                    }else if($user_type == 'buyer'){
-                        if (!empty($mobile_otp)) {
-                            $complete_deal->is_buyer_otp_verify = 1;
-                        } else {
-                            $complete_deal->is_buyer_email_otp_verify = 1;
-                        }
-                        $complete_deal->save();
-                    }else if($user_type == 'broker'){
-                        if (!empty($mobile_otp)) {
-                            $complete_deal->is_broker_otp_verify = 1;
-                        } else {
-                            $complete_deal->is_broker_email_otp_verify = 1;
-                        }
-                        $complete_deal->save();
-                    }
-
-                    if($complete_deal->is_seller_otp_verify == 1 && $complete_deal->is_buyer_otp_verify == 1 && $complete_deal->is_broker_otp_verify == 1 && $complete_deal->is_seller_email_otp_verify == 1 && $complete_deal->is_buyer_email_otp_verify == 1 && $complete_deal->is_broker_email_otp_verify == 1){
-                        $complete_deal->status = 'complete';
-                        $complete_deal->save();
-                    }
-
-                    $response['status'] = 200;
-					$response['message'] = 'Your OTP has been verified successfully';
-
-				}else{
-						$response['status'] = 200;
-						$response['message'] = 'OTP expired';
-					}
-			}else{
-					$response['status'] = 200;
-					$response['message'] = 'OTP is not valid';
-			}
-		}else{
-			$response['status'] = 200;
-			$response['message'] = 'Mobile number not found';
-		}
-		return response($response, 200);
-    }
-
-    public function resend_deal_otp(Request $request){
-        $response = array();
-		$response['status'] = 200;
-		$response['message'] = '';
-		$response['data'] = (object)array();
-
-		$data = $request->input('data');
-		$content = json_decode($data);
-
-		$deal_id = isset($content->deal_id) ? $content->deal_id : '';
-		$user_type = isset($content->user_type) ? $content->user_type : '';
-
-        $params = [
-            'deal_id' => $deal_id,
-            'user_type' => $user_type
-        ];
-
-        $validator = Validator::make($params, [
-            'deal_id' => 'required|exists:tbl_negotiation_complete,id',
-            'user_type' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-	        $response['status'] = 404;
-				$response['message'] =$validator->errors()->first();
-				return response($response, 200);
-	    }
-
-        $complete_deal = NegotiationComplete::where('id',$deal_id)->first();
-
-        if($user_type == "seller"){
-            $sellers = Sellers::select('mobile_number','email','name')->where('id',$complete_deal->seller_id)->first();
-            $s_message = "OTP to verify make deal is ". $complete_deal->seller_otp ." - E - Cotton";
-            NotificationHelper::send_otp($sellers->mobile_number,$s_message);
-
-            $s_data = array('otp'=>$complete_deal->seller_email_otp,'name' => $sellers->name);
-
-            Mail::send(['html'=>'mail'], $s_data, function($message) use($sellers) {
-                $message->to($sellers->email, 'E - Cotton')->subject('Make Deal OTP');
-            });
-        }else if($user_type == "buyer"){
-
-            $buyers = Buyers::select('mobile_number','email','name')->where('id',$complete_deal->buyer_id)->first();
-            $by_message = "OTP to verify make deal is ". $complete_deal->buyer_otp ." - E - Cotton";
-            NotificationHelper::send_otp($buyers->mobile_number,$by_message);
-
-            $by_data = array('otp'=>$complete_deal->buyer_email_otp,'name' => $buyers->name);
-
-            Mail::send(['html'=>'mail'], $by_data, function($message) use($buyers) {
-                $message->to($buyers->email, 'E - Cotton')->subject('Make deal OTP');
-            });
-        }else if($user_type == "broker"){
-
-            $brokers = Brokers::select('mobile_number','email','name')->where('id',$complete_deal->default_broker->broker_id)->first();
-            $br_message = "OTP to verify make deal is ". $complete_deal->broker_otp ." - E - Cotton";
-            NotificationHelper::send_otp($brokers->mobile_number,$br_message);
-
-            $br_data = array('otp'=>$complete_deal->broker_email_otp,'name' => $brokers->name);
-
-            Mail::send(['html'=>'mail'], $br_data, function($message) use($brokers) {
-                $message->to($brokers->email, 'E - Cotton')->subject('Make deal OTP');
-            });
-        }
-		return response($response, 200);
-
-    }
 }
