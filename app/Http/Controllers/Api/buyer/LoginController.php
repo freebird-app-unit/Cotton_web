@@ -302,11 +302,11 @@ class LoginController extends Controller
                                         $device_details->fcm_token=$fcm_token;
                                         $device_details->save();
 
+                                        $response['data']->is_user_plan = 0;
                                         $users = UserPlan::where('user_id',$login->id)->where('user_type','buyer')->first();
                                         if(!empty($users)){
-                                            $buyers = Buyers::where('id',$login->id)->first();
-                                            $buyers->is_user_plan = 1;
-                                            $buyers->save();
+
+                                            $response['data']->is_user_plan = 1;
                                         }
 
 										$response['data']->id=$login->id;

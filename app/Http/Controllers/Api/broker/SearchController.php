@@ -52,12 +52,14 @@ class SearchController extends Controller
 		$search_data = UserDetails::with('broker')->where(['country_id'=>$country_id,'state_id'=>$state_id,'city_id'=>$city_id,'station_id'=>$station_id,'user_type'=>'broker'])->get();
 		if(count($search_data)>0){
 			foreach ($search_data as $value) {
-                $search_broker[] = [
-                    'id' => $value->broker->id,
-                    'name' => $value->broker->name,
-                    'mobile_number' => $value->broker->mobile_number,
-                    'mobile_number_2' => $value->broker->mobile_number_2,
-                ];
+                if(!empty($value->broker)){
+                    $search_broker[] = [
+                        'id' => $value->broker->id,
+                        'name' => $value->broker->name,
+                        'mobile_number' => $value->broker->mobile_number,
+                        'mobile_number_2' => $value->broker->mobile_number_2,
+                    ];
+                }
 			}
 			$response['status'] = 200;
 			$response['message'] = 'Search Broker';

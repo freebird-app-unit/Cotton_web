@@ -146,6 +146,7 @@ Route::group(['namespace' => 'Api\product'], function () {
     Route::post('/test_api', 'ProductController@test_api');
 
     Route::post('/make_deal_otp_verify', 'ProductController@make_deal_otp_verify');
+    Route::post('/resend_deal_otp', 'ProductController@resend_deal_otp');
 
 });
 Route::post('/news', 'Api\seller\LoginController@news_list');

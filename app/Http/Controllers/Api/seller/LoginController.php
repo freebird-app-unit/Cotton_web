@@ -320,11 +320,10 @@ class LoginController extends Controller
                                         $device_details->fcm_token=$fcm_token;
                                         $device_details->save();
 
+                                        $response['data']->is_user_plan = 0;
                                         $users = UserPlan::where('user_id',$login->id)->where('user_type','seller')->first();
                                         if(!empty($users)){
-                                            $sellers = Sellers::where('id',$login->id)->first();
-                                            $sellers->is_user_plan = 1;
-                                            $sellers->save();
+                                            $response['data']->is_user_plan = 1;
                                         }
 
 										$response['data']->id=$login->id;
@@ -1168,11 +1167,13 @@ class LoginController extends Controller
         $broker_list = [];
         if (!empty($final_merged)) {
             foreach($final_merged as $broker) {
-                $broker_list[] = [
-                    'id' => $broker->broker->id,
-                    'name' => $broker->broker->name,
-                    'type' => $broker->broker_type,
-                ];
+				if(!empty($broker->broker)){
+					$broker_list[] = [
+						'id' => $broker->broker->id,
+						'name' => $broker->broker->name,
+						'type' => $broker->broker_type,
+					];
+				}
             }
         }
 
@@ -1226,14 +1227,20 @@ class LoginController extends Controller
         $buyer_brokers = AddBrokers::with('broker')->where(['user_type' => 'buyer', 'buyer_id' => $buyer_id, 'broker_type' => 'not_default'])->get();
         $final_merged = $merged->merge($buyer_brokers);
 
+        $broker_ids = "";
         $broker_list = [];
         if (!empty($final_merged)) {
             foreach($final_merged as $broker) {
-                $broker_list[] = [
-                    'id' => $broker->broker->id,
-                    'name' => $broker->broker->name,
-                    'type' => $broker->broker_type,
-                ];
+				if(!empty($broker->broker)){
+					if($broker_ids != $broker->broker->id){
+						$broker_list[] = [
+							'id' => $broker->broker->id,
+							'name' => $broker->broker->name,
+							'type' => $broker->broker_type,
+						];
+					}
+					$broker_ids = $broker->broker->id;
+				}
             }
         }
 
