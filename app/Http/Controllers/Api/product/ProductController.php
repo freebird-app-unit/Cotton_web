@@ -7584,7 +7584,7 @@ class ProductController extends Controller
             $user_type = "buyer";
             $data = [
                 'navigateto' => 'DealDetails',
-                'buyerId' => $buyer_id,
+                'sellerId' => $seller_id,
                 'post_id' => $post_notification_id,
                 'type' => $negotiation_type,
             ];
@@ -7598,7 +7598,7 @@ class ProductController extends Controller
             $user_type = "seller";
             $data = [
                 'navigateto' => 'DealDetails',
-                'sellerId' => $seller_id,
+                'buyerId' => $buyer_id,
                 'post_id' => $post_notification_id,
                 'type' => $negotiation_type,
             ];
