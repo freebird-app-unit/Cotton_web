@@ -9,6 +9,7 @@ use App\Models\AddBrokers;
 use App\Models\BrokerRequest;
 use Validator;
 use App\Helper\NotificationHelper;
+use App\Models\Transactions;
 
 class SearchController extends Controller
 {
@@ -382,5 +383,52 @@ class SearchController extends Controller
 
 
 		return response($response, 200);
+    }
+
+    public function broker_earning(Request $request) {
+
+        $data = $request->input('data');
+        $content = json_decode($data);
+
+        $broker_id = isset($content->broker_id) ? $content->broker_id : '';
+
+        $params = [
+            'broker_id' => $broker_id,
+        ];
+
+        $validator = Validator::make($params, [
+            'broker_id' => 'required|exists:tbl_brokers,id',
+        ]);
+
+        if ($validator->fails()) {
+            $response['status'] = 404;
+            $response['message'] = $validator->errors()->first();
+            return response($response, 200);
+        }
+
+        $transaction = Transactions::where('user_id',$broker_id)->where('user_type','broker')->get();
+
+        $trans_data = [];
+        $total = 0;
+        if(!empty($transaction) && count($transaction) > 0)
+        {
+            foreach($transaction as $value){
+                $total += $value->amount;
+                $trans_data[] = [
+                    'date' => date('d-m-Y',strtotime($value->created_at)),
+                    'amount' => $value->amount,
+                ];
+            }
+        }
+
+        $data = [
+            'total_earning' => $total,
+            'earning' => $trans_data,
+        ];
+
+        $response['message'] = 'Earning';
+        $response['status'] = 200;
+        $response['data'] = $data;
+        return response($response, 200);
     }
 }

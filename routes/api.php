@@ -80,6 +80,8 @@ Route::group(['namespace' => 'Api\broker'], function () {
 	Route::post('/broker_request_list', 'SearchController@broker_request_list');
 	Route::post('/accept_broker_request', 'SearchController@accept_broker_request');
 	Route::post('/seller_buyer_list', 'LoginController@seller_buyer_list');
+
+    Route::post('/broker_earning', 'SearchController@broker_earning');
 });
 
 

@@ -2053,8 +2053,15 @@ class ProductController extends Controller
 
         $fcm_token = "";
         $user = [];
+        $data = [];
         if ($negotiation_by == "seller") {
             $user_type = "buyer";
+            $data = [
+                'navigateto' => 'DealDetails',
+                'buyerId' => $buyer_id,
+                'post_id' => $post_notification_id,
+                'type' => $negotiation_type,
+            ];
             $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$buyer_id)->first();
 
             if (!empty($seller_data->fcm_token)) {
@@ -2063,6 +2070,12 @@ class ProductController extends Controller
             $user = Sellers::select('name')->where('id',$seller_id)->first();
         }else if($negotiation_by == 'buyer'){
             $user_type = "seller";
+            $data = [
+                'navigateto' => 'DealDetails',
+                'sellerId' => $seller_id,
+                'post_id' => $post_notification_id,
+                'type' => $negotiation_type,
+            ];
             $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$seller_id)->first();
 
             if (!empty($seller_data->fcm_token)) {
@@ -2074,9 +2087,7 @@ class ProductController extends Controller
         if (!empty($fcm_token)) {
             $json_array = [
                 "registration_ids" => [$fcm_token],
-                "data" => [
-                    'user_type' => $negotiation_by,
-                ],
+                "data" => $data,
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
                     "title" => "Buy Notification",
@@ -4268,6 +4279,10 @@ class ProductController extends Controller
         $offset = isset($content->offset) ? $content->offset : 0;
 		$limit = isset($content->limit) ? $content->limit : 10;
 
+        $negotiation_ids = [];
+        $negotiation = Negotiation::select('negotiation_complete_id')->get()->toArray();
+        $negotiation_ids = array_column($negotiation,'negotiation_complete_id');
+
 		$final_arr = [];
 		$dates = [];
 		if($user_type == "seller"){
@@ -4280,7 +4295,7 @@ class ProductController extends Controller
 			$unique_date = array_unique($dates);
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->orderBy('id','DESC')->get();
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->whereNotIn('id',$negotiation_ids)->orderBy('id','DESC')->get();
 
 				// $negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->where(function($query) {
                     // $query->where('lab_report_status','pass')
@@ -4597,7 +4612,7 @@ class ProductController extends Controller
 
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->orderBy('id','DESC')->get();
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('buyer_id',$seller_buyer_id)->whereNotIn('id',$negotiation_ids)->orderBy('id','DESC')->get();
 
 				foreach ($negotiation_data as $value) {
 
@@ -4911,7 +4926,7 @@ class ProductController extends Controller
 			$unique_date = array_unique($dates);
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('broker_id',$seller_buyer_id)->orderBy('id','DESC')->get();
+				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('broker_id',$seller_buyer_id)->whereNotIn('id',$negotiation_ids)->orderBy('id','DESC')->get();
 				foreach ($negotiation_data as $value) {
 					$dates = date('d-m-Y', strtotime($value->updated_at));
 
@@ -7564,8 +7579,15 @@ class ProductController extends Controller
 
         $fcm_token = "";
         $user = [];
+        $data = [];
         if ($negotiation_by == "seller") {
             $user_type = "buyer";
+            $data = [
+                'navigateto' => 'DealDetails',
+                'buyerId' => $buyer_id,
+                'post_id' => $post_notification_id,
+                'type' => $negotiation_type,
+            ];
             $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$buyer_id)->first();
 
             if (!empty($seller_data->fcm_token)) {
@@ -7574,6 +7596,12 @@ class ProductController extends Controller
             $user = Sellers::select('name')->where('id',$seller_id)->first();
         }else if($negotiation_by == 'buyer'){
             $user_type = "seller";
+            $data = [
+                'navigateto' => 'DealDetails',
+                'sellerId' => $seller_id,
+                'post_id' => $post_notification_id,
+                'type' => $negotiation_type,
+            ];
             $seller_data = DeviceDetails::select('fcm_token')->where('user_type',$user_type)->where('user_id',$seller_id)->first();
 
             if (!empty($seller_data->fcm_token)) {
@@ -7585,12 +7613,7 @@ class ProductController extends Controller
         if (!empty($fcm_token)) {
             $json_array = [
                 "registration_ids" => [$fcm_token],
-                "data" => [
-                    'seller_id' => $seller_id,
-                    'post_notification_id' => $post_notification_id,
-                    'post_notification_type' => $negotiation_type,
-                    'user_type' => $negotiation_by,
-                ],
+                "data" => $data,
                 "notification" => [
                     "body" => "Notification send by ".$user->name,
                     "title" => "Negotiation Notification",
