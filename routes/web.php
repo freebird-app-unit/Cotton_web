@@ -73,6 +73,15 @@ Route::group(['middleware' => ['auth:web']], function() {
         Route::post('delete/{id}', ['as' => 'city_delete', 'uses' => 'CityController@destroy']);
     });
 
+    Route::group(['prefix' => 'station'], function () {
+        Route::get('/', ['as' => 'station_index', 'uses' => 'StationController@index']);
+        Route::post('list', ['as' => 'station_list', 'uses' => 'StationController@index']);
+        Route::get('add', ['as' => 'station_create', 'uses' => 'StationController@add']);
+        Route::post('store', ['as' => 'station_store', 'uses' => 'StationController@store']);
+        Route::get('{id}/edit', ['as' => 'station_edit', 'uses' => 'StationController@edit']);
+        Route::post('delete/{id}', ['as' => 'station_delete', 'uses' => 'StationController@destroy']);
+    });
+
     Route::group(['prefix' => 'lab'], function () {
         Route::get('/', ['as' => 'lab_index', 'uses' => 'LabController@index']);
         Route::post('list', ['as' => 'lab_list', 'uses' => 'LabController@index']);
@@ -201,6 +210,8 @@ Route::group(['middleware' => ['auth:web']], function() {
 
     Route::resource('plan', 'PlanController');
 
+    Route::post('state_list', ['as' => 'state_list', 'uses' => 'StationController@state_list']);
+    Route::post('city_list', ['as' => 'city_list', 'uses' => 'StationController@city_list']);
     Route::post('check_seller_code', ['as' => 'check_seller_code', 'uses' => 'SellerController@check_seller_code']);
     Route::post('send_broker_otp', ['as' => 'send_broker_otp', 'uses' => 'SellerController@send_broker_otp']);
     Route::post('verify_broker_otp', ['as' => 'verify_broker_otp', 'uses' => 'SellerController@verify_broker_otp']);

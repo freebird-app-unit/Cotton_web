@@ -23,6 +23,9 @@
                     <a href="{{url('/city')}}" class="waves-effect {{request()->segment(1) == 'city' ? 'active' : ''}}"><i class="ti-map"></i> <span> City </span></a>
                 </li>
                 <li class="has_sub">
+                    <a href="{{url('/station')}}" class="waves-effect {{request()->segment(1) == 'station' ? 'active' : ''}}"><i class="ti-map"></i> <span> Station </span></a>
+                </li>
+                <li class="has_sub">
                     <a href="{{url('/lab')}}" class="waves-effect {{request()->segment(1) == 'lab' ? 'active' : ''}}"><i class="ti-agenda"></i> <span> Lab </span></a>
                 </li>
                 <li class="has_sub">

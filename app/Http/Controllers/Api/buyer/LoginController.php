@@ -677,7 +677,7 @@ class LoginController extends Controller
 				return response($response, 200);
 	    }
 
-        $profile =  Buyers::with('bank_details', 'user_details')->where('tbl_buyers.id',$user_id)->first();
+        $profile =  Buyers::with('bank_details', 'user_details', 'broker.broker')->where('tbl_buyers.id',$user_id)->first();
         if(!empty($profile)){
             $response['data']->id=$profile->id;
             $response['data']->mobile_number = ($profile->mobile_number)?$profile->mobile_number:'';
@@ -709,6 +709,7 @@ class LoginController extends Controller
             $response['data']->state=!empty($profile->user_details->state)?$profile->user_details->state->name:'';
             $response['data']->city=!empty($profile->user_details->city)?$profile->user_details->city->name:'';
             $response['data']->station=!empty($profile->user_details->station)?$profile->user_details->station->name:'';
+            $response['data']->broker_name=!empty($profile->broker->broker->name)?$profile->broker->broker->name:'';
 
             $image = '';
             $buyer_stamp_img = storage_path('app/public/buyer/profile/' . $profile->image);

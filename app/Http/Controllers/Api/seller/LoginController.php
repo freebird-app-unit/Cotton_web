@@ -694,7 +694,7 @@ class LoginController extends Controller
 	    }
 
 
-        $profile =  Sellers::with('bank_details', 'user_details')->where('tbl_sellers.id',$user_id)->first();
+        $profile =  Sellers::with('bank_details', 'user_details', 'broker.broker')->where('tbl_sellers.id',$user_id)->first();
         if(!empty($profile)){
             $response['data']->id=$profile->id;
             $response['data']->mobile_number=!empty($profile->mobile_number)?$profile->mobile_number:'';
@@ -726,6 +726,7 @@ class LoginController extends Controller
             $response['data']->state=!empty($profile->user_details->state)?$profile->user_details->state->name:'';
             $response['data']->city=!empty($profile->user_details->city)?$profile->user_details->city->name:'';
             $response['data']->station=!empty($profile->user_details->station)?$profile->user_details->station->name:'';
+            $response['data']->broker_name=!empty($profile->broker->broker->name)?$profile->broker->broker->name:'';
 
             $image = '';
             $seller_img = storage_path('app/public/seller/profile/' . $profile->image);
@@ -869,7 +870,7 @@ class LoginController extends Controller
 		$country_id = isset($content->country_id) ? $content->country_id : '';
 
 		$state_list = [];
-		$state = State::where('country_id',$country_id)->where('is_delete',1)->get();
+		$state = State::where('country_id',$country_id)->where('is_delete',1)->orderBy('name')->get();
 		if(count($state)>0){
 			foreach ($state as $value) {
 				$state_list[] =[
@@ -898,7 +899,7 @@ class LoginController extends Controller
 		$state_id = isset($content->state_id) ? $content->state_id : '';
 
 		$city_list = [];
-		$city = City::where('state_id',$state_id)->where('is_delete',1)->get();
+		$city = City::where('state_id',$state_id)->where('is_delete',1)->orderBy('name')->get();
 		if(count($city)>0){
 			foreach ($city as $value) {
 				$city_list[] =[
@@ -928,7 +929,7 @@ class LoginController extends Controller
 		$city_id = isset($content->city_id) ? $content->city_id : '';
 
 		$station_list = [];
-		$station = Station::where('city_id',$city_id)->where('is_delete',1)->get();
+		$station = Station::where('city_id',$city_id)->where('is_delete',1)->orderBy('name')->get();
 		if(count($station)>0){
 			foreach ($station as $value) {
 				$station_list[] =[

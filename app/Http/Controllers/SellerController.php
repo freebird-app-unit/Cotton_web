@@ -227,8 +227,8 @@ class SellerController extends Controller
                 }
 
                 $broker =  new AddBrokers();
-                $broker->buyer_id = $request->buyer_id;
-                $broker->user_type = 'buyer';
+                $broker->buyer_id = $request->seller_id;
+                $broker->user_type = 'seller';
                 $broker->broker_id = $otp_verify->id;
                 $broker->broker_type = $type;
                 $broker->save();
