@@ -597,6 +597,10 @@ class LoginController extends Controller
             $response['data']->country=!empty($profile->userDetails->country)?$profile->userDetails->country->name:'';
             $response['data']->state=!empty($profile->userDetails->state)?$profile->userDetails->state->name:'';
             $response['data']->city=!empty($profile->userDetails->city)?$profile->userDetails->city->name:'';
+			$response['data']->country_id=!empty($profile->userDetails->country_id)?$profile->userDetails->country_id:'';
+            $response['data']->state_id=!empty($profile->userDetails->state_id)?$profile->userDetails->state_id:'';
+            $response['data']->city_id=!empty($profile->userDetails->city_id)?$profile->userDetails->city_id:'';
+            $response['data']->station_id=!empty($profile->userDetails->station_id)?$profile->userDetails->station_id:''; 
             $response['data']->station=!empty($profile->userDetails->station)?$profile->userDetails->station->name:'';
 
             $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $profile->stamp_image);

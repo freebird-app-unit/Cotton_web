@@ -1285,7 +1285,7 @@ class ProductController extends Controller
                                                     ->get();
 
                                         if (!empty($station_result) && count($station_result)> 0) {
-
+                                            dd($station_result);
                                             $search_array = [];
                                             foreach($station_result as $station_result_val) {
                                                 $search_array[] = [
@@ -4283,23 +4283,32 @@ class ProductController extends Controller
         $offset = isset($content->offset) ? $content->offset : 0;
 		$limit = isset($content->limit) ? $content->limit : 10;
 
-        $negotiation_ids = [];
-        $negotiation = Negotiation::select('negotiation_complete_id')->get()->toArray();
-        $negotiation_ids = array_column($negotiation,'negotiation_complete_id');
-
 		$final_arr = [];
 		$dates = [];
+        $negotiation_ids = [];
+
 		if($user_type == "seller"){
 		    $make_deals = NegotiationComplete::where(['seller_id'=>$seller_buyer_id])->get();
 			if(count($make_deals)>0){
 				foreach ($make_deals as $make_deal) {
 					array_push($dates,date('Y-m-d', strtotime($make_deal->updated_at)));
+
+                    $negotiation = Negotiation::select('negotiation_complete_id')->where('negotiation_complete_id', $make_deal->id)->get()->first();
+                    if (!empty($negotiation)) {
+                        $negotiation_ids = array_column($negotiation,'negotiation_complete_id');
+                    }
 				}
 			}
+            // dd($negotiation_ids);
+
 			$unique_date = array_unique($dates);
 			foreach ($unique_date as $date) {
 
-				$negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->whereNotIn('id',$negotiation_ids)->orderBy('id','DESC')->get();
+                if (!empty($negotiation_ids)) {
+                    $negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->whereNotIn('id',$negotiation_ids)->orderBy('id','DESC')->get();
+                } else {
+                    $negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->orderBy('id','DESC')->get();
+                }
 
 				// $negotiation_data = NegotiationComplete::whereDate('updated_at',$date)->where('seller_id',$seller_buyer_id)->where(function($query) {
                     // $query->where('lab_report_status','pass')
@@ -6627,7 +6636,7 @@ class ProductController extends Controller
 						$buyer_name = '';
 						$seller_name = '';
 						$sellers = [];
-						$multiple_buyers = Negotiation::where('post_notification_id',$post_notification_id)->get();
+						$multiple_buyers = Negotiation::where(['post_notification_id'=>$post_notification_id,'negotiation_type' => $negotiation_type])->get();
 						if(count($multiple_buyers)>1){
 							$best_price = [];
 							foreach ($multiple_buyers as $value) {
@@ -6852,7 +6861,7 @@ class ProductController extends Controller
 						$buyer_name = '';
 						$seller_name = '';
 						$buyers = [];
-						$multiple_sellers = Negotiation::where('post_notification_id',$post_notification_id)->get();
+						$multiple_sellers = Negotiation::where(['post_notification_id'=> $post_notification_id,'negotiation_type' => $negotiation_type])->get();
 						if(count($multiple_sellers)>1){
 							$best_price = [];
 							foreach ($multiple_sellers as $value) {
@@ -7086,6 +7095,9 @@ class ProductController extends Controller
                     $negotiation = Negotiation::where('id',$negotia->id)->first();
                     $prev_price = $negotia->price;
                     $prev_bales = $negotia->bales;
+                }else{
+                    $prev_price = $notification_remain->price;
+                    $prev_bales = $notification_remain->no_of_bales;
                 }
 				$negotiation->seller_id = $seller_id;
 				$negotiation->buyer_id = $buyer_id;
@@ -7134,6 +7146,9 @@ class ProductController extends Controller
                     $negotiation_log->payment_condition_id = $payment_condition;
                     $negotiation_log->transmit_condition_id = $transmit_condition;
                     $negotiation_log->lab_id = $lab;
+                    $negotiation_log->seller_id = $seller_id;
+					$negotiation_log->buyer_id = $buyer_id;
+					$negotiation_log->broker_id = $broker_id;
                     $negotiation_log->save();
 
                     if($negotiation->negotiation_by == "seller"){
@@ -7147,7 +7162,7 @@ class ProductController extends Controller
 						$buyer_name = '';
 						$seller_name = '';
 						$sellers = [];
-						$multiple_buyers = Negotiation::where('post_notification_id',$post_notification_id)->get();
+						$multiple_buyers = Negotiation::where(['post_notification_id'=>$post_notification_id ,'negotiation_type'=>$negotiation_type])->get();
 						if(count($multiple_buyers)>1){
 							$best_price = [];
 							foreach ($multiple_buyers as $value) {
@@ -7369,7 +7384,7 @@ class ProductController extends Controller
 						$buyer_name = '';
 						$seller_name = '';
 						$buyers = [];
-						$multiple_sellers = Negotiation::where('post_notification_id',$post_notification_id)->get();
+						$multiple_sellers = Negotiation::where(['post_notification_id'=> $post_notification_id,'negotiation_type' => $negotiation_type])->get();
 						if(count($multiple_sellers)>1){
 							$best_price = [];
 							foreach ($multiple_sellers as $value) {
@@ -8149,97 +8164,134 @@ class ProductController extends Controller
                 $deal_date = date('d-M-Y', strtotime($make_deal->created_at));
                 // $deal_price = $make_deal->price;
                 $ref_no = $make_deal->id;
+
+                $broker = Brokers::where('id',$negotiation_comp->broker_id)->first();
+				$broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
+				if(!empty($broker_data)){
+					$country = Country::where('id',$broker_data->country_id)->first();
+					if(!empty($country)){
+						$state = State::where('id',$broker_data->state_id)->first();
+						if(!empty($state)){
+							$broker_name = $broker->name;
+							$broker_address = $broker->address;
+							$broker_country = $country->name;
+							$broker_state = $state->name;
+							$broker_mobile_number = $broker->mobile_number;
+							$broker_mobile_number_2 = $broker->mobile_number_2;
+							$broker_email =$broker->email;
+							$broker_url =$broker->website;
+
+							$broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $broker->stamp_image);
+
+							$broker_stamp_image = '';
+							if (!empty($broker->stamp_image) && File::exists($broker_stamp_img)) {
+								$file1 = file_get_contents($broker_stamp_img);
+								$broker_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
+							}
+
+							$broker_header_img = storage_path('app/public/broker/header_image/' . $broker->header_image);
+
+							$broker_header_image = '';
+							if (!empty($broker->header_image) && File::exists($broker_header_img)) {
+								$broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+								$file2 = file_get_contents($broker_header_img);
+								$broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+							}
+						}
+					}
+				}
+
                 // $deal_no_of_bales = $make_deal->no_of_bales;
-                if($done_by == "seller"){
-                    $seller = Sellers::where('id',$seller_id)->first();
-                    if(!empty($seller)){
-                        $broker = Brokers::where('code',$seller->referral_code)->first();
-                        if(!empty($broker)){
-                            $broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
-                            if(!empty($broker_data)){
-                                $country = Country::where('id',$broker_data->country_id)->first();
-                                if(!empty($country)){
-                                    $state = State::where('id',$broker_data->state_id)->first();
-                                    if(!empty($state)){
-                                        $broker_name = $broker->name;
-                                        $broker_address = $broker->address;
-                                        $broker_country = $country->name;
-                                        $broker_state = $state->name;
-                                        $broker_mobile_number = $broker->mobile_number;
-                                        $broker_mobile_number_2 = $broker->mobile_number_2;
-                                        $broker_email =$broker->email;
-                                        $broker_url =$broker->website;
+                // if($done_by == "seller"){
+                //     $seller = Sellers::where('id',$seller_id)->first();
+                //     if(!empty($seller)){
+                //         $broker = Brokers::where('code',$seller->referral_code)->first();
+                //         if(!empty($broker)){
+                //             $broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
+                //             if(!empty($broker_data)){
+                //                 $country = Country::where('id',$broker_data->country_id)->first();
+                //                 if(!empty($country)){
+                //                     $state = State::where('id',$broker_data->state_id)->first();
+                //                     if(!empty($state)){
+                //                         $broker_name = $broker->name;
+                //                         $broker_address = $broker->address;
+                //                         $broker_country = $country->name;
+                //                         $broker_state = $state->name;
+                //                         $broker_mobile_number = $broker->mobile_number;
+                //                         $broker_mobile_number_2 = $broker->mobile_number_2;
+                //                         $broker_email =$broker->email;
+                //                         $broker_url =$broker->website;
 
-                                        $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $broker->stamp_image);
+                //                         $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $broker->stamp_image);
 
-                                        $broker_stamp_image = '';
-									    if (!empty($broker->stamp_image) && File::exists($broker_stamp_img)) {
-                                            $file1 = file_get_contents($broker_stamp_img);
-                                            $broker_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
-                                        }
+                //                         $broker_stamp_image = '';
+				// 					    if (!empty($broker->stamp_image) && File::exists($broker_stamp_img)) {
+                //                             $file1 = file_get_contents($broker_stamp_img);
+                //                             $broker_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
+                //                         }
 
-                                        $broker_header_img = storage_path('app/public/broker/header_image/' . $broker->header_image);
+                //                         $broker_header_img = storage_path('app/public/broker/header_image/' . $broker->header_image);
 
-                                        $broker_header_image = '';
-									    if (!empty($broker->header_image) && File::exists($broker_header_img)) {
-                                            $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
-                                            $file2 = file_get_contents($broker_header_img);
-                                            $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                //                         $broker_header_image = '';
+				// 					    if (!empty($broker->header_image) && File::exists($broker_header_img)) {
+                //                             $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                //                             $file2 = file_get_contents($broker_header_img);
+                //                             $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                //                         }
+                //                     }
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
 
-                if($done_by == "buyer"){
-                    $buyer = Buyers::where('id',$buyer_id)->first();
-                    if(!empty($buyer)){
-                        $broker = Brokers::where('code',$buyer->referral_code)->first();
-                        if(!empty($broker)){
-                            $broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
-                            if(!empty($broker_data)){
-                                $country = Country::where('id',$broker_data->country_id)->first();
-                                if(!empty($country)){
-                                    $state = State::where('id',$broker_data->state_id)->first();
-                                    if(!empty($state)){
-                                        $broker_name = $broker->name;
-                                        $broker_address = $broker->address;
-                                        $broker_country = $country->name;
-                                        $broker_state = $state->name;
-                                        $broker_mobile_number = $broker->mobile_number;
-                                        $broker_mobile_number_2 =$broker->mobile_number_2;
-                                        $broker_email =$broker->email;
-                                        $broker_url =$broker->website;
-                                        // $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
-                                        // $file1 = file_get_contents($broker_stamp_img);
-                                        // $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
+                // if($done_by == "buyer"){
+                //     $buyer = Buyers::where('id',$buyer_id)->first();
+                //     if(!empty($buyer)){
+                //         $broker = Brokers::where('code',$buyer->referral_code)->first();
+                //         if(!empty($broker)){
+                //             $broker_data = UserDetails::where(['user_type'=>'broker','user_id'=>$broker->id])->first();
+                //             if(!empty($broker_data)){
+                //                 $country = Country::where('id',$broker_data->country_id)->first();
+                //                 if(!empty($country)){
+                //                     $state = State::where('id',$broker_data->state_id)->first();
+                //                     if(!empty($state)){
+                //                         $broker_name = $broker->name;
+                //                         $broker_address = $broker->address;
+                //                         $broker_country = $country->name;
+                //                         $broker_state = $state->name;
+                //                         $broker_mobile_number = $broker->mobile_number;
+                //                         $broker_mobile_number_2 =$broker->mobile_number_2;
+                //                         $broker_email =$broker->email;
+                //                         $broker_url =$broker->website;
+                //                         // $broker_stamp_img = asset('storage/app/public/broker/stamp_image/' . $broker->stamp_image);
+                //                         // $file1 = file_get_contents($broker_stamp_img);
+                //                         // $broker_stamp_image ='data:image/jpeg;base64,'.base64_encode($file1);
 
-                                        // $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
-                                        // $file2 = file_get_contents($broker_header_img);
-                                        // $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                //                         // $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                //                         // $file2 = file_get_contents($broker_header_img);
+                //                         // $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
 
-                                        $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $broker->stamp_image);
-                                        $broker_stamp_image = '';
-									    if (!empty($broker->stamp_image) && File::exists($broker_stamp_img)) {
-                                            $file1 = file_get_contents($broker_stamp_img);
-                                            $broker_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
-                                        }
+                //                         $broker_stamp_img = storage_path('app/public/broker/stamp_image/' . $broker->stamp_image);
+                //                         $broker_stamp_image = '';
+				// 					    if (!empty($broker->stamp_image) && File::exists($broker_stamp_img)) {
+                //                             $file1 = file_get_contents($broker_stamp_img);
+                //                             $broker_stamp_image = 'data:image/jpeg;base64,'.base64_encode($file1);
+                //                         }
 
-                                        $broker_header_img = storage_path('app/public/broker/header_image/' . $broker->header_image);
-                                        $broker_header_image = '';
-									    if (!empty($broker->header_image) && File::exists($broker_header_img)) {
-                                            $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
-                                            $file2 = file_get_contents($broker_header_img);
-                                            $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                //                         $broker_header_img = storage_path('app/public/broker/header_image/' . $broker->header_image);
+                //                         $broker_header_image = '';
+				// 					    if (!empty($broker->header_image) && File::exists($broker_header_img)) {
+                //                             $broker_header_img = asset('storage/app/public/broker/header_image/' . $broker->header_image);
+                //                             $file2 = file_get_contents($broker_header_img);
+                //                             $broker_header_image = 'data:image/jpeg;base64,'.base64_encode($file2);
+                //                         }
+                //                     }
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
 
                 if($make_deal->negotiation_type == "post"){
                     $post_detail = Post::where('id',$post_notification_id)->first();
@@ -9905,7 +9957,7 @@ class ProductController extends Controller
 			$final_post = array_unique(array_column($negotiation_post_arr_temp, 'post_id'));
 			$negotiation_post_arr = array_intersect_key($negotiation_post_arr_temp, $final_post);
 
-			$final_notification = array_unique(array_column($negotiation_notification_arr_temp, 'post_id'));
+			$final_notification = array_unique(array_column($negotiation_notification_arr_temp, 'notification_id'));
 			$negotiation_notification_arr = array_intersect_key($negotiation_notification_arr_temp, $final_notification);
 			//end
 			$negotiation_array = array_merge($negotiation_post_arr,$negotiation_notification_arr);
@@ -10056,20 +10108,26 @@ class ProductController extends Controller
 				if(!empty($post)){
 					$seller_name = '';
 					$seller_id = '';
+					$broker_id = '';
+					$broker_name = '';
 					if($post->user_type == "seller"){
-						$seller_data = Sellers::where('id',$post->seller_buyer_id)->first();
+						$seller_data = Sellers::with('broker.broker')->where('id',$post->seller_buyer_id)->first();
 						if(!empty($seller_data)){
 							$seller_name = $seller_data->name;
 							$seller_id = $seller_data->id;
+							$broker_id = isset($seller_data->broker->broker->id) ? $seller_data->broker->broker->id : '';
+							$broker_name = isset($seller_data->broker->broker->name) ? $seller_data->broker->broker->name : '';
 						}
 					}
 					$buyer_name = '';
 					$buyer_id = '';
 					if($post->user_type == "buyer"){
-						$buyer_data = Buyers::where('id',$post->seller_buyer_id)->first();
+						$buyer_data = Buyers::with('broker.broker')->where('id',$post->seller_buyer_id)->first();
 						if(!empty($buyer_data)){
 							$buyer_name = $buyer_data->name;
 							$buyer_id = $buyer_data->id;
+                            $broker_id = isset($buyer_data->broker->broker->id) ? $buyer_data->broker->broker->id : '';
+							$broker_name = isset($buyer_data->broker->broker->name) ? $buyer_data->broker->broker->name : '';
 						}
 					}
 					$attribute = PostDetails::where('post_id',$post->id)->get();
@@ -10087,8 +10145,8 @@ class ProductController extends Controller
 		                'seller_name' => $seller_name,
 		                'buyer_id' => $buyer_id,
 		                'buyer_name' => $buyer_name,
-		                'broker_id' => '',
-		                'broker_name' => '',
+		                'broker_id' => $broker_id,
+		                'broker_name' => $broker_name,
 		                'negotiation_by' => '',
 		                'post_notification_id' => $post->id,
 		                'negotiation_type' => 'post',
@@ -10119,20 +10177,26 @@ class ProductController extends Controller
 				if(!empty($notification)){
 					$seller_name = '';
 					$seller_id = '';
+					$broker_id = '';
+					$broker_name = '';
 					if($notification->user_type == "seller"){
-						$seller_data = Sellers::where('id',$notification->seller_buyer_id)->first();
+						$seller_data = Sellers::with('broker.broker')->where('id',$notification->seller_buyer_id)->first();
 						if(!empty($seller_data)){
 							$seller_name = $seller_data->name;
 							$seller_id = $seller_data->id;
+							$broker_id = isset($seller_data->broker->broker->id) ? $seller_data->broker->broker->id : '';
+							$broker_name = isset($seller_data->broker->broker->name) ? $seller_data->broker->broker->name : '';
 						}
 					}
 					$buyer_name = '';
 					$buyer_id = '';
 					if($notification->user_type == "buyer"){
-						$buyer_data = Buyers::where('id',$notification->seller_buyer_id)->first();
+						$buyer_data = Buyers::with('broker.broker')->where('id',$notification->seller_buyer_id)->first();
 						if(!empty($buyer_data)){
 							$buyer_name = $buyer_data->name;
 							$buyer_id = $buyer_data->id;
+                            $broker_id = isset($buyer_data->broker->broker->id) ? $buyer_data->broker->broker->id : '';
+							$broker_name = isset($buyer_data->broker->broker->name) ? $buyer_data->broker->broker->name : '';
 						}
 					}
 					$attribute = NotificatonDetails::where('notification_id',$notification->id)->get();
@@ -10150,8 +10214,8 @@ class ProductController extends Controller
 		                'seller_name' => $seller_name,
 		                'buyer_id' => $buyer_id,
 		                'buyer_name' => $buyer_name,
-		                'broker_id' => '',
-		                'broker_name' => '',
+		                'broker_id' => $broker_id,
+		                'broker_name' => $broker_name,
 		                'negotiation_by' => '',
 		                'post_notification_id' => $notification->id,
 		                'negotiation_type' => 'notification',
@@ -11973,9 +12037,12 @@ class ProductController extends Controller
 
             $s_data = array('otp'=>$complete_deal->seller_email_otp,'name' => $sellers->name);
 
-            Mail::send(['html'=>'mail'], $s_data, function($message) use($sellers) {
-                $message->to($sellers->email, 'E - Cotton')->subject('Make Deal OTP');
-            });
+            // Mail::send(['html'=>'mail'], $s_data, function($message) use($sellers) {
+            //     $message->to($sellers->email, 'E - Cotton')->subject('Make Deal OTP');
+            // });
+
+            $response['status'] = 200;
+			$response['message'] = 'OTP sent successfully';
         }else if($user_type == "buyer"){
 
             $buyers = Buyers::select('mobile_number','email','name')->where('id',$complete_deal->buyer_id)->first();
@@ -11984,9 +12051,12 @@ class ProductController extends Controller
 
             $by_data = array('otp'=>$complete_deal->buyer_email_otp,'name' => $buyers->name);
 
-            Mail::send(['html'=>'mail'], $by_data, function($message) use($buyers) {
-                $message->to($buyers->email, 'E - Cotton')->subject('Make deal OTP');
-            });
+            // Mail::send(['html'=>'mail'], $by_data, function($message) use($buyers) {
+            //     $message->to($buyers->email, 'E - Cotton')->subject('Make deal OTP');
+            // });
+
+            $response['status'] = 200;
+			$response['message'] = 'OTP sent successfully';
         }else if($user_type == "broker"){
 
             $brokers = Brokers::select('mobile_number','email','name')->where('id',$complete_deal->default_broker->broker_id)->first();
@@ -11995,10 +12065,13 @@ class ProductController extends Controller
 
             $br_data = array('otp'=>$complete_deal->broker_email_otp,'name' => $brokers->name);
 
-            Mail::send(['html'=>'mail'], $br_data, function($message) use($brokers) {
-                $message->to($brokers->email, 'E - Cotton')->subject('Make deal OTP');
-            });
+            // Mail::send(['html'=>'mail'], $br_data, function($message) use($brokers) {
+            //     $message->to($brokers->email, 'E - Cotton')->subject('Make deal OTP');
+            // });
+            $response['status'] = 200;
+			$response['message'] = 'OTP sent successfully';
         }
+
 		return response($response, 200);
 
     }

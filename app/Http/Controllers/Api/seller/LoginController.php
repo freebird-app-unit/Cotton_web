@@ -726,6 +726,10 @@ class LoginController extends Controller
             $response['data']->state=!empty($profile->user_details->state)?$profile->user_details->state->name:'';
             $response['data']->city=!empty($profile->user_details->city)?$profile->user_details->city->name:'';
             $response['data']->station=!empty($profile->user_details->station)?$profile->user_details->station->name:'';
+            $response['data']->country_id=!empty($profile->user_details->country_id)?$profile->user_details->country_id:'';
+            $response['data']->state_id=!empty($profile->user_details->state_id)?$profile->user_details->state_id:'';
+            $response['data']->city_id=!empty($profile->user_details->city_id)?$profile->user_details->city_id:'';
+            $response['data']->station_id=!empty($profile->user_details->station_id)?$profile->user_details->station_id:'';
             $response['data']->broker_name=!empty($profile->broker->broker->name)?$profile->broker->broker->name:'';
 
             $image = '';
